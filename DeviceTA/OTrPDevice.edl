@@ -1,0 +1,18 @@
+/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+enclave {
+    trusted {
+        /* define ECALLs here. */
+		public int ecall_ProcessOTrPMessage(
+		    [in, size=messageLength] const char* message, 
+		    int messageLength);
+
+		/* TODO: do we need GetTAInformation?  If so, why? */
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+		int ocall_SendOTrPMessage(
+		    [in, size=messageLength] const char* message, 
+		    int messageLength);
+    };
+};

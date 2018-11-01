@@ -1,70 +1,29 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <string.h>
 #include "OTrPTamLib.h"
+#include "OTrPTam_u.h"
 #include "../cJSON/cJSON.h"
 
-/* The caller must free the returned message with free(). */
-int OTrPHandleClientConnect(char** pMessage, int* pMessageLength)
-{
-    char* message;
-    cJSON* object = NULL;
-    cJSON* request = NULL;
-    cJSON* ocspdat = NULL;
-    cJSON* supportedsigalgs = NULL;
-
-    *pMessage = NULL;
-    *pMessageLength = 0;
-
-    /* Compose a GetDeviceStateRequest message. */
-    object = cJSON_CreateObject();
-    if (object == NULL) {
-        goto Error;
-    }
-    request = cJSON_AddObjectToObject(object, "GetDeviceStateTBSRequest");
-    if (request == NULL) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(request, "ver", "1.0") == NULL) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(request, "rid", "<Unique request ID>") == NULL) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(request, "tid", "<transaction ID>") == NULL) {
-        goto Error;
-    }
-    ocspdat = cJSON_AddArrayToObject(request, "ocspdat");
-    if (ocspdat == NULL) {
-        goto Error;
-    }
-    /* TODO: Fill in list of OCSP stapling data. */
-
-    /* supportedsigalgs is optional, so omit for now. */
-
-    /* Convert to message buffer. */
-    message = cJSON_Print(object);
-    if (message == NULL) {
-        goto Error;
-    }
-
-    cJSON_Delete(object);
-
-    *pMessage = message;
-    *pMessageLength = strlen(message);
-    return 0; /* no error */
-
-Error:
-    if (object != NULL) {
-        cJSON_Delete(object);
-    }
-    return 1; /* error */
-}
+sgx_enclave_id_t g_ta_eid = 0;
 
 int OTrPHandleClientMessage(
-    const char *inputMessage,
-    int inputMessageLength,
-    char** pOutputMessage,
-    int* pOutputMessageLength)
+    const char *message,
+    int messageLength)
 {
-    return 1; /* error */
+    int err = 0;
+    sgx_status_t sgxStatus = ecall_ProcessOTrPMessage(g_ta_eid, &err, message, messageLength);
+    if (sgxStatus != SGX_SUCCESS) {
+        return sgxStatus;
+    }
+    return err;
+}
+
+int OTrPHandleClientConnect(void)
+{
+    int err = 0;
+    sgx_status_t sgxStatus = ecall_ProcessOTrPClientConnect(g_ta_eid, &err);
+    if (sgxStatus != SGX_SUCCESS) {
+        return sgxStatus;
+    }
+    return err;
 }

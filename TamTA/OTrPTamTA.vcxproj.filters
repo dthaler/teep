@@ -2,49 +2,52 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Generated Files">
-      <UniqueIdentifier>{3f20b98c-b9e0-41e9-b3c9-64acc626a88d}</UniqueIdentifier>
+      <UniqueIdentifier>{83371cbf-f237-43ba-ac5d-b1945d440784}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{29bedde3-8d3b-430c-8231-609fdf2cfe08}</UniqueIdentifier>
+      <UniqueIdentifier>{64d45ed5-ec8c-4a7e-8bbe-cebf4c1f1ecf}</UniqueIdentifier>
       <Extensions>cpp;c;edl;def;</Extensions>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{3d8d585a-525c-4a8d-9450-586fdd5c2028}</UniqueIdentifier>
+      <UniqueIdentifier>{7b7c69bf-ba71-46fc-aae9-72a6946b5740}</UniqueIdentifier>
       <Extensions>h;hpp;</Extensions>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{d8962b0b-9484-417c-8636-7a3c0c8f1657}</UniqueIdentifier>
+      <UniqueIdentifier>{15e0fe7a-c287-4c8a-aa98-0dbeb8bb9cfa}</UniqueIdentifier>
       <Extensions>rc;xml;pem;</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OTrPDeviceEcallHandler.c">
+    <ClCompile Include="OTrPTamTA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="taJson.c">
+    <ClCompile Include="OTrPTamEcallHandler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OTrPDevice_t.c">
+    <ClCompile Include="..\DeviceTA\taJson.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OTrPTam_t.c">
       <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="OtRPDevice_private.pem">
+    <None Include="OTrPTamTA_private.pem">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="OTrPDeviceTA.config.xml">
+    <Xml Include="OTrPTamTA.config.xml">
       <Filter>Resource Files</Filter>
     </Xml>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="OTrPDevice.edl">
+    <CustomBuild Include="OTrPTam.edl">
       <Filter>Source Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="OTrPDevice_t.h">
+    <ClInclude Include="OTrPTam_t.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>

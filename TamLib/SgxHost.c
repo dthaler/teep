@@ -4,7 +4,7 @@
 #include <sgx_urts.h>
 #include <sgx_uae_service.h>
 #include <Shlobj.h>
-#include "OTrPDeviceLib.h"
+#include "OTrPTamLib.h"
 
 extern sgx_enclave_id_t g_ta_eid;
 

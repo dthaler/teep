@@ -58,9 +58,10 @@ int SendTcpMessage(const char* message, int messageLength)
 {
     int bytesSent;
     int err = 0;
+    int netLength = htonl(messageLength);
 
     /* Send message length. */
-    bytesSent = send(g_TcpSessionSocket, (char*)&messageLength, sizeof(messageLength), 0);
+    bytesSent = send(g_TcpSessionSocket, (char*)&netLength, sizeof(netLength), 0);
     if (bytesSent < sizeof(messageLength)) {
         err = WSAGetLastError();
         return err;
@@ -79,8 +80,6 @@ int SendTcpMessage(const char* message, int messageLength)
 int AcceptTcpSession(void)
 {
     int err;
-    char* message = NULL;
-    int messageLength = 0;
 
     /* Accept a client session. */
     while (g_TcpSessionSocket == INVALID_SOCKET) {
@@ -90,50 +89,48 @@ int AcceptTcpSession(void)
     }
 
     /* We now have a session.  Send a GetDeviceStateRequest message on it. */
-    err = OTrPHandleClientConnect(&message, &messageLength);
-    if (err) {
-        return err;
-    }
-
-    err = SendTcpMessage(message, messageLength);
+    err = OTrPHandleClientConnect();
     return err;
 }
 
 int HandleTcpMessage(void)
 {
-    int bytesReceived;
-    int inputMessageLength;
-    char* inputMessage;
-    int outputMessageLength;
-    char* outputMessage;
-    int err;
+    int bytesReceived = 0;
+    int messageLength = 0;
+    char* message = NULL;
+    int err = 0;
 
     /* Read message length. */
-    bytesReceived = recv(g_TcpSessionSocket, (char*)&inputMessageLength, sizeof(inputMessageLength), MSG_WAITALL);
-    if (bytesReceived < sizeof(inputMessageLength)) {
+    bytesReceived = recv(g_TcpSessionSocket, (char*)&messageLength, sizeof(messageLength), MSG_WAITALL);
+    if (bytesReceived < sizeof(messageLength)) {
+        return FALSE;
+    }
+    messageLength = ntohl(messageLength);
+    if (messageLength < 1) {
         return FALSE;
     }
 
     /* Read client message. */
-    inputMessage = malloc(inputMessageLength);
-    if (inputMessage == NULL) {
+    message = malloc(messageLength);
+    if (message == NULL) {
         return FALSE;
     }
 
-    bytesReceived = recv(g_TcpSessionSocket, inputMessage, inputMessageLength, MSG_WAITALL);
-    if (bytesReceived < inputMessageLength) {
-        free(inputMessage);
+    bytesReceived = recv(g_TcpSessionSocket, message, messageLength, MSG_WAITALL);
+    if (bytesReceived < messageLength) {
+        free(message);
         return FALSE;
     }
 
-    err = OTrPHandleClientMessage(inputMessage, inputMessageLength, &outputMessage, &outputMessageLength);
-    free(inputMessage);
-    if (err != 0) {
-        return err;
-    }
+    err = OTrPHandleClientMessage(message, messageLength);
+    free(message);
+    return err;
+}
 
-    err = SendTcpMessage(outputMessage, outputMessageLength);
-    free(outputMessage);
+int ocall_SendOTrPMessage(const char* message, int messageLength)
+{
+    int err;
 
+    err = SendTcpMessage(message, messageLength);
     return err;
 }

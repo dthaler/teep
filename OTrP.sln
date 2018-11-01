@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TamTest", "TamTest\TamTest.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OTrPDeviceLib", "DeviceLib\OTrPDeviceLib.vcxproj", "{CA28EBFA-5E65-4458-AD84-6C60FAD9C80E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OTrPTamTA", "TamTA\OTrPTamTA.vcxproj", "{36FD17E5-97A9-4DA2-8352-A7507290037E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -111,6 +113,22 @@ Global
 		{CA28EBFA-5E65-4458-AD84-6C60FAD9C80E}.Simulation|x64.Build.0 = Simulation|x64
 		{CA28EBFA-5E65-4458-AD84-6C60FAD9C80E}.Simulation|x86.ActiveCfg = Simulation|Win32
 		{CA28EBFA-5E65-4458-AD84-6C60FAD9C80E}.Simulation|x86.Build.0 = Simulation|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Debug|x64.ActiveCfg = Debug|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Debug|x64.Build.0 = Debug|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Debug|x86.ActiveCfg = Debug|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Debug|x86.Build.0 = Debug|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Prerelease|x64.ActiveCfg = Prerelease|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Prerelease|x64.Build.0 = Prerelease|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Prerelease|x86.ActiveCfg = Prerelease|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Prerelease|x86.Build.0 = Prerelease|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Release|x64.ActiveCfg = Release|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Release|x64.Build.0 = Release|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Release|x86.ActiveCfg = Release|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Release|x86.Build.0 = Release|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Simulation|x64.ActiveCfg = Simulation|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Simulation|x64.Build.0 = Simulation|x64
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Simulation|x86.ActiveCfg = Simulation|Win32
+		{36FD17E5-97A9-4DA2-8352-A7507290037E}.Simulation|x86.Build.0 = Simulation|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

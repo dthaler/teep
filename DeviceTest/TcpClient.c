@@ -48,9 +48,10 @@ int SendTcpMessage(const char* message, int messageLength)
 {
     int bytesSent;
     int err = 0;
+    int netLength = htonl(messageLength);
 
     /* Send message length. */
-    bytesSent = send(g_TcpSessionSocket, (char*)&messageLength, sizeof(messageLength), 0);
+    bytesSent = send(g_TcpSessionSocket, (char*)&netLength, sizeof(netLength), 0);
     if (bytesSent < sizeof(messageLength)) {
         err = WSAGetLastError();
         return err;
@@ -76,6 +77,10 @@ int HandleTcpMessage(void)
     /* Read message length. */
     bytesReceived = recv(g_TcpSessionSocket, (char*)&messageLength, sizeof(messageLength), MSG_WAITALL);
     if (bytesReceived < sizeof(messageLength)) {
+        return FALSE;
+    }
+    messageLength = ntohl(messageLength);
+    if (messageLength < 1) {
         return FALSE;
     }
 

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{3caf91b5-7429-42a0-b998-856c3abca435}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OTrPTamLib.c">
@@ -21,10 +24,27 @@
     <ClCompile Include="..\cJSON\cJSON.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SgxHost.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OTrPTam_u.c">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OTrPTamLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SgxHost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OTrPTam_u.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\TamTA\OTrPTam.edl">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

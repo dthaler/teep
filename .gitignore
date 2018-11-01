@@ -5,3 +5,8 @@ Debug/
 *.db
 *.opendb
 *.user
+
+OTrPTam_t.*
+OTrPTam_u.*
+OTrPDevice_t.*
+OTrPDevice_u.*

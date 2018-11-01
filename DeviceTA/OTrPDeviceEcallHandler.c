@@ -101,16 +101,16 @@ int OTrPHandleGetDeviceStateRequest(const cJSON* request)
 
     cJSON_Delete(object);
 
+    ocall_print("Sending GetDeviceTEEStateTBSResponse...\n");
+
     sgxStatus = ocall_SendOTrPMessage(&err, message, strlen(message));
     if (sgxStatus != SGX_SUCCESS) {
         return sgxStatus;
     }
-    return 0; /* no error */
+    return err;
 
 Error:
-    if (object != NULL) {
-        cJSON_Delete(object);
-    }
+    cJSON_Delete(object);
     return 1; /* error */
 }
 
@@ -149,16 +149,20 @@ int ecall_ProcessOTrPMessage(
     if (!cJSON_IsObject(messageObject)) {
         goto Done;
     }
+
+    ocall_print("Received ");
+    ocall_print(messageObject->string);
+    ocall_print("\n");
+
     if (strcmp(messageObject->string, "GetDeviceStateTBSRequest") == 0) {
         err = OTrPHandleGetDeviceStateRequest(messageObject);
+    } else {
+        /* Unrecognized message. */
+        err = 1;
     }
 
 Done:
-    if (newstr != NULL) {
-        free(newstr);
-    }
-    if (object != NULL) {
-        cJSON_Delete(object);
-    }
+    free(newstr);
+    cJSON_Delete(object);
     return err;
 }

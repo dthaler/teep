@@ -2,11 +2,7 @@
 #pragma once
 
 int OTrPHandleClientMessage(
-    const char *inputMessage,
-    int inputMessageLength,
-    char** pOutputMessage,
-    int* pOutputMessageLength);
+    _In_reads_(messageLength) const char *message,
+    _In_ int messageLength);
 
-int OTrPHandleClientConnect(
-    char** pMessage,
-    int* pMessageLength);
+int OTrPHandleClientConnect(void);

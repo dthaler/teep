@@ -2,7 +2,7 @@
 #include <string.h>
 #include "OTrPTamLib.h"
 #include "OTrPTam_u.h"
-#include "../cJSON/cJSON.h"
+#include "../external/cJSON/cJSON.h"
 
 sgx_enclave_id_t g_ta_eid = 0;
 

@@ -3,7 +3,13 @@
 #include <string.h>
 #include "OTrPDevice_t.h"
 #include "sgx_trts.h"
-#include "../cJSON/cJSON.h"
+#include "../external/cJSON/cJSON.h"
+
+#include <stdbool.h>
+#define FILE void
+#include "../external/jansson/include/jansson.h"
+#include "jose/jwe.h"
+#include "jose/jwk.h"
 
 /* Compose a DeviceStateInformation message. */
 const char* ComposeDeviceStateInformation(void)
@@ -108,6 +114,20 @@ const char* ComposeTADependencyTBSNotification(void)
     if (dsi == NULL) {
         return NULL;
     }
+    size_t dsilen = strlen(dsi); // TODO: Include NULL byte?
+
+    json_auto_t *jwke = json_pack("{s:s}", "alg", "ECDH-ES+A128KW");
+    bool ok = jose_jwk_gen(NULL, jwke);
+
+    json_auto_t *jwe = json_object();
+
+    ok = jose_jwe_enc(
+        NULL,    // Configuraton context (optional)
+        jwe,     // The JWE object
+        NULL,    // The JWE recipient object(s) or NULL
+        jwke,    // The JWK(s) or JWKSet used for wrapping.
+        dsi,     // The plaintext.
+        dsilen); // The length of the plaintext.
 
     cJSON* object = cJSON_CreateObject();
     if (object == NULL) {
@@ -174,18 +194,18 @@ const char* ComposeTADependencyTBSNotification(void)
         goto Error;
     }
     cJSON_Delete(object);
-    cJSON_free(dsi);
+    cJSON_free((void*)dsi);
     return message;
 
 Error:
     cJSON_Delete(object);
-    cJSON_free(dsi);
+    cJSON_free((void*)dsi);
     return NULL;
 }
 
 int ecall_ProcessOTrPConnect(void)
 {
-    char* message = NULL;
+    const char* message = NULL;
     size_t messageLength = 0;
     sgx_status_t sgxStatus = SGX_SUCCESS;
     int err = 0;

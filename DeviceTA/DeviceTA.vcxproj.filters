@@ -27,6 +27,9 @@
     <ClCompile Include="OTrPDevice_t.c">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="libc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="OtRPDevice_private.pem">

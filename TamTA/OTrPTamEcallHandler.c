@@ -1,7 +1,7 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdlib.h>
 #include <string.h>
-#include "../cJSON/cJSON.h"
+#include "../external/cJSON/cJSON.h"
 #include "OTrPTam_t.h"
 
 int ecall_ProcessOTrPConnect(void)

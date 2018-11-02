@@ -40,4 +40,4 @@ int cjson_sprintf(char* buffer, const char* format, ...)
 #define sscanf  cjson_sscanf
 
 /* Pull in external source code directly. */
-#include "../cJSON/cJSON.c"
+#include "../external/cJSON/cJSON.c"

@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\cJSON\cJSON.c" />
+    <ClCompile Include="..\external\cJSON\cJSON.c" />
     <ClCompile Include="OTrPTamLib.c" />
     <ClCompile Include="OTrPTam_u.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">

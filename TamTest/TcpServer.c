@@ -93,6 +93,13 @@ int AcceptTcpSession(void)
     return err;
 }
 
+void CloseTcpSession(void)
+{
+    closesocket(g_TcpSessionSocket);
+    g_TcpSessionSocket = INVALID_SOCKET;
+}
+
+/* Returns 0 on success, non-zero on failure. */
 int HandleTcpMessage(void)
 {
     int bytesReceived = 0;
@@ -103,23 +110,23 @@ int HandleTcpMessage(void)
     /* Read message length. */
     bytesReceived = recv(g_TcpSessionSocket, (char*)&messageLength, sizeof(messageLength), MSG_WAITALL);
     if (bytesReceived < sizeof(messageLength)) {
-        return FALSE;
+        return TRUE;
     }
     messageLength = ntohl(messageLength);
     if (messageLength < 1) {
-        return FALSE;
+        return TRUE;
     }
 
     /* Read client message. */
     message = malloc(messageLength);
     if (message == NULL) {
-        return FALSE;
+        return TRUE;
     }
 
     bytesReceived = recv(g_TcpSessionSocket, message, messageLength, MSG_WAITALL);
     if (bytesReceived < messageLength) {
         free(message);
-        return FALSE;
+        return TRUE;
     }
 
     err = OTrPHandleMessage(message, messageLength);

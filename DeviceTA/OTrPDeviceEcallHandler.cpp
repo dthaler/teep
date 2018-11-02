@@ -7,104 +7,174 @@
 
 #include <stdbool.h>
 #define FILE void
+extern "C" {
 #include "../external/jansson/include/jansson.h"
 #include "jose/jwe.h"
 #include "jose/jwk.h"
+extern char* strdup(const char* str);
+};
+
+class JsonAuto {
+public:
+    JsonAuto() {
+        ptr = NULL;
+    }
+    JsonAuto(JsonAuto& value) {
+        ptr = json_incref(value);
+    }
+    JsonAuto(json_t* value, bool donateReference = false) {
+        if (donateReference || !value) {
+            ptr = value;
+        } else {
+            ptr = json_incref(value);
+        }
+    }
+    ~JsonAuto() {
+        if (ptr != NULL) {
+            json_decref(ptr);
+        }
+    }
+    operator json_t*() {
+        return ptr;
+    }
+    JsonAuto& operator =(json_t* value) {
+        if (ptr != NULL) {
+            json_decref(ptr);
+        }
+        ptr = json_incref(value);
+    }
+    json_t* AddStringToObject(const char* name, const char* value) {
+        JsonAuto str = json_string(value);
+        if (str == NULL) {
+            return NULL;
+        }
+        if (json_object_set(ptr, name, str)) {
+            return NULL;
+        }
+        return str;
+    }
+    json_t* AddObjectToObject(const char* name) {
+        JsonAuto object = json_object();
+        if (object == NULL) {
+            return NULL;
+        }
+        if (json_object_set(ptr, name, object)) {
+            return NULL;
+        }
+        return object;
+    }
+    json_t* AddArrayToObject(const char* name) {
+        JsonAuto object = json_array();
+        if (object == NULL) {
+            return NULL;
+        }
+        if (json_object_set(ptr, name, object)) {
+            return NULL;
+        }
+        return object;
+    }
+    json_t* AddObjectToArray() {
+        JsonAuto object = json_object();
+        if (object == NULL) {
+            return NULL;
+        }
+        if (json_array_append(ptr, object)) {
+            return NULL;
+        }
+        return object;
+    }
+private:
+    json_t* ptr;
+};
 
 /* Compose a DeviceStateInformation message. */
 const char* ComposeDeviceStateInformation(void)
 {
-    cJSON* object = cJSON_CreateObject();
+    JsonAuto object(json_object(), true);
     if (object == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON* dsi = cJSON_AddObjectToObject(object, "dsi");
+
+    JsonAuto dsi = object.AddObjectToObject("dsi");
     if (dsi == NULL) {
-        goto Error;
+        return NULL;
     }
 
     /* Add tfwdata. */
-    cJSON* tfwdata = cJSON_AddObjectToObject(dsi, "tfwdata");
+    JsonAuto tfwdata = dsi.AddObjectToObject("tfwdata");
     if (tfwdata == NULL) {
-        goto Error;
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tfwdata, "tbs", "<TFW to be signed data is the tid>") == NULL) {
-        goto Error;
+    if (tfwdata.AddStringToObject("tbs", "<TFW to be signed data is the tid>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tfwdata, "cert", "<BASE64 encoded TFW certificate>") == NULL) {
-        goto Error;
+    if (tfwdata.AddStringToObject("cert", "<BASE64 encoded TFW certificate>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tfwdata, "sigalg", "Signing method") == NULL) {
-        goto Error;
+    if (tfwdata.AddStringToObject("sigalg", "Signing method") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tfwdata, "sig", "<TFW signed data, BASE64 encoded>") == NULL) {
-        goto Error;
+    if (tfwdata.AddStringToObject("sig", "<TFW signed data, BASE64 encoded>") == NULL) {
+        return NULL;
     }
 
     /* Add tee. */
-    cJSON* tee = cJSON_AddObjectToObject(dsi, "tee");
+    JsonAuto tee = dsi.AddObjectToObject("tee");
     if (tee == NULL) {
-        goto Error;
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tee, "name", "<TEE name>") == NULL) {
-        goto Error;
+    if (tee.AddStringToObject("name", "<TEE name>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tee, "ver", "<TEE version>") == NULL) {
-        goto Error;
+    if (tee.AddStringToObject("ver", "<TEE version>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tee, "cert", "<BASE64 encoded TEE cert>") == NULL) {
-        goto Error;
+    if (tee.AddStringToObject("cert", "<BASE64 encoded TEE cert>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(tee, "cacert", "<JSON array value of CA certificates up to the root CA>") == NULL) {
-        goto Error;
+    if (tee.AddStringToObject("cacert", "<JSON array value of CA certificates up to the root CA>") == NULL) {
+        return NULL;
     }
 
     // sdlist is optional, so we omit it.
 
-    cJSON* teeaiklist = cJSON_AddArrayToObject(tee, "teeaiklist");
+    JsonAuto teeaiklist = tee.AddArrayToObject("teeaiklist");
     if (teeaiklist == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON* teeaik = cJSON_CreateObject();
+    JsonAuto teeaik = teeaiklist.AddObjectToArray();
     if (teeaik == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON_AddItemToArray(teeaiklist, teeaik);
-    if (cJSON_AddStringToObject(teeaik, "spaik", "<SP AIK public key, BASE64 encoded>") == NULL) {
-        goto Error;
+    if (teeaik.AddStringToObject("spaik", "<SP AIK public key, BASE64 encoded>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(teeaik, "spaiktype", "RSA") == NULL) { // RSA or ECC
-        goto Error;
+    if (teeaik.AddStringToObject("spaiktype", "RSA") == NULL) { // RSA or ECC
+        return NULL;
     }
-    if (cJSON_AddStringToObject(teeaik, "spid", "<sp id>") == NULL) {
-        goto Error;
+    if (teeaik.AddStringToObject("spid", "<sp id>") == NULL) {
+        return NULL;
     }
 
-    cJSON* talist = cJSON_AddArrayToObject(tee, "talist");
+    JsonAuto talist = tee.AddArrayToObject("talist");
     if (talist == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON* ta = cJSON_CreateObject();
+    JsonAuto ta = talist.AddObjectToArray();
     if (ta == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON_AddItemToArray(talist, ta);
-    if (cJSON_AddStringToObject(ta, "taid", "<TA application identifier>") == NULL) {
-        goto Error;
+    if (ta.AddStringToObject("taid", "<TA application identifier>") == NULL) {
+        return NULL;
     }
     // taname is optional
 
     /* Convert to message buffer. */
-    const char* message = cJSON_Print(object);
+    const char* message = json_dumps(object, 0);
     if (message == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON_Delete(object);
-    return message;
-
-Error:
-    cJSON_Delete(object);
-    return NULL;
+    return strdup(message);
 }
 
 /* Compose a TADependencyNotification message. */
@@ -115,30 +185,39 @@ const char* ComposeTADependencyTBSNotification(void)
         return NULL;
     }
     size_t dsilen = strlen(dsi); // TODO: Include NULL byte?
+    free((void*)dsi); // TODO: use this
+    dsi = NULL;
 
-    json_auto_t *jwke = json_pack("{s:s}", "alg", "ECDH-ES+A128KW");
+    JsonAuto jwke(json_pack("{s:s}", "alg", "ECDH-ES+A128KW"), true);
+    if (jwke == NULL) {
+        return NULL;
+    }
+    const char* jwkestr = json_dumps(jwke, 0);
+    free((char*)jwkestr); // TODO: use this
+
     bool ok = jose_jwk_gen(NULL, jwke);
+    if (ok) {
+        json_auto_t *jwe = json_object();
 
-    json_auto_t *jwe = json_object();
+        ok = jose_jwe_enc(
+            NULL,    // Configuration context (optional)
+            jwe,     // The JWE object
+            NULL,    // The JWE recipient object(s) or NULL
+            jwke,    // The JWK(s) or JWKSet used for wrapping.
+            dsi,     // The plaintext.
+            dsilen); // The length of the plaintext.
+    }
 
-    ok = jose_jwe_enc(
-        NULL,    // Configuraton context (optional)
-        jwe,     // The JWE object
-        NULL,    // The JWE recipient object(s) or NULL
-        jwke,    // The JWK(s) or JWKSet used for wrapping.
-        dsi,     // The plaintext.
-        dsilen); // The length of the plaintext.
-
-    cJSON* object = cJSON_CreateObject();
+    JsonAuto object(json_object(), true);
     if (object == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON* request = cJSON_AddObjectToObject(object, "TADependencyTBSNotification");
+    JsonAuto request = object.AddObjectToObject("TADependencyTBSNotification");
     if (request == NULL) {
-        goto Error;
+        return NULL;
     }
-    if (cJSON_AddStringToObject(request, "ver", "1.0") == NULL) {
-        goto Error;
+    if (request.AddStringToObject("ver", "1.0") == NULL) {
+        return NULL;
     }
 
     /* Signerreq should be true if the TAM should send its signer certificate and
@@ -146,61 +225,47 @@ const char* ComposeTADependencyTBSNotification(void)
     * false if the device caches the TAM's signer certificate and OCSP
     * status.
     */
-    if (cJSON_AddStringToObject(request, "signerreq", "true") == NULL) {
-        goto Error;
+    if (request.AddStringToObject("signerreq", "true") == NULL) {
+        return NULL;
     }
-    cJSON* edsi = cJSON_AddObjectToObject(request, "edsi");
+    JsonAuto edsi = request.AddObjectToObject("edsi");
     if (edsi == NULL) {
-        goto Error;
+        return NULL;
     }
-    if (cJSON_AddStringToObject(edsi, "protected", "<BASE64URL encoding of encryption algorithm header JSON data>") == NULL) {
-        goto Error;
+    if (edsi.AddStringToObject("protected", "<BASE64URL encoding of encryption algorithm header JSON data>") == NULL) {
+        return NULL;
     }
-    cJSON* recipients = cJSON_AddArrayToObject(edsi, "recipients");
+    JsonAuto recipients = edsi.AddArrayToObject("recipients");
     if (recipients == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON* recipient = cJSON_CreateObject();
+    JsonAuto recipient = recipients.AddObjectToArray();
     if (recipient == NULL) {
-        goto Error;
+        return NULL;
     }
-    cJSON_AddItemToArray(recipients, recipient);
-    if (edsi == NULL) {
-        goto Error;
+    JsonAuto edsi_header = recipient.AddObjectToObject("header");
+    if (edsi_header == NULL) {
+        return NULL;
     }
-    cJSON* edsi_header = cJSON_AddObjectToObject(recipient, "header");
-    if (edsi == NULL) {
-        goto Error;
+    if (edsi_header.AddStringToObject("alg", "RSA1_5") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(edsi_header, "alg", "RSA1_5") == NULL) {
-        goto Error;
+    if (recipient.AddStringToObject("encrypted_key", "<encrypted value of CEK>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(recipient, "encrypted_key", "<encrypted value of CEK>") == NULL) {
-        goto Error;
+    if (edsi.AddStringToObject("iv", "<BASE64URL encoded IV data>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(edsi, "iv", "<BASE64URL encoded IV data>") == NULL) {
-        goto Error;
+    if (edsi.AddStringToObject("ciphertext", "<Encrypted data over the JSON object of dsi (BASE64URL)>") == NULL) {
+        return NULL;
     }
-    if (cJSON_AddStringToObject(edsi, "ciphertext", "<Encrypted data over the JSON object of dsi (BASE64URL)>") == NULL) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(edsi, "tag", "<JWE authentication tag (BASE64URL)>") == NULL) {
-        goto Error;
+    if (edsi.AddStringToObject("tag", "<JWE authentication tag (BASE64URL)>") == NULL) {
+        return NULL;
     }
 
     /* Convert to message buffer. */
-    const char* message = cJSON_Print(object);
-    if (message == NULL) {
-        goto Error;
-    }
-    cJSON_Delete(object);
-    cJSON_free((void*)dsi);
+    const char* message = json_dumps(object, 0);
     return message;
-
-Error:
-    cJSON_Delete(object);
-    cJSON_free((void*)dsi);
-    return NULL;
 }
 
 int ecall_ProcessOTrPConnect(void)
@@ -355,7 +420,7 @@ int ecall_ProcessOTrPMessage(
     if (message[messageLength - 1] == 0) {
         str = message;
     } else {
-        newstr = malloc(messageLength + 1);
+        newstr = (char*)malloc(messageLength + 1);
         if (newstr == NULL) {
             return 1; /* error */
         }

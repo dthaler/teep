@@ -323,7 +323,7 @@
   <ItemGroup>
     <ClCompile Include="libc.c" />
     <ClCompile Include="OTrPDevice_t.c" />
-    <ClCompile Include="OTrPDeviceEcallHandler.c" />
+    <ClCompile Include="OTrPDeviceEcallHandler.cpp" />
     <ClCompile Include="taJson.c" />
   </ItemGroup>
   <ItemGroup>

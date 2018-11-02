@@ -26,9 +26,13 @@ int main(int argc, char** argv)
         return err;
     }
 
-    AcceptTcpSession();
+    for (;;) {
+        AcceptTcpSession();
 
-    while (HandleTcpMessage() == 0);
+        while (HandleTcpMessage() == 0);
+
+        CloseTcpSession();
+    }
 
     StopTcpServer();
     return 0;

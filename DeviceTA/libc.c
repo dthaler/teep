@@ -24,3 +24,13 @@ int strcasecmp(
     }
     return 0; /* Equal. */
 }
+
+char* __cdecl strdup(const char* str)
+{
+    int len = strlen(str) + 1;
+    char* result = (char*)malloc(len);
+    if (result != NULL) {
+        memcpy(result, str, len);
+    }
+    return result;
+}

@@ -24,11 +24,11 @@
     <ClCompile Include="OTrPTamEcallHandler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\DeviceTA\taJson.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OTrPTam_t.c">
       <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="taJson.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

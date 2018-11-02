@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #define FILE void
 extern "C" {
-#include "../external/jansson/include/jansson.h"
+#include "jansson.h"
 #include "jose/jwe.h"
 #include "jose/jwk.h"
 extern char* strdup(const char* str);
@@ -293,16 +293,69 @@ int ecall_ProcessOTrPConnect(void)
     return err;
 }
 
-int OTrPHandleGetDeviceStateRequest(const cJSON* request)
+/* Compose a GetDeviceStateResponse message. */
+const char* ComposeGetDeviceStateResponse(const json_t* request, const char* statusValue)
+{
+    /* Compose a GetDeviceStateResponse message. */
+    JsonAuto object(json_object(), true);
+    if (object == NULL) {
+        return NULL;
+    }
+    JsonAuto response = object.AddObjectToObject("GetDeviceTEEStateTBSResponse");
+    if (response == NULL) {
+        return NULL;
+    }
+    if (response.AddStringToObject("ver", "1.0") == NULL) {
+        return NULL;
+    }
+    if (response.AddStringToObject("status", statusValue) == NULL) {
+        return NULL;
+    }
+
+    /* Copy rid from request. */
+    json_t* rid = json_object_get(request, "rid");
+    if (!json_is_string(rid) || (json_string_value(rid) == NULL)) {
+        return NULL;
+    }
+    if (response.AddStringToObject("rid", json_string_value(rid)) == NULL) {
+        return NULL;
+    }
+
+    /* Copy tid from request. */
+    json_t* tid = json_object_get(request, "tid");
+    if (!json_is_string(tid) || (json_string_value(tid) == NULL)) {
+        return NULL;
+    }
+    if (response.AddStringToObject("tid", json_string_value(tid)) == NULL) {
+        return NULL;
+    }
+
+    /* Support for signerreq false is optional, so pass true for now. */
+    if (response.AddStringToObject("signerreq", "true") == NULL) {
+        return NULL;
+    }
+
+    JsonAuto edsi = response.AddObjectToObject("edsi");
+    if (edsi == NULL) {
+        return NULL;
+    }
+
+    /* TODO: fill in edsi info */
+
+    /* Convert to message buffer. */
+    const char* message = json_dumps(object, 0);
+    if (message == NULL) {
+        return NULL;
+    }
+
+    return strdup(message);
+}
+
+
+int OTrPHandleGetDeviceStateRequest(const json_t* request)
 {
     int err = 1;
     sgx_status_t sgxStatus;
-    cJSON* object = NULL;
-    cJSON* response;
-    cJSON* edsi;
-    cJSON* rid;
-    cJSON* tid;
-    const char* message;
     const char* statusValue = "fail";
 
     /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
@@ -335,59 +388,7 @@ int OTrPHandleGetDeviceStateRequest(const cJSON* request)
 
     statusValue = "pass";
 
-    /* Compose a GetDeviceStateResponse message. */
-    object = cJSON_CreateObject();
-    if (object == NULL) {
-        goto Error;
-    }
-    response = cJSON_AddObjectToObject(object, "GetDeviceTEEStateTBSResponse");
-    if (request == NULL) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(response, "ver", "1.0") == NULL) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(response, "status", statusValue) == NULL) {
-        goto Error;
-    }
-    
-    /* Copy rid from request. */
-    rid = cJSON_GetObjectItemCaseSensitive(request, "rid");
-    if (!cJSON_IsString(rid) || (rid->valuestring == NULL)) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(response, "rid", rid->valuestring) == NULL) {
-        goto Error;
-    }
-
-    /* Copy tid from request. */
-    tid = cJSON_GetObjectItemCaseSensitive(request, "tid");
-    if (!cJSON_IsString(tid) || (tid->valuestring == NULL)) {
-        goto Error;
-    }
-    if (cJSON_AddStringToObject(response, "tid", tid->valuestring) == NULL) {
-        goto Error;
-    }
-
-    /* Support for signerreq false is optional, so pass true for now. */
-    if (cJSON_AddStringToObject(response, "signerreq", "true") == NULL) {
-        goto Error;
-    }
-
-    edsi = cJSON_AddObjectToObject(response, "edsi");
-    if (edsi == NULL) {
-        goto Error;
-    }
-
-    /* TODO: fill in edsi info */
-
-    /* Convert to message buffer. */
-    message = cJSON_Print(object);
-    if (message == NULL) {
-        goto Error;
-    }
-
-    cJSON_Delete(object);
+    const char* message = ComposeGetDeviceStateResponse(request, statusValue);
 
     ocall_print("Sending GetDeviceTEEStateTBSResponse...\n");
 
@@ -396,10 +397,6 @@ int OTrPHandleGetDeviceStateRequest(const cJSON* request)
         return sgxStatus;
     }
     return err;
-
-Error:
-    cJSON_Delete(object);
-    return 1; /* error */
 }
 
 int ecall_ProcessOTrPMessage(
@@ -407,9 +404,7 @@ int ecall_ProcessOTrPMessage(
     int messageLength)
 {
     int err = 1;
-    cJSON* object = NULL;
     char *newstr = NULL;
-    cJSON* messageObject = NULL;
 
     if (messageLength < 1) {
         return 1; /* error */
@@ -429,28 +424,32 @@ int ecall_ProcessOTrPMessage(
         str = newstr;
     }
 
-    object = cJSON_Parse(str);
-    if ((object == NULL) || !cJSON_IsObject(object)) {
-        goto Done;
+    json_error_t error;
+    JsonAuto object(json_loads(str, 0, &error), true);
+
+    free(newstr);
+    newstr = NULL;
+
+    if ((object == NULL) || !json_is_object((json_t*)object)) {
+        return 1; /* Error */
     }
-    messageObject = object->child;
-    if (!cJSON_IsObject(messageObject)) {
-        goto Done;
-    }
+    const char* key = json_object_iter_key(json_object_iter(object));
 
     ocall_print("Received ");
-    ocall_print(messageObject->string);
+    ocall_print(key);
     ocall_print("\n");
 
-    if (strcmp(messageObject->string, "GetDeviceStateTBSRequest") == 0) {
+    JsonAuto messageObject = json_object_get(object, key);
+    if (!json_is_object((json_t*)messageObject)) {
+        return 1; /* Error */
+    }
+
+    if (strcmp(key, "GetDeviceStateTBSRequest") == 0) {
         err = OTrPHandleGetDeviceStateRequest(messageObject);
     } else {
         /* Unrecognized message. */
         err = 1;
     }
 
-Done:
-    free(newstr);
-    cJSON_Delete(object);
     return err;
 }

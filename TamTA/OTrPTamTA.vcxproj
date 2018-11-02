@@ -320,7 +320,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\DeviceTA\taJson.c" />
+    <ClCompile Include="taJson.c" />
     <ClCompile Include="OTrPTamEcallHandler.c" />
     <ClCompile Include="OTrPTamTA.cpp" />
     <ClCompile Include="OTrPTam_t.c" />

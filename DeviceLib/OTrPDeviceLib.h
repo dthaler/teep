@@ -1,4 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #pragma once
 
-int OTrPHandleDeviceMessage(const char *message, int messageLength);
+int OTrPHandleConnect(void);
+
+int OTrPHandleMessage(const char *message, int messageLength);

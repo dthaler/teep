@@ -5,6 +5,209 @@
 #include "sgx_trts.h"
 #include "../cJSON/cJSON.h"
 
+/* Compose a DeviceStateInformation message. */
+const char* ComposeDeviceStateInformation(void)
+{
+    cJSON* object = cJSON_CreateObject();
+    if (object == NULL) {
+        goto Error;
+    }
+    cJSON* dsi = cJSON_AddObjectToObject(object, "dsi");
+    if (dsi == NULL) {
+        goto Error;
+    }
+
+    /* Add tfwdata. */
+    cJSON* tfwdata = cJSON_AddObjectToObject(dsi, "tfwdata");
+    if (tfwdata == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tfwdata, "tbs", "<TFW to be signed data is the tid>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tfwdata, "cert", "<BASE64 encoded TFW certificate>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tfwdata, "sigalg", "Signing method") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tfwdata, "sig", "<TFW signed data, BASE64 encoded>") == NULL) {
+        goto Error;
+    }
+
+    /* Add tee. */
+    cJSON* tee = cJSON_AddObjectToObject(dsi, "tee");
+    if (tee == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tee, "name", "<TEE name>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tee, "ver", "<TEE version>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tee, "cert", "<BASE64 encoded TEE cert>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(tee, "cacert", "<JSON array value of CA certificates up to the root CA>") == NULL) {
+        goto Error;
+    }
+
+    // sdlist is optional, so we omit it.
+
+    cJSON* teeaiklist = cJSON_AddArrayToObject(tee, "teeaiklist");
+    if (teeaiklist == NULL) {
+        goto Error;
+    }
+    cJSON* teeaik = cJSON_CreateObject();
+    if (teeaik == NULL) {
+        goto Error;
+    }
+    cJSON_AddItemToArray(teeaiklist, teeaik);
+    if (cJSON_AddStringToObject(teeaik, "spaik", "<SP AIK public key, BASE64 encoded>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(teeaik, "spaiktype", "RSA") == NULL) { // RSA or ECC
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(teeaik, "spid", "<sp id>") == NULL) {
+        goto Error;
+    }
+
+    cJSON* talist = cJSON_AddArrayToObject(tee, "talist");
+    if (talist == NULL) {
+        goto Error;
+    }
+    cJSON* ta = cJSON_CreateObject();
+    if (ta == NULL) {
+        goto Error;
+    }
+    cJSON_AddItemToArray(talist, ta);
+    if (cJSON_AddStringToObject(ta, "taid", "<TA application identifier>") == NULL) {
+        goto Error;
+    }
+    // taname is optional
+
+    /* Convert to message buffer. */
+    const char* message = cJSON_Print(object);
+    if (message == NULL) {
+        goto Error;
+    }
+    cJSON_Delete(object);
+    return message;
+
+Error:
+    cJSON_Delete(object);
+    return NULL;
+}
+
+/* Compose a TADependencyNotification message. */
+const char* ComposeTADependencyTBSNotification(void)
+{
+    const char* dsi = ComposeDeviceStateInformation();
+    if (dsi == NULL) {
+        return NULL;
+    }
+
+    cJSON* object = cJSON_CreateObject();
+    if (object == NULL) {
+        goto Error;
+    }
+    cJSON* request = cJSON_AddObjectToObject(object, "TADependencyTBSNotification");
+    if (request == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(request, "ver", "1.0") == NULL) {
+        goto Error;
+    }
+
+    /* Signerreq should be true if the TAM should send its signer certificate and
+    * OCSP data again in the subsequent messages.  The value may be
+    * false if the device caches the TAM's signer certificate and OCSP
+    * status.
+    */
+    if (cJSON_AddStringToObject(request, "signerreq", "true") == NULL) {
+        goto Error;
+    }
+    cJSON* edsi = cJSON_AddObjectToObject(request, "edsi");
+    if (edsi == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(edsi, "protected", "<BASE64URL encoding of encryption algorithm header JSON data>") == NULL) {
+        goto Error;
+    }
+    cJSON* recipients = cJSON_AddArrayToObject(edsi, "recipients");
+    if (recipients == NULL) {
+        goto Error;
+    }
+    cJSON* recipient = cJSON_CreateObject();
+    if (recipient == NULL) {
+        goto Error;
+    }
+    cJSON_AddItemToArray(recipients, recipient);
+    if (edsi == NULL) {
+        goto Error;
+    }
+    cJSON* edsi_header = cJSON_AddObjectToObject(recipient, "header");
+    if (edsi == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(edsi_header, "alg", "RSA1_5") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(recipient, "encrypted_key", "<encrypted value of CEK>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(edsi, "iv", "<BASE64URL encoded IV data>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(edsi, "ciphertext", "<Encrypted data over the JSON object of dsi (BASE64URL)>") == NULL) {
+        goto Error;
+    }
+    if (cJSON_AddStringToObject(edsi, "tag", "<JWE authentication tag (BASE64URL)>") == NULL) {
+        goto Error;
+    }
+
+    /* Convert to message buffer. */
+    const char* message = cJSON_Print(object);
+    if (message == NULL) {
+        goto Error;
+    }
+    cJSON_Delete(object);
+    cJSON_free(dsi);
+    return message;
+
+Error:
+    cJSON_Delete(object);
+    cJSON_free(dsi);
+    return NULL;
+}
+
+int ecall_ProcessOTrPConnect(void)
+{
+    char* message = NULL;
+    size_t messageLength = 0;
+    sgx_status_t sgxStatus = SGX_SUCCESS;
+    int err = 0;
+
+    ocall_print("Received client connection\n");
+
+    message = ComposeTADependencyTBSNotification();
+    if (message == NULL) {
+        return 1; /* Error */
+    }
+    messageLength = strlen(message);
+
+    ocall_print("Sending TADependencyTBSNotification...\n");
+
+    sgxStatus = ocall_SendOTrPMessage(&err, message, messageLength);
+    if (sgxStatus != SGX_SUCCESS) {
+        return sgxStatus;
+    }
+
+    return err;
+}
+
 int OTrPHandleGetDeviceStateRequest(const cJSON* request)
 {
     int err = 1;

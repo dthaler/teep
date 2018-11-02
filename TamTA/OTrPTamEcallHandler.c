@@ -4,7 +4,7 @@
 #include "../cJSON/cJSON.h"
 #include "OTrPTam_t.h"
 
-int ecall_ProcessOTrPClientConnect(void)
+int ecall_ProcessOTrPConnect(void)
 {
     char* message = NULL;
     size_t messageLength = 0;
@@ -70,6 +70,11 @@ int OTrPHandleGetDeviceStateResponse(cJSON* messageObject)
     return 0; /* no error */
 }
 
+int OTrPHandleTADependencyNotification(cJSON* messageObject)
+{
+    return 0; /* no error */
+}
+
 int ecall_ProcessOTrPMessage(
     const char* message,
     int messageLength)
@@ -110,8 +115,11 @@ int ecall_ProcessOTrPMessage(
     ocall_print("Received ");
     ocall_print(messageObject->string);
     ocall_print("\n");
+
     if (strcmp(messageObject->string, "GetDeviceTEEStateTBSResponse") == 0) {
         err = OTrPHandleGetDeviceStateResponse(messageObject);
+    } else if (strcmp(messageObject->string, "TADependencyTBSNotification") == 0) {
+        err = OTrPHandleTADependencyNotification(messageObject);
     } else {
         /* Unrecognized message. */
         err = 1;

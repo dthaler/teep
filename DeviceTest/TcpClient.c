@@ -40,8 +40,10 @@ int ConnectToTcpServer(const char* serverName)
         return err;
     }
 
+    err = OTrPHandleConnect();
+
     freeaddrinfo(ai);
-    return 0;
+    return err;
 }
 
 int SendTcpMessage(const char* message, int messageLength)
@@ -96,7 +98,7 @@ int HandleTcpMessage(void)
         return FALSE;
     }
 
-    err = OTrPHandleDeviceMessage(message, messageLength);
+    err = OTrPHandleMessage(message, messageLength);
 
     free(message);
 

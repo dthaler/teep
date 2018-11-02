@@ -6,7 +6,7 @@
 
 sgx_enclave_id_t g_ta_eid = 0;
 
-int OTrPHandleClientMessage(
+int OTrPHandleMessage(
     const char *message,
     int messageLength)
 {
@@ -18,10 +18,10 @@ int OTrPHandleClientMessage(
     return err;
 }
 
-int OTrPHandleClientConnect(void)
+int OTrPHandleConnect(void)
 {
     int err = 0;
-    sgx_status_t sgxStatus = ecall_ProcessOTrPClientConnect(g_ta_eid, &err);
+    sgx_status_t sgxStatus = ecall_ProcessOTrPConnect(g_ta_eid, &err);
     if (sgxStatus != SGX_SUCCESS) {
         return sgxStatus;
     }

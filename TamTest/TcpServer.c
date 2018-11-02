@@ -89,7 +89,7 @@ int AcceptTcpSession(void)
     }
 
     /* We now have a session.  Send a GetDeviceStateRequest message on it. */
-    err = OTrPHandleClientConnect();
+    err = OTrPHandleConnect();
     return err;
 }
 
@@ -122,7 +122,7 @@ int HandleTcpMessage(void)
         return FALSE;
     }
 
-    err = OTrPHandleClientMessage(message, messageLength);
+    err = OTrPHandleMessage(message, messageLength);
     free(message);
     return err;
 }

@@ -21,13 +21,13 @@
     <ClCompile Include="OTrPTamTA.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OTrPTamEcallHandler.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OTrPTam_t.c">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="taJson.c">
+    <ClCompile Include="OTrPTamEcallHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DeviceTA\libc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

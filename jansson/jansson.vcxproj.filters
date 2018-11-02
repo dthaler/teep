@@ -51,6 +51,9 @@
     <ClCompile Include="..\external\jansson\src\value.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="JsonAuto.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\jansson\src\hashtable.h">

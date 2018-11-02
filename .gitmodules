@@ -1,6 +1,3 @@
-[submodule "cJSON"]
-	path = external/cJSON
-	url = https://github.com/DaveGamble/cJSON.git
 [submodule "jose"]
 	path = external/jose
 	url = https://github.com/dthaler/jose.git

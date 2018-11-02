@@ -129,7 +129,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\private_include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\include;$(SolutionDir)external\jansson\private_include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>USE_SGX;HAVE_CONFIG_H</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
@@ -243,6 +243,7 @@
     <ClCompile Include="..\external\jansson\src\strconv.c" />
     <ClCompile Include="..\external\jansson\src\utf.c" />
     <ClCompile Include="..\external\jansson\src\value.c" />
+    <ClCompile Include="JsonAuto.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\jansson\src\hashtable.h" />

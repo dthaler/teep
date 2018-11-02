@@ -3,7 +3,6 @@
 #include <string.h>
 #include "OTrPDevice_t.h"
 #include "sgx_trts.h"
-#include "../external/cJSON/cJSON.h"
 
 #include <stdbool.h>
 #define FILE void
@@ -13,79 +12,7 @@ extern "C" {
 #include "jose/jwk.h"
 extern char* strdup(const char* str);
 };
-
-class JsonAuto {
-public:
-    JsonAuto() {
-        ptr = NULL;
-    }
-    JsonAuto(JsonAuto& value) {
-        ptr = json_incref(value);
-    }
-    JsonAuto(json_t* value, bool donateReference = false) {
-        if (donateReference || !value) {
-            ptr = value;
-        } else {
-            ptr = json_incref(value);
-        }
-    }
-    ~JsonAuto() {
-        if (ptr != NULL) {
-            json_decref(ptr);
-        }
-    }
-    operator json_t*() {
-        return ptr;
-    }
-    JsonAuto& operator =(json_t* value) {
-        if (ptr != NULL) {
-            json_decref(ptr);
-        }
-        ptr = json_incref(value);
-    }
-    json_t* AddStringToObject(const char* name, const char* value) {
-        JsonAuto str = json_string(value);
-        if (str == NULL) {
-            return NULL;
-        }
-        if (json_object_set(ptr, name, str)) {
-            return NULL;
-        }
-        return str;
-    }
-    json_t* AddObjectToObject(const char* name) {
-        JsonAuto object = json_object();
-        if (object == NULL) {
-            return NULL;
-        }
-        if (json_object_set(ptr, name, object)) {
-            return NULL;
-        }
-        return object;
-    }
-    json_t* AddArrayToObject(const char* name) {
-        JsonAuto object = json_array();
-        if (object == NULL) {
-            return NULL;
-        }
-        if (json_object_set(ptr, name, object)) {
-            return NULL;
-        }
-        return object;
-    }
-    json_t* AddObjectToArray() {
-        JsonAuto object = json_object();
-        if (object == NULL) {
-            return NULL;
-        }
-        if (json_array_append(ptr, object)) {
-            return NULL;
-        }
-        return object;
-    }
-private:
-    json_t* ptr;
-};
+#include "../jansson/JsonAuto.h"
 
 /* Compose a DeviceStateInformation message. */
 const char* ComposeDeviceStateInformation(void)

@@ -71,5 +71,8 @@
     <ClInclude Include="..\external\jansson\src\utf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="JsonAuto.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

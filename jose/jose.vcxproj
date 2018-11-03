@@ -258,11 +258,13 @@
     <ClCompile Include="..\external\jose\lib\jwk.c" />
     <ClCompile Include="..\external\jose\lib\jws.c" />
     <ClCompile Include="..\external\jose\lib\misc.c" />
+    <ClCompile Include="joseinit.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\jose\lib\hooks.h" />
     <ClInclude Include="..\external\jose\lib\hsh.h" />
     <ClInclude Include="..\external\jose\lib\misc.h" />
+    <ClInclude Include="joseinit.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

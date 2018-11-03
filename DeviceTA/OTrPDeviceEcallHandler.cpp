@@ -11,15 +11,13 @@ extern "C" {
 #include "joseinit.h"
 #include "jose/jwe.h"
 #include "jose/jwk.h"
-extern char* strdup(const char* str);
+char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
 
 void ecall_Initialize()
 {
-    // jose_init_ec();
-    jose_init_rsa();
-    // jose_init_oct();
+    jose_init();
 }
 
 /* Compose a DeviceStateInformation message. */
@@ -115,14 +113,6 @@ const char* ComposeDeviceStateInformation(void)
 /* Compose a TADependencyNotification message. */
 const char* ComposeTADependencyTBSNotification(void)
 {
-    const char* dsi = ComposeDeviceStateInformation();
-    if (dsi == NULL) {
-        return NULL;
-    }
-    size_t dsilen = strlen(dsi); // TODO: Include NULL byte?
-    free((void*)dsi); // TODO: use this
-    dsi = NULL;
-
     JsonAuto jwke(json_pack("{s:s}", "alg", "ECDH-ES+A128KW"), true);
     if (jwke == NULL) {
         return NULL;
@@ -131,17 +121,33 @@ const char* ComposeTADependencyTBSNotification(void)
     free((char*)jwkestr); // TODO: use this
 
     bool ok = jose_jwk_gen(NULL, jwke);
-    if (ok) {
-        json_auto_t *jwe = json_object();
-
-        ok = jose_jwe_enc(
-            NULL,    // Configuration context (optional)
-            jwe,     // The JWE object
-            NULL,    // The JWE recipient object(s) or NULL
-            jwke,    // The JWK(s) or JWKSet used for wrapping.
-            dsi,     // The plaintext.
-            dsilen); // The length of the plaintext.
+    if (!ok) {
+        return NULL;
     }
+
+    const char* dsi = ComposeDeviceStateInformation();
+    if (dsi == NULL) {
+        return NULL;
+    }
+    size_t dsilen = strlen(dsi); // TODO: Include NULL byte?
+
+    JsonAuto jwe(json_object(), true);
+    ok = jose_jwe_enc(
+        NULL,    // Configuration context (optional)
+        jwe,     // The JWE object
+        NULL,    // The JWE recipient object(s) or NULL
+        jwke,    // The JWK(s) or JWKSet used for wrapping.
+        dsi,     // The plaintext.
+        dsilen); // The length of the plaintext.
+
+    free((void*)dsi);
+    dsi = NULL;
+
+    if (!ok) {
+        return NULL;
+    }
+    const char* jwestr = json_dumps(jwe, 0);
+    free((char*)jwestr); // TODO: use this
 
     JsonAuto object(json_object(), true);
     if (object == NULL) {
@@ -163,38 +169,7 @@ const char* ComposeTADependencyTBSNotification(void)
     if (request.AddStringToObject("signerreq", "true") == NULL) {
         return NULL;
     }
-    JsonAuto edsi = request.AddObjectToObject("edsi");
-    if (edsi == NULL) {
-        return NULL;
-    }
-    if (edsi.AddStringToObject("protected", "<BASE64URL encoding of encryption algorithm header JSON data>") == NULL) {
-        return NULL;
-    }
-    JsonAuto recipients = edsi.AddArrayToObject("recipients");
-    if (recipients == NULL) {
-        return NULL;
-    }
-    JsonAuto recipient = recipients.AddObjectToArray();
-    if (recipient == NULL) {
-        return NULL;
-    }
-    JsonAuto edsi_header = recipient.AddObjectToObject("header");
-    if (edsi_header == NULL) {
-        return NULL;
-    }
-    if (edsi_header.AddStringToObject("alg", "RSA1_5") == NULL) {
-        return NULL;
-    }
-    if (recipient.AddStringToObject("encrypted_key", "<encrypted value of CEK>") == NULL) {
-        return NULL;
-    }
-    if (edsi.AddStringToObject("iv", "<BASE64URL encoded IV data>") == NULL) {
-        return NULL;
-    }
-    if (edsi.AddStringToObject("ciphertext", "<Encrypted data over the JSON object of dsi (BASE64URL)>") == NULL) {
-        return NULL;
-    }
-    if (edsi.AddStringToObject("tag", "<JWE authentication tag (BASE64URL)>") == NULL) {
+    if (request.AddObjectToObject("edsi", jwe) == NULL) {
         return NULL;
     }
 

@@ -35,15 +35,22 @@ json_t* JsonAuto::AddStringToObject(const char* name, const char* value) {
     return str;
 }
 
-json_t* JsonAuto::AddObjectToObject(const char* name) {
-    JsonAuto object = json_object();
-    if (object == NULL) {
-        return NULL;
+json_t* JsonAuto::AddObjectToObject(const char* name, json_t* obj) {
+    if (obj == nullptr) {
+        JsonAuto object = json_object();
+        if (object == NULL) {
+            return NULL;
+        }
+        if (json_object_set(ptr, name, object)) {
+            return NULL;
+        }
+        return object;
+    } else {
+        if (json_object_set(ptr, name, obj)) {
+            return NULL;
+        }
+        return obj;
     }
-    if (json_object_set(ptr, name, object)) {
-        return NULL;
-    }
-    return object;
 }
 
 json_t* JsonAuto::AddArrayToObject(const char* name) {

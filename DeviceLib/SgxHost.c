@@ -165,39 +165,37 @@ int initialize_enclave(const char* token_filename, const char* enclave_filename)
         {
             CloseHandle(token_handler);
         }
-        return 0;
-    }
+    } else {
+        /* flush the file cache */
+        FlushFileBuffers(token_handler);
+        /* set access offset to the begin of the file */
+        SetFilePointer(token_handler, 0, NULL, FILE_BEGIN);
 
-    /* flush the file cache */
-    FlushFileBuffers(token_handler);
-    /* set access offset to the begin of the file */
-    SetFilePointer(token_handler, 0, NULL, FILE_BEGIN);
-
-    /* write back the token */
-    DWORD write_num = 0;
-    WriteFile(token_handler, token, sizeof(sgx_launch_token_t), &write_num, NULL);
-    if (write_num != sizeof(sgx_launch_token_t))
-    {
-        printf("Warning: Failed to save launch token to \"%s\".\n", token_path);
+        /* write back the token */
+        DWORD write_num = 0;
+        WriteFile(token_handler, token, sizeof(sgx_launch_token_t), &write_num, NULL);
+        if (write_num != sizeof(sgx_launch_token_t))
+        {
+            printf("Warning: Failed to save launch token to \"%s\".\n", token_path);
+        }
+        CloseHandle(token_handler);
     }
-    CloseHandle(token_handler);
 #else /* __GNUC__ */
     if (updated == FALSE || fp == NULL)
     {
         /* if the token is not updated, or file handler is invalid, do not perform saving */
         if (fp != NULL) fclose(fp);
-        return 0;
+    } else {
+        /* reopen the file with write capablity */
+        fp = freopen(token_path, "wb", fp);
+        if (fp == NULL) return 0;
+        size_t write_num = fwrite(token, 1, sizeof(sgx_launch_token_t), fp);
+        if (write_num != sizeof(sgx_launch_token_t))
+        {
+            printf("Warning: Failed to save launch token to \"%s\".\n", token_path);
+        }
+        fclose(fp);
     }
-
-    /* reopen the file with write capablity */
-    fp = freopen(token_path, "wb", fp);
-    if (fp == NULL) return 0;
-    size_t write_num = fwrite(token, 1, sizeof(sgx_launch_token_t), fp);
-    if (write_num != sizeof(sgx_launch_token_t))
-    {
-        printf("Warning: Failed to save launch token to \"%s\".\n", token_path);
-    }
-    fclose(fp);
 #endif
 
     ret = ecall_Initialize(g_ta_eid);

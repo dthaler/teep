@@ -45,6 +45,9 @@
     <ClCompile Include="..\external\jose\lib\misc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="joseinit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\jose\lib\hooks.h">
@@ -54,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\external\jose\lib\misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="joseinit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

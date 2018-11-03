@@ -10,15 +10,13 @@ extern "C" {
 #include "joseinit.h"
 #include "jose/jwe.h"
 #include "jose/jwk.h"
-    extern char* strdup(const char* str);
+char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
 
 void ecall_Initialize()
 {
-    // jose_init_ec();
-    jose_init_rsa();
-    // jose_init_oct();
+    jose_init();
 }
 
 /* Compose a GetDeviceStateRequest message. */

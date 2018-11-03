@@ -27,6 +27,8 @@ int main(int argc, char** argv)
     }
 
     for (;;) {
+        printf("Waiting for client...\n");
+
         AcceptTcpSession();
 
         while (HandleTcpMessage() == 0);

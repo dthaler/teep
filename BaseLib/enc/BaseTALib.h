@@ -2,6 +2,7 @@
 #pragma once
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #define stderr NULL
 #define FILE   SGX_FILE

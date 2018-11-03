@@ -19,7 +19,7 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 }
 */
 
-static int RAND_optee_bytes(unsigned char *buf, int num)
+static int RAND_otrp_bytes(unsigned char *buf, int num)
 {
 	sgx_status_t status = sgx_read_rand(buf, num);
 	if (status != SGX_SUCCESS) {
@@ -30,18 +30,18 @@ static int RAND_optee_bytes(unsigned char *buf, int num)
     return num;
 }
 
-RAND_METHOD rand_optee_meth = {
-    NULL, // optee_rand_seed,
-    RAND_optee_bytes,
-    NULL, // optee_rand_cleanup,
-    NULL, // optee_rand_add,
-    RAND_optee_bytes, // optee_rand_pseudo_bytes,
-    NULL  // optee_rand_status
+RAND_METHOD rand_otrp_meth = {
+    NULL, // otrp_rand_seed,
+    RAND_otrp_bytes,
+    NULL, // otrp_rand_cleanup,
+    NULL, // otrp_rand_add,
+    RAND_otrp_bytes, // otrp_rand_pseudo_bytes,
+    NULL  // otrp_rand_status
 };
 
 void RAND_screen(void)
 {
-    RAND_set_rand_method(&rand_optee_meth);
+    RAND_set_rand_method(&rand_otrp_meth);
 }
 
 #if 0

@@ -11,6 +11,7 @@ void jose_init_ecdh(void);
 void jose_init_ecdhes(void);
 void jose_init_hash(void);
 void jose_init_jwk(void);
+void jose_init_rsassa(void);
 
 void jose_init(void)
 {
@@ -19,6 +20,7 @@ void jose_init(void)
     jose_init_ec();
     jose_init_oct();
     jose_init_rsa();
+    jose_init_rsassa();
     jose_init_ecdh();
     jose_init_ecdhes();
     jose_init_hash();

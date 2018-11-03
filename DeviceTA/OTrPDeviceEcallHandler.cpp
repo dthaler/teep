@@ -9,8 +9,10 @@
 extern "C" {
 #include "jansson.h"
 #include "joseinit.h"
+#include "jose/b64.h"
 #include "jose/jwe.h"
 #include "jose/jwk.h"
+#include "jose/jws.h"
 char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
@@ -110,7 +112,7 @@ const char* ComposeDeviceStateInformation(void)
     return strdup(message);
 }
 
-/* Compose a TADependencyNotification message. */
+/* Compose a TADependencyTBSNotification message. */
 const char* ComposeTADependencyTBSNotification(void)
 {
     JsonAuto jwke(json_pack("{s:s}", "alg", "ECDH-ES+A128KW"), true);
@@ -129,7 +131,7 @@ const char* ComposeTADependencyTBSNotification(void)
     if (dsi == NULL) {
         return NULL;
     }
-    size_t dsilen = strlen(dsi); // TODO: Include NULL byte?
+    size_t dsilen = strlen(dsi);
 
     JsonAuto jwe(json_object(), true);
     ok = jose_jwe_enc(
@@ -146,8 +148,6 @@ const char* ComposeTADependencyTBSNotification(void)
     if (!ok) {
         return NULL;
     }
-    const char* jwestr = json_dumps(jwe, 0);
-    free((char*)jwestr); // TODO: use this
 
     JsonAuto object(json_object(), true);
     if (object == NULL) {
@@ -178,6 +178,63 @@ const char* ComposeTADependencyTBSNotification(void)
     return message;
 }
 
+/* Compose a TADependencyNotification message. */
+const char* ComposeTADependencyNotification(void)
+{
+    JsonAuto jwke(json_pack("{s:s}", "alg", "RS256"), true);
+    if (jwke == NULL) {
+        return NULL;
+    }
+
+    bool ok = jose_jwk_gen(NULL, jwke);
+    if (!ok) {
+        return NULL;
+    }
+
+    /* Get a TADependencyTBSNotification. */
+    const char* tbsNotification = ComposeTADependencyTBSNotification();
+    size_t len = strlen(tbsNotification);
+    json_t* b64Notification = jose_b64_enc(tbsNotification, len);
+    free((void*)tbsNotification);
+    if (b64Notification == NULL) {
+        return NULL;
+    }
+
+    /* Create a signed message. */
+    JsonAuto jws(json_pack("{s:o}", "payload", b64Notification, true));
+    if ((json_t*)jws == NULL) {
+        return NULL;
+    }
+    ok = jose_jws_sig(
+        NULL,    // Configuration context (optional)
+        jws,     // The JWE object
+        NULL,    // The JWE recipient object(s) or NULL
+        jwke);   // The JWK(s) or JWKSet used for wrapping.
+    if (!ok) {
+        return NULL;
+    }
+
+    /* Create the final TADependencyNotification message. */
+    JsonAuto object(json_object(), true);
+    if ((json_t*)object == NULL) {
+        return NULL;
+    }
+    JsonAuto dnlist = object.AddArrayToObject("TADependencyNotifications");
+    if (dnlist == NULL) {
+        return NULL;
+    }
+    JsonAuto dn = dnlist.AddObjectToArray();
+    if (dn == NULL) {
+        return NULL;
+    }
+    if (dn.AddObjectToObject("TADependencyNotification", jws) == NULL) {
+        return NULL;
+    }
+
+    const char* message = json_dumps(object, 0);
+    return message;
+}
+
 int ecall_ProcessOTrPConnect(void)
 {
     const char* message = NULL;
@@ -185,9 +242,9 @@ int ecall_ProcessOTrPConnect(void)
     sgx_status_t sgxStatus = SGX_SUCCESS;
     int err = 0;
 
-    ocall_print("Received client connection\n");
+    ocall_print("Connected to TAM\n");
 
-    message = ComposeTADependencyTBSNotification();
+    message = ComposeTADependencyNotification();
     if (message == NULL) {
         return 1; /* Error */
     }

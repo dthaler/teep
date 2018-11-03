@@ -4,3 +4,6 @@
 [submodule "external/jansson"]
 	path = external/jansson
 	url = https://github.com/dthaler/jansson.git
+[submodule "external/openssl"]
+	path = external/openssl
+	url = https://github.com/openssl/openssl.git

@@ -1,7 +1,7 @@
-Debug/
+openssl/
+bin/
+obj/
 .vs/
-*/Debug/*
-*/Release/*
 *.db
 *.opendb
 *.user
@@ -10,3 +10,5 @@ OTrPTam_t.*
 OTrPTam_u.*
 OTrPDevice_t.*
 OTrPDevice_u.*
+BaseLib_t.*
+BaseLib_u.*

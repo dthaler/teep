@@ -5,6 +5,7 @@
 #include <sgx_uae_service.h>
 #include <Shlobj.h>
 #include "OTrPDeviceLib.h"
+#include "OTrPDevice_u.h"
 
 extern sgx_enclave_id_t g_ta_eid;
 
@@ -198,6 +199,11 @@ int initialize_enclave(const char* token_filename, const char* enclave_filename)
     }
     fclose(fp);
 #endif
+
+    ret = ecall_Initialize(g_ta_eid);
+    if (ret != SGX_SUCCESS) {
+        return -1;
+    }
     return 0;
 }
 

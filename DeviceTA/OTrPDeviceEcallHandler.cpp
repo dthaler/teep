@@ -8,11 +8,19 @@
 #define FILE void
 extern "C" {
 #include "jansson.h"
+#include "joseinit.h"
 #include "jose/jwe.h"
 #include "jose/jwk.h"
 extern char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
+
+void ecall_Initialize()
+{
+    // jose_init_ec();
+    jose_init_rsa();
+    // jose_init_oct();
+}
 
 /* Compose a DeviceStateInformation message. */
 const char* ComposeDeviceStateInformation(void)

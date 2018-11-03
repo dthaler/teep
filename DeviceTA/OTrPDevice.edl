@@ -1,9 +1,12 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 enclave {
     from "sgx_tprotected_fs.edl" import *;
+    from "BaseLib.edl" import *;
 
     trusted {
         /* define ECALLs here. */
+        public void ecall_Initialize();
+
         public int ecall_ProcessOTrPConnect();
 
         public int ecall_ProcessOTrPMessage(

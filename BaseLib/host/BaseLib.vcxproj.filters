@@ -21,10 +21,16 @@
     <ClCompile Include="time.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HttpHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseLib_u.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpHelper.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

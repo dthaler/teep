@@ -166,7 +166,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)jose;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/include/;$(SolutionDir)openssl/include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -187,7 +187,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)jose;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/include/;$(SolutionDir)openssl/include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Debug</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -210,7 +210,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -233,7 +233,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Release</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -256,7 +256,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)jose;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/include/;$(SolutionDir)openssl/include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -277,7 +277,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)jose;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/include/;$(SolutionDir)openssl/include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Debug</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -300,7 +300,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -323,7 +323,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Release</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -347,35 +347,35 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="OTrPDevice.edl">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>

@@ -31,6 +31,8 @@ int main(int argc, char** argv)
 
         AcceptTcpSession();
 
+        printf("Accepted client connection...\n");
+
         while (HandleTcpMessage() == 0);
 
         CloseTcpSession();

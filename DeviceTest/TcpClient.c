@@ -1,4 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+#ifdef USE_TCP
+#include <stdio.h>
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 #include "TcpClient.h"
@@ -102,7 +104,12 @@ int HandleTcpMessage(void)
 
     free(message);
 
-    return (err == 0);
+    if (err != 0) {
+        printf("Error %d\n", err);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 void DisconnectFromTcpServer(void)
@@ -118,3 +125,4 @@ int ocall_SendOTrPMessage(const char* message, int messageLength)
     err = SendTcpMessage(message, messageLength);
     return err;
 }
+#endif

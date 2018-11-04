@@ -10,14 +10,12 @@ extern "C" {
 #include "joseinit.h"
 #include "jose/jwe.h"
 #include "jose/jwk.h"
+#include "jose/jws.h"
+#include "jose/b64.h"
+#include "../OTrPTALib/common.h"
 char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
-
-void ecall_Initialize()
-{
-    jose_init();
-}
 
 /* Compose a GetDeviceStateRequest message. */
 const char* ComposeGetDeviceStateRequest(void)
@@ -76,67 +74,107 @@ int ecall_ProcessOTrPConnect(void)
 
 int OTrPHandleGetDeviceStateResponse(const json_t* messageObject)
 {
+    if (!json_is_object(messageObject)) {
+        return 1; /* Error */
+    }
+
     return 0; /* no error */
 }
 
 int OTrPHandleTADependencyNotification(const json_t* messageObject)
 {
+    if (!json_is_object(messageObject)) {
+        return 1; /* Error */
+    }
+
+    /* Get the JWS signed object. */
+    json_t* jws = json_object_get(messageObject, "TADependencyNotification");
+    if (jws == NULL) {
+        return 1; /* Error */
+    }
+    const char* message = json_dumps(jws, 0);
+    free((char*)message); // XXX
+
+    /* Verify the signature. */
+    JsonAuto jwkr(json_pack("{s:s}", "alg", "RS256"), true);
+    if ((json_t*)jwkr == NULL) {
+        return 1; /* Error */
+    }
+    if (!jose_jwk_gen(NULL, jwkr)) {
+        return 1; /* Error */
+    }
+
+    char* payload = DecodeJWS(jws, jwkr);
+    if (!payload) {
+        return 1; /* Error */
+    }
+
+    JsonAuto object(json_loads(payload, 0, NULL));
+    free(payload);
+    if ((json_t*)object == NULL) {
+        return 1; /* Error */
+    }
+
+    json_t* edsi = json_object_get(object, "edsi");
+    if (edsi == NULL) {
+        return 1; /* Error */
+    }
+
+    JsonAuto jwke(json_pack("{s:s}", "alg", "A128CBC-HS256"), true);
+    if (jwke == NULL) {
+        return NULL;
+    }
+    const char* jwkestr = json_dumps(jwke, 0);
+    free((char*)jwkestr); // TODO: use this
+
+    bool ok = jose_jwk_gen(NULL, jwke);
+    if (!ok) {
+        return NULL;
+    }
+
+    // Decrypt the edsi.
+    size_t len = 0;
+    char* dsistr = (char*)jose_jwe_dec(NULL, edsi, NULL, jwke, &len);
+    if (dsistr == NULL) {
+        return 1; /* Error */
+    }
+    json_error_t error;
+    JsonAuto dsi(json_loads(dsistr, 0, &error), true);
+    free(dsistr);
+    if ((json_t*)dsi == NULL) {
+        return 1; /* Error */
+    }
+
     return 0; /* no error */
 }
 
-int ecall_ProcessOTrPMessage(
-    const char* message,
-    int messageLength)
+int OTrPHandleTADependencyNotifications(const json_t* messageObject)
 {
-    int err = 1;
-    char *newstr = NULL;
-
-    if (messageLength < 1) {
-        return 1; /* error */
+    if (!json_is_array(messageObject)) {
+        return 1; /* Error */
     }
 
-    /* Verify string is null-terminated. */
-    const char* str = message;
-    if (message[messageLength - 1] == 0) {
-        str = message;
-    } else {
-        newstr = (char*)malloc(messageLength + 1);
-        if (newstr == NULL) {
-            return 1; /* error */
+    size_t index;
+    json_t* value;
+    json_array_foreach(messageObject, index, value) {
+        int err = OTrPHandleTADependencyNotification(value);
+        if (err != 0) {
+            return err;
         }
-        memcpy(newstr, message, messageLength);
-        newstr[messageLength] = 0;
-        str = newstr;
     }
 
-    json_error_t error;
-    JsonAuto object(json_loads(str, 0, &error), true);
+    return 0; /* no error */
+}
 
-    free(newstr);
-    newstr = NULL;
-
-    if ((object == NULL) || !json_is_object((json_t*)object)) {
-        return 1; /* Error */
-    }
-    const char* key = json_object_iter_key(json_object_iter(object));
-
-    ocall_print("Received ");
-    ocall_print(key);
-    ocall_print("\n");
-
-    JsonAuto messageObject = json_object_get(object, key);
-    if (!json_is_object((json_t*)messageObject)) {
-        return 1; /* Error */
-    }
-
+int OTrPHandleMessage(const char* key, const json_t* messageObject)
+{
     if (strcmp(key, "GetDeviceTEEStateTBSResponse") == 0) {
-        err = OTrPHandleGetDeviceStateResponse(messageObject);
-    } else if (strcmp(key, "TADependencyTBSNotification") == 0) {
-        err = OTrPHandleTADependencyNotification(messageObject);
-    } else {
-        /* Unrecognized message. */
-        err = 1;
+        return OTrPHandleGetDeviceStateResponse(messageObject);
+    } 
+    if (strcmp(key, "TADependencyNotifications") == 0) {
+        return OTrPHandleTADependencyNotifications(messageObject);
     }
 
-    return err;
+    /* Unrecognized message. */
+    return 1;
 }

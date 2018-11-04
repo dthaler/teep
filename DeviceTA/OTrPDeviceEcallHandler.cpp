@@ -14,13 +14,9 @@ extern "C" {
 #include "jose/jwk.h"
 #include "jose/jws.h"
 char* strdup(const char* str);
+#include "../OTrPTALib/common.h"
 };
 #include "../jansson/JsonAuto.h"
-
-void ecall_Initialize()
-{
-    jose_init();
-}
 
 /* Compose a DeviceStateInformation message. */
 const char* ComposeDeviceStateInformation(void)
@@ -193,6 +189,9 @@ const char* ComposeTADependencyNotification(void)
 
     /* Get a TADependencyTBSNotification. */
     const char* tbsNotification = ComposeTADependencyTBSNotification();
+    if (tbsNotification == NULL) {
+        return NULL;
+    }
     size_t len = strlen(tbsNotification);
     json_t* b64Notification = jose_b64_enc(tbsNotification, len);
     free((void*)tbsNotification);
@@ -318,7 +317,6 @@ const char* ComposeGetDeviceStateResponse(const json_t* request, const char* sta
     return strdup(message);
 }
 
-
 int OTrPHandleGetDeviceStateRequest(const json_t* request)
 {
     int err = 1;
@@ -356,6 +354,9 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
     statusValue = "pass";
 
     const char* message = ComposeGetDeviceStateResponse(request, statusValue);
+    if (message == NULL) {
+        return 1; /* Error */
+    }
 
     ocall_print("Sending GetDeviceTEEStateTBSResponse...\n");
 
@@ -366,57 +367,12 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
     return err;
 }
 
-int ecall_ProcessOTrPMessage(
-    const char* message,
-    int messageLength)
+int OTrPHandleMessage(const char* key, const json_t* messageObject)
 {
-    int err = 1;
-    char *newstr = NULL;
-
-    if (messageLength < 1) {
-        return 1; /* error */
-    }
-
-    /* Verify string is null-terminated. */
-    const char* str = message;
-    if (message[messageLength - 1] == 0) {
-        str = message;
-    } else {
-        newstr = (char*)malloc(messageLength + 1);
-        if (newstr == NULL) {
-            return 1; /* error */
-        }
-        memcpy(newstr, message, messageLength);
-        newstr[messageLength] = 0;
-        str = newstr;
-    }
-
-    json_error_t error;
-    JsonAuto object(json_loads(str, 0, &error), true);
-
-    free(newstr);
-    newstr = NULL;
-
-    if ((object == NULL) || !json_is_object((json_t*)object)) {
-        return 1; /* Error */
-    }
-    const char* key = json_object_iter_key(json_object_iter(object));
-
-    ocall_print("Received ");
-    ocall_print(key);
-    ocall_print("\n");
-
-    JsonAuto messageObject = json_object_get(object, key);
-    if (!json_is_object((json_t*)messageObject)) {
-        return 1; /* Error */
-    }
-
     if (strcmp(key, "GetDeviceStateTBSRequest") == 0) {
-        err = OTrPHandleGetDeviceStateRequest(messageObject);
-    } else {
-        /* Unrecognized message. */
-        err = 1;
+        return OTrPHandleGetDeviceStateRequest(messageObject);
     }
 
-    return err;
+    /* Unrecognized message. */
+    return 1;
 }

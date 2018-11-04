@@ -12,8 +12,8 @@
 #define TOKEN_FILENAME   "OTrPDeviceTA.token"
 
 //#define DEFAULT_TAM_URI "http://127.0.0.1:12345/"
-//#define DEFAULT_TAM_URI "127.0.0.1:12345"
-#define DEFAULT_TAM_URI "ietf.org"
+#define DEFAULT_TAM_URI "localhost:54321"
+//#define DEFAULT_TAM_URI "ietf.org"
 
 #define DEFAULT_TA_ID "abcdef"
 

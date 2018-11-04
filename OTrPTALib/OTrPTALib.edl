@@ -1,0 +1,19 @@
+enclave {
+    trusted {
+        /* define ECALLs here. */
+        public void ecall_Initialize();
+
+		public int ecall_ProcessOTrPMessage(
+            [in, size=messageLength] const char* message, 
+            int messageLength);
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        int ocall_SendOTrPMessage(
+            [in, size=messageLength] const char* message, 
+            int messageLength);
+
+        void ocall_print([in, string] const char* message);
+    };
+};

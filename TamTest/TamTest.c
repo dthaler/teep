@@ -1,6 +1,10 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdio.h>
+#ifdef USE_TCP
 #include "TcpServer.h"
+#else
+#include "HttpServer.h"
+#endif
 #include "..\TamLib\SgxHost.h"
 
 #define ENCLAVE_FILENAME "OTrPTamTA.signed.dll"
@@ -20,6 +24,7 @@ int main(int argc, char** argv)
         return 1;
     }
         
+#ifdef USE_TCP
     err = StartTcpServer();
     if (err != 0) {
         printf("Error %d starting transport\n", err);
@@ -39,6 +44,10 @@ int main(int argc, char** argv)
     }
 
     StopTcpServer();
+#else
+    wchar_t* myargv[2] = { NULL, OTRP_URI };
+    err = RunHttpServer(2, myargv);
+#endif
     return 0;
 }
 

@@ -1,4 +1,5 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+#ifdef USE_TCP
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "../OTrPTransport.h"
@@ -141,3 +142,4 @@ int ocall_SendOTrPMessage(const char* message, int messageLength)
     err = SendTcpMessage(message, messageLength);
     return err;
 }
+#endif

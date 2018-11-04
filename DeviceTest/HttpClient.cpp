@@ -15,7 +15,7 @@ extern "C" {
 const char* ConnectToTam(const char* uri)
 {
     const char* authority = uri; // TODO
-    const char* path = "/";
+    const char* path = "/OTRP"; // TODO
     int statusCode;
     char* responseBuffer;
 

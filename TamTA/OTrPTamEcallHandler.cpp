@@ -17,8 +17,8 @@ char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
 
-/* Compose a GetDeviceStateRequest message. */
-const char* ComposeGetDeviceStateRequest(void)
+/* Compose a GetDeviceStateTBSRequest message. */
+const char* ComposeGetDeviceStateTBSRequest(void)
 {
     JsonAuto object(json_object(), true);
     if (object == NULL) {
@@ -51,6 +51,56 @@ const char* ComposeGetDeviceStateRequest(void)
         return NULL;
     }
     return strdup(message);
+}
+
+const char* ComposeGetDeviceStateRequest(void)
+{
+    JsonAuto jwke(json_pack("{s:s}", "alg", "RS256"), true);
+    if (jwke == NULL) {
+        return NULL;
+    }
+
+    bool ok = jose_jwk_gen(NULL, jwke);
+    if (!ok) {
+        return NULL;
+    }
+
+    const char* tbsRequest = ComposeGetDeviceStateTBSRequest();
+    if (tbsRequest == NULL) {
+        return NULL;
+    }
+    size_t len = strlen(tbsRequest);
+    json_t* b64Request = jose_b64_enc(tbsRequest, len);
+    free((void*)tbsRequest);
+    if (b64Request == NULL) {
+        return NULL;
+    }
+
+    /* Create a signed message. */
+    JsonAuto jws(json_pack("{s:o}", "payload", b64Request, true));
+    if ((json_t*)jws == NULL) {
+        return NULL;
+    }
+    ok = jose_jws_sig(
+        NULL,    // Configuration context (optional)
+        jws,     // The JWE object
+        NULL,    // The JWE recipient object(s) or NULL
+        jwke);   // The JWK(s) or JWKSet used for wrapping.
+    if (!ok) {
+        return NULL;
+    }
+
+    /* Create the final GetDeviceStateRequest message. */
+    JsonAuto object(json_object(), true);
+    if ((json_t*)object == NULL) {
+        return NULL;
+    }
+    if (object.AddObjectToObject("GetDeviceStateRequest", jws) == NULL) {
+        return NULL;
+    }
+
+    const char* message = json_dumps(object, 0);
+    return message;
 }
 
 int ecall_ProcessOTrPConnect(void)

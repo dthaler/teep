@@ -74,3 +74,10 @@ json_t* JsonAuto::AddObjectToArray() {
     }
     return object;
 }
+
+json_t* JsonAuto::Detach(void)
+{
+    json_t* obj = ptr;
+    ptr = NULL;
+    return obj;
+}

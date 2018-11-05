@@ -1,6 +1,8 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdlib.h>
 #include <string.h>
+#include <sgx.h>
+#include <sgx_trts.h>
 #include "OTrPTam_t.h"
 
 #include <stdbool.h>
@@ -17,6 +19,32 @@ char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
 
+#define UNIQUE_ID_LEN 16
+
+json_t* GetNewRequestID(void)
+{
+    unsigned char value[UNIQUE_ID_LEN];
+
+    sgx_status_t status = sgx_read_rand(value, UNIQUE_ID_LEN);
+    if (status != SGX_SUCCESS) {
+        return NULL;
+    }
+
+    return jose_b64_enc(value, sizeof(value));
+}
+
+json_t* GetNewTransactionID(void)
+{
+    unsigned char value[UNIQUE_ID_LEN];
+
+    sgx_status_t status = sgx_read_rand(value, UNIQUE_ID_LEN);
+    if (status != SGX_SUCCESS) {
+        return NULL;
+    }
+
+    return jose_b64_enc(value, sizeof(value));
+}
+
 /* Compose a GetDeviceStateTBSRequest message. */
 const char* ComposeGetDeviceStateTBSRequest(void)
 {
@@ -31,10 +59,10 @@ const char* ComposeGetDeviceStateTBSRequest(void)
     if (request.AddStringToObject("ver", "1.0") == NULL) {
         return NULL;
     }
-    if (request.AddStringToObject("rid", "<Unique request ID>") == NULL) {
+    if (request.AddObjectToObject("rid", GetNewRequestID()) == NULL) {
         return NULL;
     }
-    if (request.AddStringToObject("tid", "<transaction ID>") == NULL) {
+    if (request.AddObjectToObject("tid", GetNewTransactionID()) == NULL) {
         return NULL;
     }
     JsonAuto ocspdat = request.AddArrayToObject("ocspdat");
@@ -77,14 +105,26 @@ const char* ComposeGetDeviceStateRequest(void)
     }
 
     /* Create a signed message. */
-    JsonAuto jws(json_pack("{s:o}", "payload", b64Request, true));
+    JsonAuto jws(json_pack("{s:o}", "payload", b64Request), true);
     if ((json_t*)jws == NULL) {
         return NULL;
     }
+
+    JsonAuto sig(json_object(), true);
+    JsonAuto header = sig.AddObjectToObject("header");
+    if ((json_t*)header == NULL) {
+        return NULL;
+    }
+    void* certChain = "abc"; // XXX
+    size_t certChainLen = 3; // XXX
+    if (json_object_set_new(header, "x5c", jose_b64_enc(certChain, certChainLen)) < 0) {
+        return NULL;
+    }
+
     ok = jose_jws_sig(
         NULL,    // Configuration context (optional)
         jws,     // The JWE object
-        NULL,    // The JWE recipient object(s) or NULL
+        sig,     // The JWE recipient object(s) or NULL
         jwke);   // The JWK(s) or JWKSet used for wrapping.
     if (!ok) {
         return NULL;
@@ -108,12 +148,14 @@ int ecall_ProcessOTrPConnect(void)
     ocall_print("Received client connection\n");
 
     const char* message = ComposeGetDeviceStateRequest();
-    size_t messageLength = strlen(message);
+    if (message == NULL) {
+        return 1; /* Error */
+    }
 
-    ocall_print("Sending GetDeviceStateTBSRequest...\n");
+    ocall_print("Sending GetDeviceStateRequest...\n");
 
     int err = 0;
-    sgx_status_t sgxStatus = ocall_SendOTrPMessage(&err, message, messageLength);
+    sgx_status_t sgxStatus = ocall_SendOTrPMessage(&err, message);
     free((void*)message);
     if (sgxStatus != SGX_SUCCESS) {
         return sgxStatus;

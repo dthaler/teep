@@ -16,15 +16,22 @@
 #pragma comment(lib, "httpapi.lib")
 
 const char* g_MessageToSend = NULL;
+int g_MessageLength = 0;
 
-int ocall_SendOTrPMessage(const char* message, int messageLength)
+int ocall_SendOTrPMessage(const char* message)
 {
-    assert(messageLength == strlen(message));
     assert(g_MessageToSend == NULL);
+    int messageLength = strlen(message);
 
     // Save message for later transmission.
-    g_MessageToSend = _strdup(message);
-    return (g_MessageToSend == NULL);
+    g_MessageLength = messageLength;
+    g_MessageToSend = (char*)malloc(messageLength);
+    if (g_MessageToSend == NULL) {
+        return 1;
+    }
+    printf("Sending %d bytes...\n", messageLength);
+    memcpy((char*)g_MessageToSend, message, messageLength);
+    return 0;
 }
 
 //
@@ -59,7 +66,8 @@ DWORD SendHttpResponse(
     IN USHORT        StatusCode,
     IN PSTR          pReason,
     IN PSTR          pContentType,
-    IN PSTR          pEntityString)
+    IN PSTR          pEntityString,
+    IN ULONG         EntityStringLength)
 {
     HTTP_RESPONSE   response;
     HTTP_DATA_CHUNK dataChunk;
@@ -86,7 +94,7 @@ DWORD SendHttpResponse(
         //
         dataChunk.DataChunkType = HttpDataChunkFromMemory;
         dataChunk.FromMemory.pBuffer = pEntityString;
-        dataChunk.FromMemory.BufferLength = (ULONG)strlen(pEntityString);
+        dataChunk.FromMemory.BufferLength = EntityStringLength;
 
         response.EntityChunkCount = 1;
         response.pEntityChunks = &dataChunk;
@@ -281,7 +289,7 @@ DWORD SendHttpPostResponse(
                     break;
                 }
 
-                sprintf_s(szContentLength, MAX_ULONG_STR, "%lu", strlen(g_MessageToSend));
+                sprintf_s(szContentLength, MAX_ULONG_STR, "%lu", g_MessageLength);
                 ADD_KNOWN_HEADER(
                     response,
                     HttpHeaderContentLength,
@@ -328,7 +336,7 @@ DWORD SendHttpPostResponse(
                 dataChunk.FromFileHandle.FileHandle = hTempFile;
 #else
                 dataChunk.DataChunkType = HttpDataChunkFromMemory;
-                dataChunk.FromMemory.BufferLength = strlen(g_MessageToSend);
+                dataChunk.FromMemory.BufferLength = g_MessageLength;
                 dataChunk.FromMemory.pBuffer = (void*)g_MessageToSend;
 #endif
 
@@ -480,7 +488,8 @@ DWORD DoReceiveRequests(
                         200,
                         "OK",
                         "application/json",
-                        (PSTR)g_MessageToSend);
+                        (PSTR)g_MessageToSend,
+                        g_MessageLength);
 
                     free((char*)g_MessageToSend);
                     g_MessageToSend = NULL;
@@ -493,7 +502,8 @@ DWORD DoReceiveRequests(
                         200,
                         "OK",
                         "application/json",
-                        pResponseString);
+                        pResponseString,
+                        strlen(pResponseString));
                 }
                 break;
 
@@ -517,7 +527,8 @@ DWORD DoReceiveRequests(
                     503,
                     "Not Implemented",
                     NULL,
-                    NULL
+                    NULL,
+                    0
                 );
                 break;
             }

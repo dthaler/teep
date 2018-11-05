@@ -39,9 +39,9 @@ const char* ConnectToTam(const char* uri)
 
 const char* g_MessageToSend = NULL;
 
-int ocall_SendOTrPMessage(const char* message, int messageLength)
+int ocall_SendOTrPMessage(const char* message)
 {
-    assert(messageLength == strlen(message));
+    size_t messageLength = strlen(message);
     assert(g_MessageToSend == NULL);
 
     // Save message for later transmission.
@@ -51,6 +51,7 @@ int ocall_SendOTrPMessage(const char* message, int messageLength)
 
 const char* HandleHttpResponse(const char* message, const char* uri)
 {
+    int len = strlen(message);
     int err = OTrPHandleMessage(message, strlen(message));
 
     free((char*)message);

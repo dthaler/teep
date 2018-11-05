@@ -24,8 +24,8 @@ char *DecodeJWS(const json_t *jws, const json_t *jwk)
     char *str = NULL;
     size_t len = 0;
 
-    if (!jose_jws_ver(NULL, jws, NULL, jwk, false)) {
-        /* TODO: return NULL; */
+    if (jwk != nullptr && !jose_jws_ver(NULL, jws, NULL, jwk, false)) {
+        return NULL;
     }
 
     len = jose_b64_dec(json_object_get(jws, "payload"), NULL, 0);
@@ -34,6 +34,7 @@ char *DecodeJWS(const json_t *jws, const json_t *jwk)
         free(str);
         return NULL;
     }
+    str[len] = 0;
     return str;
 }
 

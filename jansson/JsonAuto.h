@@ -21,7 +21,8 @@ public:
     json_t* AddStringToObject(const char* name, const char* value);
     json_t* AddObjectToObject(const char* name, json_t* obj = nullptr);
     json_t* AddArrayToObject(const char* name);
-    json_t* AddObjectToArray();
+    json_t* AddObjectToArray(void);
+    json_t* Detach(void);
 private:
     json_t* ptr;
 };

@@ -135,11 +135,11 @@ int HandleTcpMessage(void)
     return err;
 }
 
-int ocall_SendOTrPMessage(const char* message, int messageLength)
+int ocall_SendOTrPMessage(const char* message)
 {
     int err;
 
-    err = SendTcpMessage(message, messageLength);
+    err = SendTcpMessage(message, strlen(message));
     return err;
 }
 #endif

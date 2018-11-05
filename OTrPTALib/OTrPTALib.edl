@@ -11,8 +11,7 @@ enclave {
     untrusted {
         /* define OCALLs here. */
         int ocall_SendOTrPMessage(
-            [in, size=messageLength] const char* message, 
-            int messageLength);
+            [in, string] const char* message);
 
         void ocall_print([in, string] const char* message);
     };

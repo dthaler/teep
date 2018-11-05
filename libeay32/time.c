@@ -1,5 +1,6 @@
 /* Copyright Microsoft Corporation */
 #include "BaseTALib.h"
+#include "../BaseLib/enc/time.h"
 #include <TrustedOpenssl.h>
 
 struct tm *localtime(const time_t *timer)

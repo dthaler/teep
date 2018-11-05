@@ -18,6 +18,10 @@ char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
 
+#ifdef USE_SGX
+# define TEE_NAME "Intel SGX"
+#endif
+
 /* Compose a DeviceStateInformation message. */
 const char* ComposeDeviceStateInformation(void)
 {
@@ -31,6 +35,7 @@ const char* ComposeDeviceStateInformation(void)
         return NULL;
     }
 
+#ifndef USE_SGX
     /* Add tfwdata. */
     JsonAuto tfwdata = dsi.AddObjectToObject("tfwdata");
     if (tfwdata == NULL) {
@@ -48,13 +53,14 @@ const char* ComposeDeviceStateInformation(void)
     if (tfwdata.AddStringToObject("sig", "<TFW signed data, BASE64 encoded>") == NULL) {
         return NULL;
     }
+#endif
 
     /* Add tee. */
     JsonAuto tee = dsi.AddObjectToObject("tee");
     if (tee == NULL) {
         return NULL;
     }
-    if (tee.AddStringToObject("name", "<TEE name>") == NULL) {
+    if (tee.AddStringToObject("name", TEE_NAME) == NULL) {
         return NULL;
     }
     if (tee.AddStringToObject("ver", "<TEE version>") == NULL) {

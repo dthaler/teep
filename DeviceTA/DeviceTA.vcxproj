@@ -37,7 +37,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7CFC3AC5-A1CE-4D38-900A-453B64462033}</ProjectGuid>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <ProjectName>OTrPDeviceTA</ProjectName>
+    <ProjectName>OTrPAgentTA</ProjectName>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -167,7 +167,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -175,7 +175,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPDevice_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
+      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPAgent_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
       <Message>sign the enclave</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -189,7 +189,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Debug</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -198,7 +198,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPDevice_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
+      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPAgent_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
       <Message>sign the enclave</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -213,7 +213,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -237,7 +237,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Release</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -247,7 +247,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPDevice_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
+      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPAgent_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
       <Message>sign the enclave</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -261,7 +261,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>sgx_tcxx.lib;sgx_tprotected_fs.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -269,7 +269,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPDevice_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
+      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPAgent_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
       <Message>sign the enclave</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -283,7 +283,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts_sim.lib;sgx_tstdc.lib;sgx_tservice_sim.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Debug</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -292,7 +292,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPDevice_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
+      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPAgent_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
       <Message>sign the enclave</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -307,7 +307,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol />
@@ -331,7 +331,7 @@
       <PreprocessorDefinitions>USE_SGX;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>jose.lib;jose_openssl.lib;jansson.lib;LibEay32_t.lib;BaseTALib.lib;OTrPTALib.lib;LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
+      <AdditionalDependencies>LibEay32_t;sgx_tprotected_fs.lib;JsonLib.lib;sgx_trts.lib;sgx_tstdc.lib;sgx_tservice.lib;sgx_tcrypto.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\bin\$(Platform)\$(Configuration)\;$(SGXSDKInstallPath)bin\$(Platform)\Release</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>
@@ -341,57 +341,77 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPDevice_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
+      <Command>"$(SGXSDKInstallPath)bin\win32\release\sgx_sign.exe" sign -key "$(ProjectDir)OTrPAgent_private.pem" -enclave "$(OutDir)OTrPDeviceTA.dll" -out "$(OutDir)OTrPDeviceTA.signed.dll" -config "$(ProjectDir)OTrPDeviceTA.config.xml"</Command>
       <Message>sign the enclave</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="libc.c" />
-    <ClCompile Include="OTrPDevice_t.c" />
+    <ClCompile Include="OTrPAgent_t.c" />
     <ClCompile Include="OTrPDeviceEcallHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="OTrPDevice_t.h" />
+    <ClInclude Include="OTrPAgent_t.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="OTrPDevice.edl">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+    <CustomBuild Include="OTrPAgent.edl">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Simulation|Win32'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Simulation|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\BaseLib;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">"$(SGXSDKInstallPath)bin\win32\release\sgx_edger8r.exe" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\OTrPTALib;$(SGXSDKInstallPath)include"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">Creating proxy/bridge routines</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">OTrPDeviceTA.config.xml;%(AdditionalInputs)</AdditionalInputs>
     </CustomBuild>
-    <None Include="OTrPDevice_private.pem" />
+    <None Include="OTrPAgent_private.pem" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="OTrPDeviceTA.config.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\jose_openssl\jose_openssl.vcxproj">
+      <Project>{2a4e62ee-c5bb-4b0d-9798-3d76f2e4481b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\libeay32\LibEay32_t.vcxproj">
+      <Project>{275fac8b-b49c-4c91-b708-5abfb9e24215}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\UntrustedTime\enc\UntrustedTimeTALib.vcxproj">
+      <Project>{a4fdd39f-06ac-4f96-8ad7-65364532692f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\jansson\jansson.vcxproj">
+      <Project>{0ba01906-2dae-48e9-8044-4a631267b4ba}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\jose\jose.vcxproj">
+      <Project>{da064898-e24b-44b9-8297-b5be1089779f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\OTrPTALib\OTrPTALib.vcxproj">
+      <Project>{c922651a-4eda-4e91-b783-ad8da5924df3}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

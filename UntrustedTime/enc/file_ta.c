@@ -4,7 +4,7 @@
 #include <sgx.h>
 #include <sgx_trts.h>
 #include <sgx_tprotected_fs.h>
-#include "BaseTALib.h"
+#include "UntrustedTimeTALib.h"
 
 char *fgets(
     char *str,

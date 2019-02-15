@@ -8,8 +8,8 @@ obj/
 
 OTrPTam_t.*
 OTrPTam_u.*
-OTrPDevice_t.*
-OTrPDevice_u.*
-BaseLib_t.*
-BaseLib_u.*
+OTrPAgent_t.*
+OTrPAgent_u.*
+UntrustedTime_t.*
+UntrustedTime_u.*
 OTrPTALib_t.*

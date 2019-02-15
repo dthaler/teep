@@ -1,5 +1,5 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#include "BaseLib_u.h"
+#include "UntrustedTime_u.h"
 #include <time.h>
 
 uint64_t ocall_time64(void)

@@ -34,7 +34,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\BaseLib.edl">
+    <CustomBuild Include="..\UntrustedTime.edl">
       <Filter>Source Files</Filter>
     </CustomBuild>
   </ItemGroup>

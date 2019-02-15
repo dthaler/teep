@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <sgx.h>
 #include "time.h"
-#include "BaseLib_t.h"
+#include "UntrustedTime_t.h"
 
 time_t time(time_t *timer)
 {

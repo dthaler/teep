@@ -1,7 +1,7 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdlib.h>
 #include <string.h>
-#include "OTrPDevice_t.h"
+#include "OTrPAgent_t.h"
 #include "sgx_trts.h"
 
 #include <stdbool.h>

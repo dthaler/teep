@@ -5,8 +5,8 @@
 extern "C" {
 #include "HttpHelper.h"
 #include "HttpClient.h"
-#include "..\DeviceLib\OTrPDevice_u.h"
-#include "..\DeviceLib\OTrPDeviceLib.h"
+#include "..\DeviceLib\OTrPAgent_u.h"
+#include "..\DeviceLib\OTrPAgentBrokerLib.h"
 };
 
 #define JSON_MEDIA_TYPE "application/json"

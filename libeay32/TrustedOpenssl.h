@@ -6,7 +6,7 @@
 #undef _WIN32
 #endif
 
-#include "BaseTALib.h"
+#include "UntrustedTimeTALib.h"
 #include <stdio.h>
 #include <sgx.h>
 #include <sgx_trts.h>

@@ -4,8 +4,8 @@
 #include <sgx_urts.h>
 #include <sgx_uae_service.h>
 #include <Shlobj.h>
-#include "OTrPDeviceLib.h"
-#include "OTrPDevice_u.h"
+#include "OTrPAgentBrokerLib.h"
+#include "OTrPAgent_u.h"
 
 extern sgx_enclave_id_t g_ta_eid;
 

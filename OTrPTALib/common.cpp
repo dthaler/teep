@@ -3,7 +3,7 @@
 #include <sgx_trts.h>
 #include <sgx_tprotected_fs.h>
 #include <string.h>
-#include "../BaseLib/enc/BaseTALib.h"
+#include "../UntrustedTime/enc/UntrustedTimeTALib.h"
 #include "OTrPTALib_t.h"
 #include "JsonAuto.h"
 extern "C" {

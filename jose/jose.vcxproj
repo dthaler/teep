@@ -146,7 +146,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
@@ -159,7 +159,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
@@ -172,7 +172,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>
@@ -186,7 +186,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>
@@ -200,7 +200,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
@@ -213,7 +213,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
@@ -226,7 +226,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>
@@ -240,7 +240,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)BaseLib\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>USE_SGX</PreprocessorDefinitions>
     </ClCompile>

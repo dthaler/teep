@@ -1,6 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#include "OTrPDeviceLib.h"
-#include "OTrPDevice_u.h"
+#include "OTrPAgentBrokerLib.h"
+#include "OTrPAgent_u.h"
 
 sgx_enclave_id_t g_ta_eid = 0;
 

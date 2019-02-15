@@ -21,7 +21,7 @@
     <ClInclude Include="OTrPDevice_u.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="OTrPDeviceLib.h">
+    <ClInclude Include="OTrPAgentBrokerLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -29,10 +29,10 @@
     <ClCompile Include="OTrPDevice_u.c">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="OTrPDeviceLib.c">
+    <ClCompile Include="SgxHost.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SgxHost.c">
+    <ClCompile Include="OTrPAgentBrokerLib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,15 +1,16 @@
 openssl/
 bin/
 obj/
+Debug/
+packages/
+
+# Visual Studio generated files
 .vs/
 *.db
 *.opendb
 *.user
-
-OTrPTam_t.*
-OTrPTam_u.*
-OTrPAgent_t.*
-OTrPAgent_u.*
-UntrustedTime_t.*
-UntrustedTime_u.*
-OTrPTALib_t.*
+*_args.h
+*_t.h
+*_u.h
+*_t.c
+*_u.c

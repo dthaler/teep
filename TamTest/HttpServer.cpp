@@ -8,10 +8,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "HttpServer.h"
-#include "../TamLib/OTrPTamLib.h"
-
-#include <sgx.h>
-#include "../TamLib/OTrPTam_u.h"
+#include "../OTrPTamBrokerLib/OTrPTamBrokerLib.h"
+#include "../OTrPTamBrokerLib/OTrPTam_u.h" // for OCALL prototypes
 
 #pragma comment(lib, "httpapi.lib")
 
@@ -64,9 +62,9 @@ DWORD SendHttpResponse(
     IN HANDLE        hReqQueue,
     IN PHTTP_REQUEST pRequest,
     IN USHORT        StatusCode,
-    IN PSTR          pReason,
-    IN PSTR          pContentType,
-    IN PSTR          pEntityString,
+    IN PCSTR         pReason,
+    IN PCSTR         pContentType,
+    IN PCSTR         pEntityString,
     IN ULONG         EntityStringLength)
 {
     HTTP_RESPONSE   response;
@@ -93,7 +91,7 @@ DWORD SendHttpResponse(
         // Add an entity chunk.
         //
         dataChunk.DataChunkType = HttpDataChunkFromMemory;
-        dataChunk.FromMemory.pBuffer = pEntityString;
+        dataChunk.FromMemory.pBuffer = (void*)pEntityString;
         dataChunk.FromMemory.BufferLength = EntityStringLength;
 
         response.EntityChunkCount = 1;
@@ -427,7 +425,7 @@ DWORD DoReceiveRequests(
     PCHAR              pRequestBuffer;
     ULONG              RequestBufferLength;
     char               responseBuffer[1024];
-    char              *pResponseString = responseBuffer;
+    const char        *pResponseString = responseBuffer;
 
     //
     // Allocate a 2 KB buffer. This size should work for most
@@ -488,7 +486,7 @@ DWORD DoReceiveRequests(
                         200,
                         "OK",
                         "application/json",
-                        (PSTR)g_MessageToSend,
+                        g_MessageToSend,
                         g_MessageLength);
 
                     free((char*)g_MessageToSend);

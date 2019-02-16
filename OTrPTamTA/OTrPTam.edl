@@ -1,0 +1,16 @@
+enclave {
+    /* Include the following line to use stdio APIs from inside an enclave. */
+    from "openenclave/stdio.edl" import *;
+
+    from "UntrustedTime.edl" import *;
+	from "OTrPCommonTALib.edl" import *;
+
+    trusted {
+        /* define ECALLs here. */
+        public int ecall_ProcessOTrPConnect();
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+    };
+};

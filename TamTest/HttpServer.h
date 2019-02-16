@@ -1,8 +1,8 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #pragma once
 
-#define OTRP_URI L"http://localhost:54321/OTRP"
-#define OTRP_PATH L"/OTRP"
+#define OTRP_URI L"http://localhost:54321/OTrP"
+#define OTRP_PATH L"/OTrP"
 
 #ifdef __cplusplus
 extern "C" {

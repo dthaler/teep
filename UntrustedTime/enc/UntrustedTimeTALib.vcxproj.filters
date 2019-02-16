@@ -18,14 +18,14 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BaseLib_t.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BaseTALib.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="UntrustedTime_t.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UntrustedTimeTALib.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -35,16 +35,19 @@
     <ClCompile Include="time_ta.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BaseTALib.c">
+    <ClCompile Include="file_ta.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="file_ta.c">
+    <ClCompile Include="UntrustedTimeTALib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\BaseLib.edl">
+    <CustomBuild Include="..\UntrustedTime.edl">
       <Filter>Source Files</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

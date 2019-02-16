@@ -5,8 +5,8 @@
 extern "C" {
 #include "HttpHelper.h"
 #include "HttpClient.h"
-#include "..\DeviceLib\OTrPAgent_u.h"
-#include "..\DeviceLib\OTrPAgentBrokerLib.h"
+#include "../OTrPAgentBrokerLib/OTrPAgent_u.h"
+#include "../OTrPAgentBrokerLib/OTrPAgentBrokerLib.h"
 };
 
 #define JSON_MEDIA_TYPE "application/json"
@@ -15,7 +15,7 @@ extern "C" {
 const char* ConnectToTam(const char* uri)
 {
     const char* authority = uri; // TODO
-    const char* path = "/OTRP"; // TODO
+    const char* path = "/OTrP"; // TODO
     int statusCode;
     char* responseBuffer;
 

@@ -5,25 +5,17 @@
 #else
 #include "HttpServer.h"
 #endif
-#include "..\TamLib\SgxHost.h"
-
-#define ENCLAVE_FILENAME "OTrPTamTA.signed.dll"
-#define TOKEN_FILENAME   "OTrPTamTA.token"
+#include "../OTrPTamBrokerLib/OTrPTamBrokerLib.h"
 
 int main(int argc, char** argv)
 {
     int err;
 
-    if (query_sgx_status() < 0) {
-        printf("either SGX is disabled, or a reboot is required to enable SGX\n");
-        return 1;
+    err = StartTamBroker();
+    if (err != 0) {
+        return err;
     }
 
-    /* Initialize the enclave */
-    if (initialize_enclave(TOKEN_FILENAME, ENCLAVE_FILENAME) < 0) {
-        return 1;
-    }
-        
 #ifdef USE_TCP
     err = StartTcpServer();
     if (err != 0) {
@@ -48,6 +40,7 @@ int main(int argc, char** argv)
     wchar_t* myargv[2] = { NULL, OTRP_URI };
     err = RunHttpServer(2, myargv);
 #endif
+
+    StopTamBroker();
     return 0;
 }
-

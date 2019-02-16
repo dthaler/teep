@@ -7,7 +7,8 @@ enclave {
         int tm_mday;
         int tm_mon;
         int tm_year;
-        int tm_wday;                                                                    int tm_yday;
+        int tm_wday;
+        int tm_yday;
         int tm_isdst;
     };
 
@@ -18,13 +19,13 @@ enclave {
 
     trusted {
         /* define ECALLs here. */
-        public int ecall_InitializeEnclave();
+        public int ecall_InitializeUntrustedTime();
     };
 
     untrusted {
         /* define OCALLs here. */
-        uint64_t ocall_time64(void);
-        GetTm_Result ocall_localtime64(uint64_t timer);
-        GetTm_Result ocall_gmtime64(uint64_t timer);
+        uint64_t ocall_UntrustedTime_time64(void);
+        GetTm_Result ocall_UntrustedTime_localtime64(uint64_t timer);
+        GetTm_Result ocall_UntrustedTime_gmtime64(uint64_t timer);
     };
 };

@@ -16,7 +16,7 @@
 #pragma comment(lib, "httpapi.lib")
 
 typedef struct {
-    const char* MessageToSend;
+    const char* OutboundMessage;
     int MessageLength;
 } OTrPSession;
 
@@ -26,17 +26,17 @@ int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
 {
     OTrPSession* session = (OTrPSession*)sessionHandle;
 
-    assert(session->MessageToSend == NULL);
+    assert(session->OutboundMessage == NULL);
     int messageLength = strlen(message);
 
     // Save message for later transmission.
     session->MessageLength = messageLength;
-    session->MessageToSend = (char*)malloc(messageLength);
-    if (session->MessageToSend == NULL) {
+    session->OutboundMessage = (char*)malloc(messageLength);
+    if (session->OutboundMessage == NULL) {
         return 1;
     }
     printf("Sending %d bytes...\n", messageLength);
-    memcpy((char*)session->MessageToSend, message, messageLength);
+    memcpy((char*)session->OutboundMessage, message, messageLength);
     return 0;
 }
 
@@ -173,9 +173,6 @@ DWORD SendHttpPostResponse(
     INITIALIZE_HTTP_RESPONSE(&response, 200, "OK");
 
     //
-    // For POST, echo back the entity from the
-    // client
-    //
     // NOTE: If the HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY flag had been
     //       passed with HttpReceiveHttpRequest(), the entity would
     //       have been a part of HTTP_REQUEST (using the pEntityChunks
@@ -292,18 +289,18 @@ DWORD SendHttpPostResponse(
                 //       use a ULONGLONG.
                 //
 
-                // XXX handle POST body
-
                 if (OTrPHandleMessage(session, (char*)pEntityBuffer, TotalBytesRead) != 0) {
-                    break;
+                    INITIALIZE_HTTP_RESPONSE(&response, 400, "Bad Request");
                 }
-
-                sprintf_s(szContentLength, MAX_ULONG_STR, "%lu", session->MessageLength);
-                ADD_KNOWN_HEADER(
-                    response,
-                    HttpHeaderContentLength,
-                    szContentLength
-                );
+                else
+                {
+                    sprintf_s(szContentLength, MAX_ULONG_STR, "%lu", session->MessageLength);
+                    ADD_KNOWN_HEADER(
+                        response,
+                        HttpHeaderContentLength,
+                        szContentLength
+                    );
+                }
 
                 result =
                     HttpSendHttpResponse(
@@ -328,50 +325,52 @@ DWORD SendHttpPostResponse(
                     goto Done;
                 }
 
+                if (session->OutboundMessage != nullptr) {
 #if 0
-                //
-                // Send entity body from a file handle.
-                //
-                dataChunk.DataChunkType =
-                    HttpDataChunkFromFileHandle;
+                    //
+                    // Send entity body from a file handle.
+                    //
+                    dataChunk.DataChunkType =
+                        HttpDataChunkFromFileHandle;
 
-                dataChunk.FromFileHandle.
-                    ByteRange.StartingOffset.QuadPart = 0;
+                    dataChunk.FromFileHandle.
+                        ByteRange.StartingOffset.QuadPart = 0;
 
-                dataChunk.FromFileHandle.
-                    ByteRange.Length.QuadPart =
-                    HTTP_BYTE_RANGE_TO_EOF;
+                    dataChunk.FromFileHandle.
+                        ByteRange.Length.QuadPart =
+                        HTTP_BYTE_RANGE_TO_EOF;
 
-                dataChunk.FromFileHandle.FileHandle = hTempFile;
+                    dataChunk.FromFileHandle.FileHandle = hTempFile;
 #else
-                dataChunk.DataChunkType = HttpDataChunkFromMemory;
-                dataChunk.FromMemory.BufferLength = session->MessageLength;
-                dataChunk.FromMemory.pBuffer = (void*)session->MessageToSend;
+                    dataChunk.DataChunkType = HttpDataChunkFromMemory;
+                    dataChunk.FromMemory.BufferLength = session->MessageLength;
+                    dataChunk.FromMemory.pBuffer = (void*)session->OutboundMessage;
 #endif
 
-                result = HttpSendResponseEntityBody(
-                    hReqQueue,
-                    pRequest->RequestId,
-                    0,           // This is the last send.
-                    1,           // Entity Chunk Count.
-                    &dataChunk,
-                    NULL,
-                    NULL,
-                    0,
-                    NULL,
-                    NULL
-                );
-
-                // Free message.
-                free((char*)session->MessageToSend);
-                session->MessageToSend = NULL;
-
-                if (result != NO_ERROR)
-                {
-                    wprintf(
-                        L"HttpSendResponseEntityBody failed %lu\n",
-                        result
+                    result = HttpSendResponseEntityBody(
+                        hReqQueue,
+                        pRequest->RequestId,
+                        0,           // This is the last send.
+                        1,           // Entity Chunk Count.
+                        &dataChunk,
+                        NULL,
+                        NULL,
+                        0,
+                        NULL,
+                        NULL
                     );
+
+                    // Free message.
+                    free((char*)session->OutboundMessage);
+                    session->OutboundMessage = NULL;
+
+                    if (result != NO_ERROR)
+                    {
+                        wprintf(
+                            L"HttpSendResponseEntityBody failed %lu\n",
+                            result
+                        );
+                    }
                 }
 
                 goto Done;
@@ -500,11 +499,11 @@ DWORD DoReceiveRequests(
                         200,
                         "OK",
                         OTRP_JSON_MEDIA_TYPE,
-                        session->MessageToSend,
+                        session->OutboundMessage,
                         session->MessageLength);
 
-                    free((char*)session->MessageToSend);
-                    session->MessageToSend = NULL;
+                    free((char*)session->OutboundMessage);
+                    session->OutboundMessage = NULL;
                 } else {
                     pResponseString = "[{\"error\":1234}}]\r\n";
 

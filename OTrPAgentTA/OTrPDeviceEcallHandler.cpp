@@ -140,35 +140,6 @@ json_t* AddEdsiToObject(JsonAuto& request, const json_t* jwke)
     return request.AddObjectToObject("edsi", jwe);
 }
 
-json_t* CreateNewJwk(const char* alg)
-{
-    JsonAuto jwk(json_pack("{s:s}", "alg", alg), true);
-    if (jwk == NULL) {
-        return NULL;
-    }
-
-    bool ok = jose_jwk_gen(NULL, jwk);
-    if (!ok) {
-        return NULL;
-    }
-
-    return json_incref(jwk);
-}
-
-json_t* CreateNewJwke()
-{
-    return CreateNewJwk("ECDH-ES+A128KW");
-}
-
-json_t* CreateNewJwkR1_5()
-{
-    return CreateNewJwk("RSA1_5");
-}
-
-json_t* CreateNewJwkRS256()
-{
-    return CreateNewJwk("RS256");
-}
 
 JsonAuto g_AgentKey;
 

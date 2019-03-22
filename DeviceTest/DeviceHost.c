@@ -21,5 +21,8 @@ int main(int argc, char** argv)
 
 exit:
     StopAgentBroker();
+
+    printf("Press Enter to exit\n");
+    int c = getchar();
     return err;
 }

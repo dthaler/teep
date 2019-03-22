@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <string.h>
 extern "C" {
+#include "OTrPSession.h"
 #include "HttpHelper.h"
 #include "HttpClient.h"
-#include "OTrPSession.h"
 #include "../OTrPAgentBrokerLib/OTrPAgent_u.h"
 #include "../OTrPAgentBrokerLib/OTrPAgentBrokerLib.h"
 };
@@ -55,8 +55,8 @@ int ocall_Connect(const char* tamUri)
         return statusCode;
     }
 
-    assert(session->ResponseBuffer == nullptr);
-    session->ResponseBuffer = responseBuffer;
+    assert(session->InboundMessage == nullptr);
+    session->InboundMessage = responseBuffer;
 
     return 0;
 }
@@ -66,45 +66,46 @@ int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
     OTrPSession* session = (OTrPSession*)sessionHandle;
 
     size_t messageLength = strlen(message);
-    assert(session->MessageToSend == NULL);
+    assert(session->OutboundMessage == NULL);
 
-    // Save message for later transmission.
-    session->MessageToSend = _strdup(message);
-    return (session->MessageToSend == NULL);
+    // Save message for later transmission after the ECALL returns.
+    session->OutboundMessage = _strdup(message);
+    return (session->OutboundMessage == NULL);
 }
 
-const char* HandleHttpResponse(void* sessionHandle, const char* message)
+const char* SendOTrPMessage(OTrPSession* session)
 {
-    OTrPSession* session = (OTrPSession*)sessionHandle;
-    int len = strlen(message);
-    int err = OTrPHandleMessage(sessionHandle, message, strlen(message));
-
-    free((char*)message);
-
-    if (err != 0) {
-        printf("Error %d\n", err);
-        return NULL;
-    }
-
-    const char* authority = session->TamUri; // TODO
-    const char* path = "/";
-    PCSTR extraHeaders = "Content-type: " OTRP_JSON_MEDIA_TYPE "\r\n";
+    char authority[266];
+    char hostName[256];
+    char path[256];
     int statusCode;
     char* responseBuffer;
+    URL_COMPONENTS components = { sizeof(components) };
+    const char* extraHeaders = "Content-type: " OTRP_JSON_MEDIA_TYPE "\r\n";
 
-    err = MakeHttpCall(
-        "PUT",
+    // Get authority and path from URI.
+    components.dwHostNameLength = 255;
+    components.lpszHostName = hostName;
+    components.dwUrlPathLength = 255;
+    components.lpszUrlPath = path;
+    if (!InternetCrackUrl(session->TamUri, 0, 0, &components)) {
+        return NULL;
+    }
+    sprintf_s(authority, sizeof(authority), "%s:%d", components.lpszHostName, components.nPort);
+
+    int err = MakeHttpCall(
+        "POST",
         authority,
         path,
         extraHeaders,
-        session->MessageToSend,
+        session->OutboundMessage,
         OTRP_JSON_MEDIA_TYPE,
         &statusCode,
         &responseBuffer);
 
-    if (session->MessageToSend != NULL) {
-        free((char*)session->MessageToSend);
-        session->MessageToSend = NULL;
+    if (session->OutboundMessage != NULL) {
+        free((char*)session->OutboundMessage);
+        session->OutboundMessage = NULL;
     }
 
     if (err != 0) {

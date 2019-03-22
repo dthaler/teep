@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-    const char* HandleHttpResponse(void* sessionHandle, const char* message);
+    const char* SendOTrPMessage(OTrPSession* session);
 
 #ifdef __cplusplus
 };

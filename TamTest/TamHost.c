@@ -14,5 +14,8 @@ int main(int argc, char** argv)
     err = TamBrokerProcess();
 
     StopTamBroker();
+
+    printf("Press Enter to exit\n");
+    int c = getchar();
     return err;
 }

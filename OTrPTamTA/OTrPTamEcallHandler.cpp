@@ -51,6 +51,26 @@ json_t* GetNewTransactionID(void)
     return GetNewGloballyUniqueID();
 }
 
+JsonAuto g_TamSigningKey;
+
+json_t* GetTamSigningKey()
+{
+    if ((json_t*)g_TamSigningKey == nullptr) {
+        g_TamSigningKey = CreateNewJwkRS256();
+    }
+    return (json_t*)g_TamSigningKey;
+}
+
+JsonAuto g_TamEncryptionKey;
+
+json_t* GetTamEncryptionKey()
+{
+    if ((json_t*)g_TamEncryptionKey == nullptr) {
+        g_TamEncryptionKey = CopyToJweKey(GetTamSigningKey(), "RSA1_5");
+    }
+    return g_TamEncryptionKey;
+}
+
 /* Compose a GetDeviceStateTBSRequest message. */
 const char* ComposeGetDeviceStateTBSRequest(void)
 {
@@ -89,15 +109,7 @@ const char* ComposeGetDeviceStateTBSRequest(void)
 
 const char* ComposeGetDeviceStateRequest(void)
 {
-    /* Construct a key.  TODO: this should only be done once. */
-    JsonAuto jwk(json_pack("{s:s}", "alg", "RS256"), true);
-    if (jwk == NULL) {
-        return NULL;
-    }
-    bool ok = jose_jwk_gen(NULL, jwk);
-    if (!ok) {
-        return NULL;
-    }
+    json_t* jwk = GetTamSigningKey();
 
     /* Compose a raw GetDeviceState request to be signed. */
     const char* tbsRequest = ComposeGetDeviceStateTBSRequest();
@@ -134,7 +146,7 @@ const char* ComposeGetDeviceStateRequest(void)
         return NULL;
     }
 
-    ok = jose_jws_sig(
+    bool ok = jose_jws_sig(
         NULL,    // Configuration context (optional)
         jws,     // The JWE object
         sig,     // The JWE recipient object(s) or NULL
@@ -179,25 +191,15 @@ int ecall_ProcessOTrPConnect(void* sessionHandle)
     return err;
 }
 
-/* Handle a GetDeviceStateResponse from an OTrP Agent. */
-int OTrPHandleGetDeviceStateResponse(void* sessionHandle, const json_t* messageObject)
-{
-    if (!json_is_object(messageObject)) {
-        return 1; /* Error */
-    }
-
-    return 0; /* no error */
-}
-
-/* Handle a single TADependencyNotification from an OTrP Agent. */
-int OTrPHandleTADependencyNotification(const json_t* messageObject)
+/* Handle a GetDeviceTEEStateResponse from an OTrP Agent. */
+int OTrPHandleGetDeviceTEEStateResponse(void* sessionHandle, const json_t* messageObject)
 {
     if (!json_is_object(messageObject)) {
         return 1; /* Error */
     }
 
     /* Get the JWS signed object. */
-    json_t* jws = json_object_get(messageObject, "TADependencyNotification");
+    json_t* jws = json_object_get(messageObject, "GetDeviceTEEStateResponse");
     if (jws == NULL) {
         return 1; /* Error */
     }
@@ -206,17 +208,13 @@ int OTrPHandleTADependencyNotification(const json_t* messageObject)
     free((char*)message);
 #endif
 
-    /* Verify the signature. */
-    JsonAuto jwkr(json_pack("{s:s}", "alg", "RS256"), true);
-    if ((json_t*)jwkr == NULL) {
-        return 1; /* Error */
-    }
-    if (!jose_jwk_gen(NULL, jwkr)) {
-        return 1; /* Error */
-    }
+    /* Parse the JSON "payload" property and decrypt the JSON element
+     * "edsi".  The decrypted message contains the TEE signer
+     * certificate.
+     */
 
-    char* payload = DecodeJWS(jws, jwkr);
-    if (!payload) {
+    char* payload = DecodeJWS(jws, nullptr);
+    if (payload == NULL) {
         return 1; /* Error */
     }
 
@@ -226,26 +224,20 @@ int OTrPHandleTADependencyNotification(const json_t* messageObject)
         return 1; /* Error */
     }
 
-    json_t* edsi = json_object_get(object, "edsi");
-    if (edsi == NULL) {
+    json_t* tbs = json_object_get(object, "GetDeviceTEEStateTBSResponse");
+    if (tbs == NULL || !json_is_object(tbs)) {
         return 1; /* Error */
     }
 
-    JsonAuto jwke(json_pack("{s:s}", "alg", "A128CBC-HS256"), true);
-    if (jwke == NULL) {
-        return NULL;
-    }
-    const char* jwkestr = json_dumps(jwke, 0);
-    free((char*)jwkestr); /* TODO: use this */
-
-    bool ok = jose_jwk_gen(NULL, jwke);
-    if (!ok) {
-        return NULL;
+    json_t* edsi = json_object_get(tbs, "edsi");
+    if (edsi == NULL || !json_is_object(edsi)) {
+        return 1; /* Error */
     }
 
     /* Decrypt the edsi. */
+    json_t* jwkEncryption = GetTamEncryptionKey();
     size_t len = 0;
-    char* dsistr = (char*)jose_jwe_dec(NULL, edsi, NULL, jwke, &len);
+    char* dsistr = (char*)jose_jwe_dec(NULL, edsi, NULL, jwkEncryption, &len);
     if (dsistr == NULL) {
         return 1; /* Error */
     }
@@ -256,20 +248,25 @@ int OTrPHandleTADependencyNotification(const json_t* messageObject)
         return 1; /* Error */
     }
 
+    /* Verify the signature. */
+    json_t* jwkSigning = GetTamSigningKey();
+    // TODO
+
     return 0; /* no error */
 }
 
-/* Handle a set of TADependencyNotifications from an OTrP Agent. */
-int OTrPHandleTADependencyNotifications(void* sessionHandle, const json_t* messageObject)
+/* Handle a GetDeviceStateResponse from an OTrP Agent. */
+int OTrPHandleGetDeviceStateResponse(void* sessionHandle, const json_t* messageObject)
 {
     if (!json_is_array(messageObject)) {
         return 1; /* Error */
     }
 
+    // Parse to get list of GetDeviceTEEStateResponse JSON objects.
     size_t index;
     json_t* value;
     json_array_foreach(messageObject, index, value) {
-        int err = OTrPHandleTADependencyNotification(value);
+        int err = OTrPHandleGetDeviceTEEStateResponse(sessionHandle, value);
         if (err != 0) {
             return err;
         }
@@ -281,11 +278,8 @@ int OTrPHandleTADependencyNotifications(void* sessionHandle, const json_t* messa
 /* Handle an incoming message from an OTrP Agent. */
 int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
 {
-    if (strcmp(key, "GetDeviceTEEStateTBSResponse") == 0) {
+    if (strcmp(key, "GetDeviceStateResponse") == 0) {
         return OTrPHandleGetDeviceStateResponse(sessionHandle, messageObject);
-    } 
-    if (strcmp(key, "TADependencyNotifications") == 0) {
-        return OTrPHandleTADependencyNotifications(sessionHandle, messageObject);
     }
 
     /* Unrecognized message. */

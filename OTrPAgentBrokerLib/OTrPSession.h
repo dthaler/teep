@@ -3,8 +3,8 @@
 
 typedef struct {
     char TamUri[1024];
-    const char* MessageToSend;
-    const char* ResponseBuffer;
+    const char* OutboundMessage;
+    const char* InboundMessage;
 } OTrPSession;
 
 extern OTrPSession g_Session;

@@ -8,6 +8,7 @@ enclave {
         public void ecall_Initialize();
 
 		public int ecall_ProcessOTrPMessage(
+		    [user_check] void* sessionHandle,
             [in, size=messageLength] const char* message, 
             int messageLength);
     };
@@ -15,6 +16,7 @@ enclave {
     untrusted {
         /* define OCALLs here. */
         int ocall_SendOTrPMessage(
+		    [user_check] void* sessionHandle,
             [in, string] const char* message);
 
         void ocall_print([in, string] const char* message);

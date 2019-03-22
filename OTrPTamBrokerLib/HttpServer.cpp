@@ -11,24 +11,32 @@
 #include "../OTrPTamBrokerLib/OTrPTamBrokerLib.h"
 #include "../OTrPTamBrokerLib/OTrPTam_u.h" // for OCALL prototypes
 
+#define OTRP_JSON_MEDIA_TYPE "application/otrp+json"
+
 #pragma comment(lib, "httpapi.lib")
 
-const char* g_MessageToSend = NULL;
-int g_MessageLength = 0;
+typedef struct {
+    const char* MessageToSend;
+    int MessageLength;
+} OTrPSession;
 
-int ocall_SendOTrPMessage(const char* message)
+OTrPSession g_Session = { NULL, 0 };
+
+int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
 {
-    assert(g_MessageToSend == NULL);
+    OTrPSession* session = (OTrPSession*)sessionHandle;
+
+    assert(session->MessageToSend == NULL);
     int messageLength = strlen(message);
 
     // Save message for later transmission.
-    g_MessageLength = messageLength;
-    g_MessageToSend = (char*)malloc(messageLength);
-    if (g_MessageToSend == NULL) {
+    session->MessageLength = messageLength;
+    session->MessageToSend = (char*)malloc(messageLength);
+    if (session->MessageToSend == NULL) {
         return 1;
     }
     printf("Sending %d bytes...\n", messageLength);
-    memcpy((char*)g_MessageToSend, message, messageLength);
+    memcpy((char*)session->MessageToSend, message, messageLength);
     return 0;
 }
 
@@ -124,6 +132,7 @@ DWORD SendHttpResponse(
     return result;
 }
 
+// Handle an incoming POST request, which might be for any session.
 DWORD SendHttpPostResponse(
     IN HANDLE        hReqQueue,
     IN PHTTP_REQUEST pRequest)
@@ -226,6 +235,8 @@ DWORD SendHttpPostResponse(
                 NULL
             );
 
+            OTrPSession* session = &g_Session;
+
             switch (result)
             {
             case NO_ERROR:
@@ -283,11 +294,11 @@ DWORD SendHttpPostResponse(
 
                 // XXX handle POST body
 
-                if (OTrPHandleMessage((char*)pEntityBuffer, TotalBytesRead) != 0) {
+                if (OTrPHandleMessage(session, (char*)pEntityBuffer, TotalBytesRead) != 0) {
                     break;
                 }
 
-                sprintf_s(szContentLength, MAX_ULONG_STR, "%lu", g_MessageLength);
+                sprintf_s(szContentLength, MAX_ULONG_STR, "%lu", session->MessageLength);
                 ADD_KNOWN_HEADER(
                     response,
                     HttpHeaderContentLength,
@@ -334,8 +345,8 @@ DWORD SendHttpPostResponse(
                 dataChunk.FromFileHandle.FileHandle = hTempFile;
 #else
                 dataChunk.DataChunkType = HttpDataChunkFromMemory;
-                dataChunk.FromMemory.BufferLength = g_MessageLength;
-                dataChunk.FromMemory.pBuffer = (void*)g_MessageToSend;
+                dataChunk.FromMemory.BufferLength = session->MessageLength;
+                dataChunk.FromMemory.pBuffer = (void*)session->MessageToSend;
 #endif
 
                 result = HttpSendResponseEntityBody(
@@ -352,8 +363,8 @@ DWORD SendHttpPostResponse(
                 );
 
                 // Free message.
-                free((char*)g_MessageToSend);
-                g_MessageToSend = NULL;
+                free((char*)session->MessageToSend);
+                session->MessageToSend = NULL;
 
                 if (result != NO_ERROR)
                 {
@@ -415,6 +426,7 @@ Done:
     return result;
 }
 
+// Handle a series of incoming requests, which might be for different sessions.
 DWORD DoReceiveRequests(
     IN HANDLE hReqQueue)
 {
@@ -466,6 +478,8 @@ DWORD DoReceiveRequests(
 
         if (NO_ERROR == result)
         {
+            OTrPSession* session = &g_Session;
+
             //
             // Worked!
             //
@@ -476,7 +490,7 @@ DWORD DoReceiveRequests(
                     pRequest->CookedUrl.pFullUrl);
 
                 if (wcscmp(pRequest->CookedUrl.pAbsPath, OTRP_PATH) == 0) {
-                    if (OTrPHandleConnect() != 0) {
+                    if (OTrPHandleConnect(session) != 0) {
                         break;
                     }
 
@@ -485,12 +499,12 @@ DWORD DoReceiveRequests(
                         pRequest,
                         200,
                         "OK",
-                        "application/json",
-                        g_MessageToSend,
-                        g_MessageLength);
+                        OTRP_JSON_MEDIA_TYPE,
+                        session->MessageToSend,
+                        session->MessageLength);
 
-                    free((char*)g_MessageToSend);
-                    g_MessageToSend = NULL;
+                    free((char*)session->MessageToSend);
+                    session->MessageToSend = NULL;
                 } else {
                     pResponseString = "[{\"error\":1234}}]\r\n";
 
@@ -499,7 +513,7 @@ DWORD DoReceiveRequests(
                         pRequest,
                         200,
                         "OK",
-                        "application/json",
+                        OTRP_JSON_MEDIA_TYPE,
                         pResponseString,
                         strlen(pResponseString));
                 }

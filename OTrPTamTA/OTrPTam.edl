@@ -7,7 +7,7 @@ enclave {
 
     trusted {
         /* define ECALLs here. */
-        public int ecall_ProcessOTrPConnect();
+        public int ecall_ProcessOTrPConnect([user_check] void* sessionHandle);
     };
 
     untrusted {

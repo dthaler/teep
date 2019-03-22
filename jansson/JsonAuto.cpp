@@ -81,3 +81,8 @@ json_t* JsonAuto::Detach(void)
     ptr = NULL;
     return obj;
 }
+
+void JsonAuto::Attach(json_t* obj)
+{
+    ptr = obj;
+}

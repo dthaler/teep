@@ -74,5 +74,14 @@
     <ClInclude Include="JsonAuto.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="jansson_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\jansson\include\jansson.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

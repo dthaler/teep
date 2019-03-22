@@ -13,34 +13,42 @@ extern "C" {
 #include "jose/jws.h"
 #include "jose/b64.h"
 #include "../OTrPCommonTALib/common.h"
-char* strdup(const char* str);
+    char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
 
 #define UNIQUE_ID_LEN 16
 
-json_t* GetNewRequestID(void)
+/* Try to constrict a globally unique value. */
+json_t* GetNewGloballyUniqueID(void)
 {
+    /* Create a random 16-byte value. */
     unsigned char value[UNIQUE_ID_LEN];
-
     oe_result_t result = oe_random(value, UNIQUE_ID_LEN);
     if (result != OE_OK) {
         return NULL;
     }
 
+    /* Base64-encode it into a string. */
     return jose_b64_enc(value, sizeof(value));
 }
 
+/* Construct a unique request ID.  The OTrP spec does not say what
+ * the scope of uniqueness needs to be, but we currently try to use
+ * globally unique value.
+ */
+json_t* GetNewRequestID(void)
+{
+    return GetNewGloballyUniqueID();
+}
+
+/* Construct a unique transaction ID.  The OTrP spec does not say what
+ * the scope of uniqueness needs to be, but we currently try to use
+ * a globally unique value.
+ */
 json_t* GetNewTransactionID(void)
 {
-    unsigned char value[UNIQUE_ID_LEN];
-
-    oe_result_t result = oe_random(value, UNIQUE_ID_LEN);
-    if (result != OE_OK) {
-        return NULL;
-    }
-
-    return jose_b64_enc(value, sizeof(value));
+    return GetNewGloballyUniqueID();
 }
 
 /* Compose a GetDeviceStateTBSRequest message. */
@@ -81,20 +89,27 @@ const char* ComposeGetDeviceStateTBSRequest(void)
 
 const char* ComposeGetDeviceStateRequest(void)
 {
-    JsonAuto jwke(json_pack("{s:s}", "alg", "RS256"), true);
-    if (jwke == NULL) {
+    /* Construct a key.  TODO: this should only be done once. */
+    JsonAuto jwk(json_pack("{s:s}", "alg", "RS256"), true);
+    if (jwk == NULL) {
         return NULL;
     }
-
-    bool ok = jose_jwk_gen(NULL, jwke);
+    bool ok = jose_jwk_gen(NULL, jwk);
     if (!ok) {
         return NULL;
     }
 
+    /* Compose a raw GetDeviceState request to be signed. */
     const char* tbsRequest = ComposeGetDeviceStateTBSRequest();
     if (tbsRequest == NULL) {
         return NULL;
     }
+#ifdef _DEBUG
+    ocall_print("Sending TBS: ");
+    ocall_print(tbsRequest);
+#endif
+
+    /* Base64 encode it. */
     size_t len = strlen(tbsRequest);
     json_t* b64Request = jose_b64_enc(tbsRequest, len);
     free((void*)tbsRequest);
@@ -102,7 +117,7 @@ const char* ComposeGetDeviceStateRequest(void)
         return NULL;
     }
 
-    /* Create a signed message. */
+    /* Create the signed message. */
     JsonAuto jws(json_pack("{s:o}", "payload", b64Request), true);
     if ((json_t*)jws == NULL) {
         return NULL;
@@ -113,8 +128,8 @@ const char* ComposeGetDeviceStateRequest(void)
     if ((json_t*)header == NULL) {
         return NULL;
     }
-    void* certChain = "abc"; // XXX
-    size_t certChainLen = 3; // XXX
+    void* certChain = "abc"; // TODO
+    size_t certChainLen = 3; // TODO
     if (json_object_set_new(header, "x5c", jose_b64_enc(certChain, certChainLen)) < 0) {
         return NULL;
     }
@@ -123,7 +138,7 @@ const char* ComposeGetDeviceStateRequest(void)
         NULL,    // Configuration context (optional)
         jws,     // The JWE object
         sig,     // The JWE recipient object(s) or NULL
-        jwke);   // The JWK(s) or JWKSet used for wrapping.
+        jwk);   // The JWK(s) or JWKSet used for wrapping.
     if (!ok) {
         return NULL;
     }
@@ -137,11 +152,13 @@ const char* ComposeGetDeviceStateRequest(void)
         return NULL;
     }
 
+    /* Serialize it to a single string. */
     const char* message = json_dumps(object, 0);
     return message;
 }
 
-int ecall_ProcessOTrPConnect(void)
+/* Handle a new incoming connection from a device. */
+int ecall_ProcessOTrPConnect(void* sessionHandle)
 {
     ocall_print("Received client connection\n");
 
@@ -153,7 +170,7 @@ int ecall_ProcessOTrPConnect(void)
     ocall_print("Sending GetDeviceStateRequest...\n");
 
     int err = 0;
-    oe_result_t result = ocall_SendOTrPMessage(&err, message);
+    oe_result_t result = ocall_SendOTrPMessage(&err, sessionHandle, message);
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -162,7 +179,8 @@ int ecall_ProcessOTrPConnect(void)
     return err;
 }
 
-int OTrPHandleGetDeviceStateResponse(const json_t* messageObject)
+/* Handle a GetDeviceStateResponse from an OTrP Agent. */
+int OTrPHandleGetDeviceStateResponse(void* sessionHandle, const json_t* messageObject)
 {
     if (!json_is_object(messageObject)) {
         return 1; /* Error */
@@ -171,6 +189,7 @@ int OTrPHandleGetDeviceStateResponse(const json_t* messageObject)
     return 0; /* no error */
 }
 
+/* Handle a single TADependencyNotification from an OTrP Agent. */
 int OTrPHandleTADependencyNotification(const json_t* messageObject)
 {
     if (!json_is_object(messageObject)) {
@@ -182,8 +201,10 @@ int OTrPHandleTADependencyNotification(const json_t* messageObject)
     if (jws == NULL) {
         return 1; /* Error */
     }
+#ifdef _DEBUG
     const char* message = json_dumps(jws, 0);
-    free((char*)message); // XXX
+    free((char*)message);
+#endif
 
     /* Verify the signature. */
     JsonAuto jwkr(json_pack("{s:s}", "alg", "RS256"), true);
@@ -215,14 +236,14 @@ int OTrPHandleTADependencyNotification(const json_t* messageObject)
         return NULL;
     }
     const char* jwkestr = json_dumps(jwke, 0);
-    free((char*)jwkestr); // TODO: use this
+    free((char*)jwkestr); /* TODO: use this */
 
     bool ok = jose_jwk_gen(NULL, jwke);
     if (!ok) {
         return NULL;
     }
 
-    // Decrypt the edsi.
+    /* Decrypt the edsi. */
     size_t len = 0;
     char* dsistr = (char*)jose_jwe_dec(NULL, edsi, NULL, jwke, &len);
     if (dsistr == NULL) {
@@ -238,7 +259,8 @@ int OTrPHandleTADependencyNotification(const json_t* messageObject)
     return 0; /* no error */
 }
 
-int OTrPHandleTADependencyNotifications(const json_t* messageObject)
+/* Handle a set of TADependencyNotifications from an OTrP Agent. */
+int OTrPHandleTADependencyNotifications(void* sessionHandle, const json_t* messageObject)
 {
     if (!json_is_array(messageObject)) {
         return 1; /* Error */
@@ -256,13 +278,14 @@ int OTrPHandleTADependencyNotifications(const json_t* messageObject)
     return 0; /* no error */
 }
 
-int OTrPHandleMessage(const char* key, const json_t* messageObject)
+/* Handle an incoming message from an OTrP Agent. */
+int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
 {
     if (strcmp(key, "GetDeviceTEEStateTBSResponse") == 0) {
-        return OTrPHandleGetDeviceStateResponse(messageObject);
+        return OTrPHandleGetDeviceStateResponse(sessionHandle, messageObject);
     } 
     if (strcmp(key, "TADependencyNotifications") == 0) {
-        return OTrPHandleTADependencyNotifications(messageObject);
+        return OTrPHandleTADependencyNotifications(sessionHandle, messageObject);
     }
 
     /* Unrecognized message. */

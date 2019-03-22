@@ -1,4 +1,5 @@
 #pragma once
+#include <openenclave/host.h>
 #include "JsonAuto.h"
 
 #define ABT_USER_AGENT "OTrP Test"

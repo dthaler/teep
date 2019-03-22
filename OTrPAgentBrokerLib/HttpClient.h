@@ -5,8 +5,7 @@
 extern "C" {
 #endif
 
-    const char* ConnectToTam(const char* serverName);
-    const char* HandleHttpResponse(const char* message, const char* uri);
+    const char* HandleHttpResponse(void* sessionHandle, const char* message);
 
 #ifdef __cplusplus
 };

@@ -77,16 +77,9 @@
 #define json_auto_t json_t
 #endif
 
-#ifdef USE_SGX
-/****************** SGX defines ***************/
-#include <stdlib.h>
-#include <sgx.h>
-#include <sgx_tprotected_fs.h>
-#define FILE SGX_FILE
-#define fwrite sgx_fwrite
-#define fopen  sgx_fopen_auto_key
-#define fclose sgx_fclose
-#define stdin NULL
+#ifndef _OE_HOST_H
+#include <openenclave/enclave.h>
+#include <openenclave/bits/stdio.h>
 #endif
 
 #endif

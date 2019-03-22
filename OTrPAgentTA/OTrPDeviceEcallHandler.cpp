@@ -1,9 +1,10 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#include <stdlib.h>
-#include <string.h>
+#include <openenclave/enclave.h>
 #include "OTrPAgent_t.h"
 
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #define FILE void
 extern "C" {
 #include "jansson.h"
@@ -139,29 +140,51 @@ json_t* AddEdsiToObject(JsonAuto& request, const json_t* jwke)
     return request.AddObjectToObject("edsi", jwe);
 }
 
-json_t* CreateNewJwke()
+json_t* CreateNewJwk(const char* alg)
 {
-    JsonAuto jwke(json_pack("{s:s}", "alg", "ECDH-ES+A128KW"), true);
-    if (jwke == NULL) {
+    JsonAuto jwk(json_pack("{s:s}", "alg", alg), true);
+    if (jwk == NULL) {
         return NULL;
     }
 
-    bool ok = jose_jwk_gen(NULL, jwke);
+    bool ok = jose_jwk_gen(NULL, jwk);
     if (!ok) {
         return NULL;
     }
 
-    return json_incref(jwke);
+    return json_incref(jwk);
+}
+
+json_t* CreateNewJwke()
+{
+    return CreateNewJwk("ECDH-ES+A128KW");
+}
+
+json_t* CreateNewJwkR1_5()
+{
+    return CreateNewJwk("RSA1_5");
+}
+
+json_t* CreateNewJwkRS256()
+{
+    return CreateNewJwk("RS256");
+}
+
+JsonAuto g_AgentKey;
+
+json_t* GetAgentKey()
+{
+    if ((json_t*)g_AgentKey == NULL) {
+        g_AgentKey = CreateNewJwkRS256();
+    }
+    return (json_t*)g_AgentKey;
 }
 
 /* Compose a TADependencyTBSNotification message. */
 const char* ComposeTADependencyTBSNotification(void)
 {
-    JsonAuto jwke(CreateNewJwke(), true);
-    if (jwke == NULL) {
-        return NULL;
-    }
-    const char* jwkestr = json_dumps(jwke, 0);
+    json_t* jwk = GetAgentKey();
+    const char* jwkestr = json_dumps(jwk, 0);
     free((char*)jwkestr); // TODO: use this
 
     JsonAuto object(json_object(), true);
@@ -177,15 +200,15 @@ const char* ComposeTADependencyTBSNotification(void)
     }
 
     /* Signerreq should be true if the TAM should send its signer certificate and
-    * OCSP data again in the subsequent messages.  The value may be
-    * false if the device caches the TAM's signer certificate and OCSP
-    * status.
-    */
+     * OCSP data again in the subsequent messages.
+     * TODO: The value may be false if the device caches the TAM's signer certificate
+     * and OCSP status.
+     */
     if (request.AddStringToObject("signerreq", "true") == NULL) {
         return NULL;
     }
 
-    if (AddEdsiToObject(request, jwke)) {
+    if (AddEdsiToObject(request, jwk)) {
         return NULL;
     }
  
@@ -197,15 +220,7 @@ const char* ComposeTADependencyTBSNotification(void)
 /* Compose a TADependencyNotification message. */
 const char* ComposeTADependencyNotification(void)
 {
-    JsonAuto jwke(json_pack("{s:s}", "alg", "RS256"), true);
-    if (jwke == NULL) {
-        return NULL;
-    }
-
-    bool ok = jose_jwk_gen(NULL, jwke);
-    if (!ok) {
-        return NULL;
-    }
+    json_t* jwk = GetAgentKey();
 
     /* Get a TADependencyTBSNotification. */
     const char* tbsNotification = ComposeTADependencyTBSNotification();
@@ -224,11 +239,11 @@ const char* ComposeTADependencyNotification(void)
     if ((json_t*)jws == NULL) {
         return NULL;
     }
-    ok = jose_jws_sig(
+    bool ok = jose_jws_sig(
         NULL,    // Configuration context (optional)
         jws,     // The JWE object
         NULL,    // The JWE recipient object(s) or NULL
-        jwke);   // The JWK(s) or JWKSet used for wrapping.
+        jwk);   // The JWK(s) or JWKSet used for wrapping.
     if (!ok) {
         return NULL;
     }
@@ -254,7 +269,7 @@ const char* ComposeTADependencyNotification(void)
     return message;
 }
 
-int ecall_ProcessOTrPConnect(void)
+int ecall_ProcessOTrPConnect(void* sessionHandle)
 {
     const char* message = NULL;
     size_t messageLength = 0;
@@ -270,7 +285,7 @@ int ecall_ProcessOTrPConnect(void)
 
     ocall_print("Sending TADependencyTBSNotification...\n");
 
-    result = ocall_SendOTrPMessage(&err, message);
+    result = ocall_SendOTrPMessage(&err, sessionHandle, message);
     if (result != OE_OK) {
         return result;
     }
@@ -282,7 +297,7 @@ int ecall_ProcessOTrPConnect(void)
 const char* ComposeGetDeviceTEEStateTBSResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
-    const json_t* jwke)       // Key to encrypt with.
+    const json_t* jwk)       // Public key to encrypt with.
 {
     /* Compose a GetDeviceStateResponse message. */
     JsonAuto object(json_object(), true);
@@ -328,7 +343,7 @@ const char* ComposeGetDeviceTEEStateTBSResponse(
         return NULL;
     }
 
-    if (AddEdsiToObject(response, jwke) == NULL) {
+    if (AddEdsiToObject(response, jwk) == NULL) {
         return NULL;
     }
 
@@ -345,13 +360,19 @@ const char* ComposeGetDeviceTEEStateTBSResponse(
 json_t* ComposeGetDeviceTEEStateResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
-    const json_t* jwke)       // Key to encrypt with.
+    const json_t* jwkTam,     // TAM Public key to encrypt with.
+    const json_t* jwkAgent)   // Agent private key to sign with.
 {
     /* Get a GetDeviceTEEStateTBSResponse. */
-    const char* tbsResponse = ComposeGetDeviceTEEStateTBSResponse(request, statusValue, jwke);
+    const char* tbsResponse = ComposeGetDeviceTEEStateTBSResponse(request, statusValue, jwkTam);
     if (tbsResponse == NULL) {
         return NULL;
     }
+#ifdef _DEBUG
+    ocall_print("Sending TBS: ");
+    ocall_print(tbsResponse);
+    ocall_print("\n");
+#endif
     size_t len = strlen(tbsResponse);
     json_t* b64Response = jose_b64_enc(tbsResponse, len);
     free((void*)tbsResponse);
@@ -359,7 +380,7 @@ json_t* ComposeGetDeviceTEEStateResponse(
         return NULL;
     }
 
-    /* Create a signed message. */
+    // Create a signed message.
     JsonAuto jws(json_pack("{s:o}", "payload", b64Response, true));
     if ((json_t*)jws == NULL) {
         return NULL;
@@ -367,8 +388,8 @@ json_t* ComposeGetDeviceTEEStateResponse(
     bool ok = jose_jws_sig(
         NULL,    // Configuration context (optional)
         jws,     // The JWE object
-        NULL,    // The JWE recipient object(s) or NULL
-        jwke);   // The JWK(s) or JWKSet used for wrapping.
+        NULL,
+        jwkAgent);   // The JWK(s) or JWKSet used for wrapping.
     if (!ok) {
         return NULL;
     }
@@ -380,9 +401,10 @@ json_t* ComposeGetDeviceTEEStateResponse(
 const char* ComposeGetDeviceStateResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
-    const json_t* jwke)       // Key to encrypt with.
+    const json_t* jwkTam,     // TAM public key to encrypt with.
+    const json_t* jwkAgent)   // Agent private key to sign with.
 {
-    JsonAuto jws(ComposeGetDeviceTEEStateResponse(request, statusValue, jwke), true);
+    JsonAuto jws(ComposeGetDeviceTEEStateResponse(request, statusValue, jwkTam, jwkAgent), true);
     if ((json_t*)jws == NULL) {
         return NULL;
     }
@@ -408,7 +430,7 @@ const char* ComposeGetDeviceStateResponse(
     return message;
 }
 
-int OTrPHandleGetDeviceStateRequest(const json_t* request)
+int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
 {
     if (!json_is_object(request)) {
         return 1; /* Error */
@@ -423,6 +445,11 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
     if (!payload) {
         return 1; /* Error */
     }
+#ifdef _DEBUG
+    ocall_print("Received TBS: ");
+    ocall_print(payload);
+    ocall_print("\n");
+#endif
     json_error_t error;
     JsonAuto object(json_loads(payload, 0, &error), true);
     if ((json_t*)object == NULL) {
@@ -438,8 +465,6 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
      *     *  A TEE can use its own clock time for the OCSP stapling data
      *        validation.
      */
-    const char* debug = json_dumps(object, 0);
-    free((char*)debug); // TODO: use this
     json_t* tbsRequest = json_object_get(object, "GetDeviceStateTBSRequest");
     if (tbsRequest == NULL) {
         return 1;
@@ -473,7 +498,7 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
     free(certChain);
 
     // Create a JWK from the server's public key.
-    JsonAuto jwke(CreateNewJwke(), true); // TODO: fix this
+    JsonAuto jwkTam(CreateNewJwkR1_5(), true); // TODO: fix this
 
     /* TODO: Cache the CA OCSP stapling data and certificate revocation
     *        check status for other subsequent requests.
@@ -495,26 +520,68 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
 
     statusValue = "pass";
 
-    const char* message = ComposeGetDeviceStateResponse(tbsRequest, statusValue, jwke);
+    json_t* jwkAgent = GetAgentKey();
+    const char* message = ComposeGetDeviceStateResponse(tbsRequest, statusValue, jwkTam, jwkAgent);
     if (message == NULL) {
         return 1; /* Error */
     }
 
     ocall_print("Sending GetDeviceStateResponse...\n");
 
-    result = ocall_SendOTrPMessage(&err, message);
+    result = ocall_SendOTrPMessage(&err, sessionHandle, message);
     if (result != OE_OK) {
         return result;
     }
     return err;
 }
 
-int OTrPHandleMessage(const char* key, const json_t* messageObject)
+int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
 {
     if (strcmp(key, "GetDeviceStateRequest") == 0) {
-        return OTrPHandleGetDeviceStateRequest(messageObject);
+        return OTrPHandleGetDeviceStateRequest(sessionHandle, messageObject);
     }
 
     /* Unrecognized message. */
     return 1;
+}
+
+int ecall_RequestTA(
+    const char* taid,
+    const char* tamUri)
+{
+    int err = 0;
+    oe_result_t result = OE_OK;
+    size_t responseLength = 0;
+
+    // TODO: See whether taid is already installed.
+    // For now we skip this step and pretend it's not.
+    bool isInstalled = false;
+
+    if (isInstalled) {
+        // Already installed, nothing to do.
+        // This counts as "pass no data back" in the broker spec.
+        return 0;
+    }
+
+    // TODO: we may want to modify the TAM URI here.
+
+    // TODO: see whether we already have a TAM cert we trust.
+    // For now we skip this step and say we don't.
+    bool haveTrustedTamCert = false;
+
+    if (!haveTrustedTamCert) {
+        // Pass back a TAM URI with no buffer.
+        result = ocall_Connect(&err, tamUri);
+        if (result != OE_OK) {
+            return result;
+        }
+        if (err != 0) {
+            return err;
+        }
+    } else {
+        // TODO: implement going on to the next message.
+        assert(false);
+    }
+
+    return err;
 }

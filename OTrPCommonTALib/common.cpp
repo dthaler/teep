@@ -39,6 +39,7 @@ char *DecodeJWS(const json_t *jws, const json_t *jwk)
 }
 
 int ecall_ProcessOTrPMessage(
+    void* sessionHandle,
     const char* message,
     int messageLength)
 {
@@ -84,7 +85,7 @@ int ecall_ProcessOTrPMessage(
         return 1; /* Error */
     }
 
-    err = OTrPHandleMessage(key, messageObject);
+    err = OTrPHandleMessage(sessionHandle, key, messageObject);
 
     return err;
 }

@@ -276,6 +276,7 @@ int OTrPHandleGetDeviceStateResponse(void* sessionHandle, const json_t* messageO
 }
 
 /* Handle an incoming message from an OTrP Agent. */
+/* Returns 0 on success, or non-zero if error. */
 int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
 {
     if (strcmp(key, "GetDeviceStateResponse") == 0) {

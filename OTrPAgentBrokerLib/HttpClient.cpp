@@ -15,7 +15,7 @@ extern "C" {
 
 OTrPSession g_Session = { NULL };
 
-// Send a GET to the indicated URI.
+// Send an empty POST to the indicated URI.
 int ocall_Connect(const char* tamUri)
 {
     char authority[266];
@@ -40,7 +40,7 @@ int ocall_Connect(const char* tamUri)
     strcpy_s(session->TamUri, tamUri);
 
     int err = MakeHttpCall(
-        "GET",
+        "POST",
         authority,
         path,
         NULL,

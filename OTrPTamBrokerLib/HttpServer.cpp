@@ -15,6 +15,8 @@
 
 #pragma comment(lib, "httpapi.lib")
 
+#define ASSERT(x) if (!(x)) { DebugBreak(); }
+
 typedef struct {
     const char* OutboundMessage;
     int MessageLength;
@@ -133,296 +135,57 @@ DWORD SendHttpResponse(
 }
 
 // Handle an incoming POST request, which might be for any session.
-DWORD SendHttpPostResponse(
+DWORD HandleOtrpHttpPost(
     IN HANDLE        hReqQueue,
     IN PHTTP_REQUEST pRequest)
 {
-    HTTP_RESPONSE   response;
-    DWORD           result;
-    DWORD           bytesSent;
-    PUCHAR          pEntityBuffer;
-    ULONG           EntityBufferLength;
-    ULONG           BytesRead;
-    ULONG           TempFileBytesWritten;
-    HANDLE          hTempFile;
-    TCHAR           szTempName[MAX_PATH + 1];
-    CHAR            szContentLength[MAX_ULONG_STR];
-    HTTP_DATA_CHUNK dataChunk;
-    ULONG           TotalBytesRead = 0;
+    OTrPSession* session = &g_Session;
+    int result = 0;
 
-    BytesRead = 0;
-    hTempFile = INVALID_HANDLE_VALUE;
-
-    //
-    // Allocate space for an entity buffer. Buffer can be increased
-    // on demand.
-    //
-    EntityBufferLength = 2048;
-    pEntityBuffer = (PUCHAR)ALLOC_MEM(EntityBufferLength);
-
-    if (pEntityBuffer == NULL)
-    {
-        result = ERROR_NOT_ENOUGH_MEMORY;
-        wprintf(L"Insufficient resources \n");
-        goto Done;
-    }
-
-    //
-    // Initialize the HTTP response structure.
-    //
-    INITIALIZE_HTTP_RESPONSE(&response, 200, "OK");
-
-    //
-    // NOTE: If the HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY flag had been
-    //       passed with HttpReceiveHttpRequest(), the entity would
-    //       have been a part of HTTP_REQUEST (using the pEntityChunks
-    //       field). Because that flag was not passed, there are no
-    //       o entity bodies in HTTP_REQUEST.
-    //
-    if (pRequest->Flags & HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS)
-    {
-        // The entity body is sent over multiple calls. Collect
-        // these in a file and send back. Create a temporary
-        // file.
-        //
-
-        if (GetTempFileName(
-            L".",
-            L"New",
-            0,
-            szTempName
-        ) == 0)
-        {
-            result = GetLastError();
-            wprintf(L"GetTempFileName failed with %lu\n", result);
-            goto Done;
-        }
-
-        hTempFile = CreateFile(
-            szTempName,
-            GENERIC_READ | GENERIC_WRITE,
-            0,                  // Do not share.
-            NULL,               // No security descriptor.
-            CREATE_ALWAYS,      // Overrwrite existing.
-            FILE_ATTRIBUTE_NORMAL,    // Normal file.
-            NULL
-        );
-
-        if (hTempFile == INVALID_HANDLE_VALUE)
-        {
-            result = GetLastError();
-            wprintf(L"Cannot create temporary file. Error %lu\n",
-                result);
-            goto Done;
-        }
-
-        for (;;)
-        {
-            //
-            // Read the entity chunk from the request.
-            //
-            BytesRead = 0;
-            result = HttpReceiveRequestEntityBody(
+    if (pRequest->EntityChunkCount == 0) {
+        // A 0-byte post is a connect.
+        if (OTrPHandleConnect(session) != 0) {
+            return SendHttpResponse(
                 hReqQueue,
-                pRequest->RequestId,
-                0,
-                pEntityBuffer,
-                EntityBufferLength,
-                &BytesRead,
-                NULL
-            );
-
-            OTrPSession* session = &g_Session;
-
-            switch (result)
-            {
-            case NO_ERROR:
-
-                if (BytesRead != 0)
-                {
-                    TotalBytesRead += BytesRead;
-                    WriteFile(
-                        hTempFile,
-                        pEntityBuffer,
-                        BytesRead,
-                        &TempFileBytesWritten,
-                        NULL
-                    );
-                }
-                break;
-
-            case ERROR_HANDLE_EOF:
-
-                //
-                // The last request entity body has been read.
-                // Send back a response.
-                //
-                // To illustrate entity sends via
-                // HttpSendResponseEntityBody, the response will
-                // be sent over multiple calls. To do this,
-                // pass the HTTP_SEND_RESPONSE_FLAG_MORE_DATA
-                // flag.
-                if (BytesRead != 0)
-                {
-                    TotalBytesRead += BytesRead;
-                    WriteFile(
-                        hTempFile,
-                        pEntityBuffer,
-                        BytesRead,
-                        &TempFileBytesWritten,
-                        NULL
-                    );
-                }
-
-                //
-                // Because the response is sent over multiple
-                // API calls, add a content-length.
-                //
-                // Alternatively, the response could have been
-                // sent using chunked transfer encoding, by
-                // passing "Transfer-Encoding: Chunked".
-                //
-                // NOTE: Because the TotalBytesread in a ULONG
-                //       are accumulated, this will not work
-                //       for entity bodies larger than 4 GB.
-                //       For support of large entity bodies,
-                //       use a ULONGLONG.
-                //
-
-                if (OTrPHandleMessage(session, (char*)pEntityBuffer, TotalBytesRead) != 0) {
-                    INITIALIZE_HTTP_RESPONSE(&response, 400, "Bad Request");
-                }
-                else
-                {
-                    sprintf_s(szContentLength, MAX_ULONG_STR, "%lu", session->MessageLength);
-                    ADD_KNOWN_HEADER(
-                        response,
-                        HttpHeaderContentLength,
-                        szContentLength
-                    );
-                }
-
-                result =
-                    HttpSendHttpResponse(
-                        hReqQueue,           // ReqQueueHandle
-                        pRequest->RequestId, // Request ID
-                        HTTP_SEND_RESPONSE_FLAG_MORE_DATA,
-                        &response,       // HTTP response
-                        NULL,            // pReserved1
-                        &bytesSent,      // bytes sent-optional
-                        NULL,            // pReserved2
-                        0,               // Reserved3
-                        NULL,            // LPOVERLAPPED
-                        NULL             // pReserved4
-                    );
-
-                if (result != NO_ERROR)
-                {
-                    wprintf(
-                        L"HttpSendHttpResponse failed with %lu\n",
-                        result
-                    );
-                    goto Done;
-                }
-
-                if (session->OutboundMessage != nullptr) {
-#if 0
-                    //
-                    // Send entity body from a file handle.
-                    //
-                    dataChunk.DataChunkType =
-                        HttpDataChunkFromFileHandle;
-
-                    dataChunk.FromFileHandle.
-                        ByteRange.StartingOffset.QuadPart = 0;
-
-                    dataChunk.FromFileHandle.
-                        ByteRange.Length.QuadPart =
-                        HTTP_BYTE_RANGE_TO_EOF;
-
-                    dataChunk.FromFileHandle.FileHandle = hTempFile;
-#else
-                    dataChunk.DataChunkType = HttpDataChunkFromMemory;
-                    dataChunk.FromMemory.BufferLength = session->MessageLength;
-                    dataChunk.FromMemory.pBuffer = (void*)session->OutboundMessage;
-#endif
-
-                    result = HttpSendResponseEntityBody(
-                        hReqQueue,
-                        pRequest->RequestId,
-                        0,           // This is the last send.
-                        1,           // Entity Chunk Count.
-                        &dataChunk,
-                        NULL,
-                        NULL,
-                        0,
-                        NULL,
-                        NULL
-                    );
-
-                    // Free message.
-                    free((char*)session->OutboundMessage);
-                    session->OutboundMessage = NULL;
-
-                    if (result != NO_ERROR)
-                    {
-                        wprintf(
-                            L"HttpSendResponseEntityBody failed %lu\n",
-                            result
-                        );
-                    }
-                }
-
-                goto Done;
-
-                break;
-
-            default:
-                wprintf(
-                    L"HttpReceiveRequestEntityBody failed with %lu\n",
-                    result);
-                goto Done;
-            }
+                pRequest,
+                400,
+                "Bad Request",
+                NULL,
+                NULL,
+                0);
         }
-    }
-    else
-    {
-        // This request does not have an entity body.
-        //
 
-        result = HttpSendHttpResponse(
-            hReqQueue,           // ReqQueueHandle
-            pRequest->RequestId, // Request ID
-            0,
-            &response,           // HTTP response
-            NULL,                // pReserved1
-            &bytesSent,          // bytes sent (optional)
-            NULL,                // pReserved2
-            0,                   // Reserved3
-            NULL,                // LPOVERLAPPED
-            NULL                 // pReserved4
-        );
-        if (result != NO_ERROR)
-        {
-            wprintf(L"HttpSendHttpResponse failed with %lu\n",
-                result);
-        }
+        result = SendHttpResponse(
+                hReqQueue,
+                pRequest,
+                200,
+                "OK",
+                OTRP_JSON_MEDIA_TYPE,
+                session->OutboundMessage,
+                session->MessageLength);
+
+        free((char*)session->OutboundMessage);
+        session->OutboundMessage = nullptr;
+        session->MessageLength = 0;
+
+        return result;
     }
 
-Done:
-
-    if (pEntityBuffer)
-    {
-        FREE_MEM(pEntityBuffer);
+    ASSERT(pRequest->EntityChunkCount == 1);
+    ASSERT(pRequest->pEntityChunks[0].DataChunkType == HttpDataChunkFromMemory);
+    int size = pRequest->pEntityChunks[0].FromMemory.BufferLength;
+    const char* message = (char*)pRequest->pEntityChunks[0].FromMemory.pBuffer;
+    if (OTrPHandleMessage(session, message, size) != 0) {
+        (void)SendHttpResponse(
+            hReqQueue,
+            pRequest,
+            400,
+            "Bad Request",
+            NULL,
+            NULL,
+            0);
     }
-
-    if (INVALID_HANDLE_VALUE != hTempFile)
-    {
-        CloseHandle(hTempFile);
-        DeleteFile(szTempName);
-    }
-
-    return result;
+    return 0;
 }
 
 // Handle a series of incoming requests, which might be for different sessions.
@@ -523,9 +286,16 @@ DWORD DoReceiveRequests(
                     pRequest->CookedUrl.pFullUrl);
 
                 if (wcscmp(pRequest->CookedUrl.pAbsPath, OTRP_PATH) == 0) {
-                    result = SendHttpPostResponse(hReqQueue, pRequest);
+                    result = HandleOtrpHttpPost(hReqQueue, pRequest);
                 } else {
-                    break;
+                    result = SendHttpResponse(
+                        hReqQueue,
+                        pRequest,
+                        404,
+                        "Not Found",
+                        NULL,
+                        NULL,
+                        0);
                 }
                 break;
             default:
@@ -539,8 +309,7 @@ DWORD DoReceiveRequests(
                     "Not Implemented",
                     NULL,
                     NULL,
-                    0
-                );
+                    0);
                 break;
             }
 

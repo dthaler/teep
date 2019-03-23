@@ -41,6 +41,7 @@ int StartAgentBroker(void)
         "OTrPAgentTA",
 #endif
         &enclave);
+    g_ta_eid = enclave;
     if (result != OE_OK)
     {
         fprintf(
@@ -48,9 +49,10 @@ int StartAgentBroker(void)
             "oe_create_enclave(): result=%u (%s)\n",
             result,
             oe_result_str(result));
+        return result;
     }
 
-    g_ta_eid = enclave;
+    result = ecall_Initialize(enclave);
     return result;
 }
 

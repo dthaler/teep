@@ -1,9 +1,10 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#include <stdlib.h>
-#include <string.h>
+#include <openenclave/enclave.h>
 #include "OTrPAgent_t.h"
 
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #define FILE void
 extern "C" {
 #include "jansson.h"
@@ -25,90 +26,90 @@ char* strdup(const char* str);
 const char* ComposeDeviceStateInformation(void)
 {
     JsonAuto object(json_object(), true);
-    if ((json_t*)object == NULL) {
-        return NULL;
+    if ((json_t*)object == nullptr) {
+        return nullptr;
     }
 
     JsonAuto dsi = object.AddObjectToObject("dsi");
-    if ((json_t*)dsi == NULL) {
-        return NULL;
+    if ((json_t*)dsi == nullptr) {
+        return nullptr;
     }
 
 #ifndef OE_USE_SGX
     /* Add tfwdata. */
     JsonAuto tfwdata = dsi.AddObjectToObject("tfwdata");
-    if (tfwdata == NULL) {
-        return NULL;
+    if (tfwdata == nullptr) {
+        return nullptr;
     }
-    if (tfwdata.AddStringToObject("tbs", "<TFW to be signed data is the tid>") == NULL) {
-        return NULL;
+    if (tfwdata.AddStringToObject("tbs", "<TFW to be signed data is the tid>") == nullptr) {
+        return nullptr;
     }
-    if (tfwdata.AddStringToObject("cert", "<BASE64 encoded TFW certificate>") == NULL) {
-        return NULL;
+    if (tfwdata.AddStringToObject("cert", "<BASE64 encoded TFW certificate>") == nullptr) {
+        return nullptr;
     }
-    if (tfwdata.AddStringToObject("sigalg", "Signing method") == NULL) {
-        return NULL;
+    if (tfwdata.AddStringToObject("sigalg", "Signing method") == nullptr) {
+        return nullptr;
     }
-    if (tfwdata.AddStringToObject("sig", "<TFW signed data, BASE64 encoded>") == NULL) {
-        return NULL;
+    if (tfwdata.AddStringToObject("sig", "<TFW signed data, BASE64 encoded>") == nullptr) {
+        return nullptr;
     }
 #endif
 
     /* Add tee. */
     JsonAuto tee = dsi.AddObjectToObject("tee");
-    if (tee == NULL) {
-        return NULL;
+    if (tee == nullptr) {
+        return nullptr;
     }
-    if (tee.AddStringToObject("name", TEE_NAME) == NULL) {
-        return NULL;
+    if (tee.AddStringToObject("name", TEE_NAME) == nullptr) {
+        return nullptr;
     }
-    if (tee.AddStringToObject("ver", "<TEE version>") == NULL) {
-        return NULL;
+    if (tee.AddStringToObject("ver", "<TEE version>") == nullptr) {
+        return nullptr;
     }
-    if (tee.AddStringToObject("cert", "<BASE64 encoded TEE cert>") == NULL) {
-        return NULL;
+    if (tee.AddStringToObject("cert", "<BASE64 encoded TEE cert>") == nullptr) {
+        return nullptr;
     }
-    if (tee.AddStringToObject("cacert", "<JSON array value of CA certificates up to the root CA>") == NULL) {
-        return NULL;
+    if (tee.AddStringToObject("cacert", "<JSON array value of CA certificates up to the root CA>") == nullptr) {
+        return nullptr;
     }
 
     // sdlist is optional, so we omit it.
 
     JsonAuto teeaiklist = tee.AddArrayToObject("teeaiklist");
-    if (teeaiklist == NULL) {
-        return NULL;
+    if (teeaiklist == nullptr) {
+        return nullptr;
     }
     JsonAuto teeaik = teeaiklist.AddObjectToArray();
-    if (teeaik == NULL) {
-        return NULL;
+    if (teeaik == nullptr) {
+        return nullptr;
     }
-    if (teeaik.AddStringToObject("spaik", "<SP AIK public key, BASE64 encoded>") == NULL) {
-        return NULL;
+    if (teeaik.AddStringToObject("spaik", "<SP AIK public key, BASE64 encoded>") == nullptr) {
+        return nullptr;
     }
-    if (teeaik.AddStringToObject("spaiktype", "RSA") == NULL) { // RSA or ECC
-        return NULL;
+    if (teeaik.AddStringToObject("spaiktype", "RSA") == nullptr) { // RSA or ECC
+        return nullptr;
     }
-    if (teeaik.AddStringToObject("spid", "<sp id>") == NULL) {
-        return NULL;
+    if (teeaik.AddStringToObject("spid", "<sp id>") == nullptr) {
+        return nullptr;
     }
 
     JsonAuto talist = tee.AddArrayToObject("talist");
-    if (talist == NULL) {
-        return NULL;
+    if (talist == nullptr) {
+        return nullptr;
     }
     JsonAuto ta = talist.AddObjectToArray();
-    if (ta == NULL) {
-        return NULL;
+    if (ta == nullptr) {
+        return nullptr;
     }
-    if (ta.AddStringToObject("taid", "<TA application identifier>") == NULL) {
-        return NULL;
+    if (ta.AddStringToObject("taid", "<TA application identifier>") == nullptr) {
+        return nullptr;
     }
     // taname is optional
 
     /* Convert to message buffer. */
     const char* message = json_dumps(object, 0);
-    if (message == NULL) {
-        return NULL;
+    if (message == nullptr) {
+        return nullptr;
     }
     return strdup(message);
 }
@@ -116,226 +117,110 @@ const char* ComposeDeviceStateInformation(void)
 json_t* AddEdsiToObject(JsonAuto& request, const json_t* jwke)
 {
     const char* dsi = ComposeDeviceStateInformation();
-    if (dsi == NULL) {
-        return NULL;
+    if (dsi == nullptr) {
+        return nullptr;
     }
     size_t dsilen = strlen(dsi);
 
     JsonAuto jwe(json_object(), true);
     bool ok = jose_jwe_enc(
-        NULL,    // Configuration context (optional)
+        nullptr,    // Configuration context (optional)
         jwe,     // The JWE object
-        NULL,    // The JWE recipient object(s) or NULL
+        nullptr,    // The JWE recipient object(s) or nullptr
         jwke,    // The JWK(s) or JWKSet used for wrapping.
         dsi,     // The plaintext.
         dsilen); // The length of the plaintext.
 
     free((void*)dsi);
-    dsi = NULL;
+    dsi = nullptr;
 
     if (!ok) {
-        return NULL;
+        return nullptr;
     }
     return request.AddObjectToObject("edsi", jwe);
 }
 
-json_t* CreateNewJwke()
+
+JsonAuto g_AgentKey;
+
+json_t* GetAgentKey()
 {
-    JsonAuto jwke(json_pack("{s:s}", "alg", "ECDH-ES+A128KW"), true);
-    if (jwke == NULL) {
-        return NULL;
+    if ((json_t*)g_AgentKey == nullptr) {
+        g_AgentKey = CreateNewJwkRS256();
     }
-
-    bool ok = jose_jwk_gen(NULL, jwke);
-    if (!ok) {
-        return NULL;
-    }
-
-    return json_incref(jwke);
+    return (json_t*)g_AgentKey;
 }
 
-/* Compose a TADependencyTBSNotification message. */
-const char* ComposeTADependencyTBSNotification(void)
+int ecall_ProcessError(void* sessionHandle)
 {
-    JsonAuto jwke(CreateNewJwke(), true);
-    if (jwke == NULL) {
-        return NULL;
-    }
-    const char* jwkestr = json_dumps(jwke, 0);
-    free((char*)jwkestr); // TODO: use this
-
-    JsonAuto object(json_object(), true);
-    if (object == NULL) {
-        return NULL;
-    }
-    JsonAuto request = object.AddObjectToObject("TADependencyTBSNotification");
-    if (request == NULL) {
-        return NULL;
-    }
-    if (request.AddStringToObject("ver", "1.0") == NULL) {
-        return NULL;
-    }
-
-    /* Signerreq should be true if the TAM should send its signer certificate and
-    * OCSP data again in the subsequent messages.  The value may be
-    * false if the device caches the TAM's signer certificate and OCSP
-    * status.
-    */
-    if (request.AddStringToObject("signerreq", "true") == NULL) {
-        return NULL;
-    }
-
-    if (AddEdsiToObject(request, jwke)) {
-        return NULL;
-    }
- 
-    /* Convert to message buffer. */
-    const char* message = json_dumps(object, 0);
-    return message;
+    // TODO: process transport error
+    return 0;
 }
 
-/* Compose a TADependencyNotification message. */
-const char* ComposeTADependencyNotification(void)
+int ecall_RequestPolicyCheck(void)
 {
-    JsonAuto jwke(json_pack("{s:s}", "alg", "RS256"), true);
-    if (jwke == NULL) {
-        return NULL;
-    }
-
-    bool ok = jose_jwk_gen(NULL, jwke);
-    if (!ok) {
-        return NULL;
-    }
-
-    /* Get a TADependencyTBSNotification. */
-    const char* tbsNotification = ComposeTADependencyTBSNotification();
-    if (tbsNotification == NULL) {
-        return NULL;
-    }
-    size_t len = strlen(tbsNotification);
-    json_t* b64Notification = jose_b64_enc(tbsNotification, len);
-    free((void*)tbsNotification);
-    if (b64Notification == NULL) {
-        return NULL;
-    }
-
-    /* Create a signed message. */
-    JsonAuto jws(json_pack("{s:o}", "payload", b64Notification, true));
-    if ((json_t*)jws == NULL) {
-        return NULL;
-    }
-    ok = jose_jws_sig(
-        NULL,    // Configuration context (optional)
-        jws,     // The JWE object
-        NULL,    // The JWE recipient object(s) or NULL
-        jwke);   // The JWK(s) or JWKSet used for wrapping.
-    if (!ok) {
-        return NULL;
-    }
-
-    /* Create the final TADependencyNotification message. */
-    JsonAuto object(json_object(), true);
-    if ((json_t*)object == NULL) {
-        return NULL;
-    }
-    JsonAuto dnlist = object.AddArrayToObject("TADependencyNotifications");
-    if (dnlist == NULL) {
-        return NULL;
-    }
-    JsonAuto dn = dnlist.AddObjectToArray();
-    if (dn == NULL) {
-        return NULL;
-    }
-    if (dn.AddObjectToObject("TADependencyNotification", jws) == NULL) {
-        return NULL;
-    }
-
-    const char* message = json_dumps(object, 0);
-    return message;
-}
-
-int ecall_ProcessOTrPConnect(void)
-{
-    const char* message = NULL;
-    size_t messageLength = 0;
-    oe_result_t result = OE_OK;
-    int err = 0;
-
-    ocall_print("Connected to TAM\n");
-
-    message = ComposeTADependencyNotification();
-    if (message == NULL) {
-        return 1; /* Error */
-    }
-
-    ocall_print("Sending TADependencyTBSNotification...\n");
-
-    result = ocall_SendOTrPMessage(&err, message);
-    if (result != OE_OK) {
-        return result;
-    }
-
-    return err;
+    // TODO: request policy check
+    return 0;
 }
 
 /* Compose a GetDeviceTEEStateTBSResponse message. */
 const char* ComposeGetDeviceTEEStateTBSResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
-    const json_t* jwke)       // Key to encrypt with.
+    const json_t* jwk)       // Public key to encrypt with.
 {
     /* Compose a GetDeviceStateResponse message. */
     JsonAuto object(json_object(), true);
-    if (object == NULL) {
-        return NULL;
+    if (object == nullptr) {
+        return nullptr;
     }
     JsonAuto response = object.AddObjectToObject("GetDeviceTEEStateTBSResponse");
-    if (response == NULL) {
-        return NULL;
+    if (response == nullptr) {
+        return nullptr;
     }
-    if (response.AddStringToObject("ver", "1.0") == NULL) {
-        return NULL;
+    if (response.AddStringToObject("ver", "1.0") == nullptr) {
+        return nullptr;
     }
-    if (response.AddStringToObject("status", statusValue) == NULL) {
-        return NULL;
+    if (response.AddStringToObject("status", statusValue) == nullptr) {
+        return nullptr;
     }
 
     /* Copy rid from request. */
     json_t* rid = json_object_get(request, "rid");
-    if (!json_is_string(rid) || (json_string_value(rid) == NULL)) {
-        return NULL;
+    if (!json_is_string(rid) || (json_string_value(rid) == nullptr)) {
+        return nullptr;
     }
-    if (response.AddStringToObject("rid", json_string_value(rid)) == NULL) {
-        return NULL;
+    if (response.AddStringToObject("rid", json_string_value(rid)) == nullptr) {
+        return nullptr;
     }
 
     /* Copy tid from request. */
     json_t* tid = json_object_get(request, "tid");
-    if (!json_is_string(tid) || (json_string_value(tid) == NULL)) {
-        return NULL;
+    if (!json_is_string(tid) || (json_string_value(tid) == nullptr)) {
+        return nullptr;
     }
-    if (response.AddStringToObject("tid", json_string_value(tid)) == NULL) {
-        return NULL;
+    if (response.AddStringToObject("tid", json_string_value(tid)) == nullptr) {
+        return nullptr;
     }
 
     /* Support for signerreq false is optional, so pass true for now. */
-    if (response.AddStringToObject("signerreq", "true") == NULL) {
-        return NULL;
+    if (response.AddStringToObject("signerreq", "true") == nullptr) {
+        return nullptr;
     }
 
     JsonAuto edsi = response.AddObjectToObject("edsi");
-    if (edsi == NULL) {
-        return NULL;
+    if (edsi == nullptr) {
+        return nullptr;
     }
 
-    if (AddEdsiToObject(response, jwke) == NULL) {
-        return NULL;
+    if (AddEdsiToObject(response, jwk) == nullptr) {
+        return nullptr;
     }
 
     /* Convert to message buffer. */
     const char* message = json_dumps(object, 0);
-    if (message == NULL) {
-        return NULL;
+    if (message == nullptr) {
+        return nullptr;
     }
 
     return strdup(message);
@@ -345,70 +230,79 @@ const char* ComposeGetDeviceTEEStateTBSResponse(
 json_t* ComposeGetDeviceTEEStateResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
-    const json_t* jwke)       // Key to encrypt with.
+    const json_t* jwkTam,     // TAM Public key to encrypt with.
+    const json_t* jwkAgent)   // Agent private key to sign with.
 {
     /* Get a GetDeviceTEEStateTBSResponse. */
-    const char* tbsResponse = ComposeGetDeviceTEEStateTBSResponse(request, statusValue, jwke);
-    if (tbsResponse == NULL) {
-        return NULL;
+    const char* tbsResponse = ComposeGetDeviceTEEStateTBSResponse(request, statusValue, jwkTam);
+    if (tbsResponse == nullptr) {
+        return nullptr;
     }
+#ifdef _DEBUG
+    ocall_print("Sending TBS: ");
+    ocall_print(tbsResponse);
+    ocall_print("\n");
+#endif
     size_t len = strlen(tbsResponse);
     json_t* b64Response = jose_b64_enc(tbsResponse, len);
     free((void*)tbsResponse);
-    if (b64Response == NULL) {
-        return NULL;
+    if (b64Response == nullptr) {
+        return nullptr;
     }
 
-    /* Create a signed message. */
+    // Create a signed message.
     JsonAuto jws(json_pack("{s:o}", "payload", b64Response, true));
-    if ((json_t*)jws == NULL) {
-        return NULL;
+    if ((json_t*)jws == nullptr) {
+        return nullptr;
     }
     bool ok = jose_jws_sig(
-        NULL,    // Configuration context (optional)
+        nullptr,    // Configuration context (optional)
         jws,     // The JWE object
-        NULL,    // The JWE recipient object(s) or NULL
-        jwke);   // The JWK(s) or JWKSet used for wrapping.
+        nullptr,
+        jwkAgent);   // The JWK(s) or JWKSet used for wrapping.
     if (!ok) {
-        return NULL;
+        return nullptr;
     }
 
     return jws.Detach();
 }
 
-/* Compose a GetDeviceStateResponse message. */
+// Compose a GetDeviceStateResponse message.
+// Returns the message composed, or nullptr on error.
 const char* ComposeGetDeviceStateResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
-    const json_t* jwke)       // Key to encrypt with.
+    const json_t* jwkTam,     // TAM public key to encrypt with.
+    const json_t* jwkAgent)   // Agent private key to sign with.
 {
-    JsonAuto jws(ComposeGetDeviceTEEStateResponse(request, statusValue, jwke), true);
-    if ((json_t*)jws == NULL) {
-        return NULL;
+    JsonAuto jws(ComposeGetDeviceTEEStateResponse(request, statusValue, jwkTam, jwkAgent), true);
+    if ((json_t*)jws == nullptr) {
+        return nullptr;
     }
 
     /* Create the final GetDeviceStateResponse message. */
     JsonAuto object(json_object(), true);
-    if ((json_t*)object == NULL) {
-        return NULL;
+    if ((json_t*)object == nullptr) {
+        return nullptr;
     }
     JsonAuto dnlist = object.AddArrayToObject("GetDeviceStateResponse");
-    if (dnlist == NULL) {
-        return NULL;
+    if (dnlist == nullptr) {
+        return nullptr;
     }
     JsonAuto dn = dnlist.AddObjectToArray();
-    if (dn == NULL) {
-        return NULL;
+    if (dn == nullptr) {
+        return nullptr;
     }
-    if (dn.AddObjectToObject("GetDeviceTEEStateResponse", jws) == NULL) {
-        return NULL;
+    if (dn.AddObjectToObject("GetDeviceTEEStateResponse", jws) == nullptr) {
+        return nullptr;
     }
 
     const char* message = json_dumps(object, 0);
     return message;
 }
 
-int OTrPHandleGetDeviceStateRequest(const json_t* request)
+// Returns 0 on success, non-zero on error.
+int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
 {
     if (!json_is_object(request)) {
         return 1; /* Error */
@@ -419,13 +313,18 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
     const char* statusValue = "fail";
 
     /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
-    char* payload = DecodeJWS(request, NULL);
+    char* payload = DecodeJWS(request, nullptr);
     if (!payload) {
         return 1; /* Error */
     }
+#ifdef _DEBUG
+    ocall_print("Received TBS: ");
+    ocall_print(payload);
+    ocall_print("\n");
+#endif
     json_error_t error;
     JsonAuto object(json_loads(payload, 0, &error), true);
-    if ((json_t*)object == NULL) {
+    if ((json_t*)object == nullptr) {
         return 1;
     }
 
@@ -438,25 +337,25 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
      *     *  A TEE can use its own clock time for the OCSP stapling data
      *        validation.
      */
-    const char* debug = json_dumps(object, 0);
-    free((char*)debug); // TODO: use this
     json_t* tbsRequest = json_object_get(object, "GetDeviceStateTBSRequest");
-    if (tbsRequest == NULL) {
+    if (tbsRequest == nullptr) {
         return 1;
     }
 
     // Get the TAM's cert from the request.
+    // Each string in the x5c array is a base64 (not base64url) encoded  DER
+    // PKIX certificate value.
     json_t* header = json_object_get(request, "header");
-    if (header == NULL) {
+    if (header == nullptr) {
         return 1;
     }
     json_t* x5c = json_object_get(header, "x5c");
-    if (x5c == NULL) {
+    if (x5c == nullptr) {
         return 1;
     }
-    size_t certChainSize = jose_b64_dec(x5c, NULL, 0);
+    size_t certChainSize = jose_b64_dec(x5c, nullptr, 0);
     void* certChain = malloc(certChainSize);
-    if (certChain == NULL) {
+    if (certChain == nullptr) {
         return 1;
     }
     if (jose_b64_dec(x5c, certChain, certChainSize) != certChainSize) {
@@ -473,7 +372,7 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
     free(certChain);
 
     // Create a JWK from the server's public key.
-    JsonAuto jwke(CreateNewJwke(), true); // TODO: fix this
+    JsonAuto jwkTam(CreateNewJwkR1_5(), true); // TODO: fix this
 
     /* TODO: Cache the CA OCSP stapling data and certificate revocation
     *        check status for other subsequent requests.
@@ -495,26 +394,69 @@ int OTrPHandleGetDeviceStateRequest(const json_t* request)
 
     statusValue = "pass";
 
-    const char* message = ComposeGetDeviceStateResponse(tbsRequest, statusValue, jwke);
-    if (message == NULL) {
+    json_t* jwkAgent = GetAgentKey();
+    const char* message = ComposeGetDeviceStateResponse(tbsRequest, statusValue, jwkTam, jwkAgent);
+    if (message == nullptr) {
         return 1; /* Error */
     }
 
     ocall_print("Sending GetDeviceStateResponse...\n");
 
-    result = ocall_SendOTrPMessage(&err, message);
+    result = ocall_SendOTrPMessage(&err, sessionHandle, message);
     if (result != OE_OK) {
         return result;
     }
     return err;
 }
 
-int OTrPHandleMessage(const char* key, const json_t* messageObject)
+// Returns 0 on success, non-zero on error.
+int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
 {
     if (strcmp(key, "GetDeviceStateRequest") == 0) {
-        return OTrPHandleGetDeviceStateRequest(messageObject);
+        return OTrPHandleGetDeviceStateRequest(sessionHandle, messageObject);
     }
 
     /* Unrecognized message. */
     return 1;
+}
+
+int ecall_RequestTA(
+    const char* taid,
+    const char* tamUri)
+{
+    int err = 0;
+    oe_result_t result = OE_OK;
+    size_t responseLength = 0;
+
+    // TODO: See whether taid is already installed.
+    // For now we skip this step and pretend it's not.
+    bool isInstalled = false;
+
+    if (isInstalled) {
+        // Already installed, nothing to do.
+        // This counts as "pass no data back" in the broker spec.
+        return 0;
+    }
+
+    // TODO: we may want to modify the TAM URI here.
+
+    // TODO: see whether we already have a TAM cert we trust.
+    // For now we skip this step and say we don't.
+    bool haveTrustedTamCert = false;
+
+    if (!haveTrustedTamCert) {
+        // Pass back a TAM URI with no buffer.
+        result = ocall_Connect(&err, tamUri);
+        if (result != OE_OK) {
+            return result;
+        }
+        if (err != 0) {
+            return err;
+        }
+    } else {
+        // TODO: implement going on to the next message.
+        assert(false);
+    }
+
+    return err;
 }

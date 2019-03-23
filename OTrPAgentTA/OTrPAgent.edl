@@ -3,16 +3,23 @@ enclave {
     from "openenclave/stdio.edl" import *;
 
     from "UntrustedTime.edl" import *;
-	from "OTrPCommonTALib.edl" import *;
+    from "OTrPCommonTALib.edl" import *;
 
     trusted {
         /* define ECALLs here. */
-        public int ecall_ProcessOTrPConnect();
 
-        /* TODO: do we need GetTAInformation?  If so, why? */
+        public int ecall_RequestTA(
+            [in, string] const char* taid,
+            [in, string] const char* tamUri);
+
+        public int ecall_ProcessError([user_check] void* sessionHandle);
+
+        public int ecall_RequestPolicyCheck();
     };
 
     untrusted {
         /* define OCALLs here. */
+
+        int ocall_Connect([in, string] const char* tamUri);
     };
 };

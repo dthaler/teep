@@ -2061,6 +2061,7 @@
   <ItemGroup>
     <None Include="$(OpensslDir)crypto\ec\Makefile" />
     <None Include="$(OpensslDir)crypto\evp\Makefile" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="$(OpensslDir)crypto\evp\evptests.txt" />

@@ -8,9 +8,8 @@
 
 #include "UntrustedTimeTALib.h"
 #include <stdio.h>
-#include <sgx.h>
-#include <sgx_trts.h>
-#include <sgx_tprotected_fs.h>
+#define OE_NO_SAL 1
+#include <openenclave/enclave.h>
 #define GETPID_IS_MEANINGLESS
 
 #include <string.h>

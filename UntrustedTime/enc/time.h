@@ -16,11 +16,4 @@ typedef __time64_t time_t;
 # define __time_t_defined
 #endif
 
-#if !defined(_WINSOCKAPI_) && !(defined(__timeval_defined) || defined(_STRUCT_TIMEVAL))
-struct timeval {
-    long tv_sec;
-    long tv_usec;
-};
-#endif
-
 struct tm* _localtime64(const __time64_t *timer);

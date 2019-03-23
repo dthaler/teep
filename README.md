@@ -1,5 +1,7 @@
 # OTrP
-C Implementation of draft-ietf-teep-opentrustprotocol
+
+C Implementation of draft-ietf-teep-opentrustprotocol and 
+https://tools.ietf.org/html/draft-thaler-teep-otrp-over-http
 
 The directories are organized as follows.
 

@@ -7,10 +7,14 @@ extern "C" {
 
     int OTrPHandleConnect(void);
 
-    int OTrPHandleMessage(const char *message, int messageLength);
+    int OTrPHandleMessage(void* sessionHandle, const char *message, int messageLength);
 
     int StartAgentBroker(void);
     void StopAgentBroker(void);
+
+    int AgentBrokerRequestTA(
+        const char* taid,
+        const char* tamUri);
 
 #ifdef __cplusplus
 };

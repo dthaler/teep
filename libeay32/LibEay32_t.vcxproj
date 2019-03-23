@@ -706,6 +706,7 @@
   <ItemGroup>
     <None Include="$(OpensslDir)crypto\ec\Makefile" />
     <None Include="$(OpensslDir)crypto\evp\Makefile" />
+    <None Include="packages.config" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{275FAC8B-B49C-4C91-B708-5ABFB9E24215}</ProjectGuid>
@@ -825,7 +826,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TRUSTED_CODE;AES_decrypt=openssl_AES_decrypt;AES_encrypt=openssl_AES_encrypt;OPENSSL_NO_POSIX_IO;NO_SYSLOG;NO_SYS_PARAM_H;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions);USE_SGX</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;AES_decrypt=openssl_AES_decrypt;AES_encrypt=openssl_AES_encrypt;OPENSSL_NO_POSIX_IO;NO_SYSLOG;NO_SYS_PARAM_H;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OE_USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
@@ -838,7 +839,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TRUSTED_CODE;AES_decrypt=openssl_AES_decrypt;AES_encrypt=openssl_AES_encrypt;OPENSSL_NO_POSIX_IO;NO_SYSLOG;NO_SYS_PARAM_H;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;SIMULATE_TEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;AES_decrypt=openssl_AES_decrypt;AES_encrypt=openssl_AES_encrypt;OPENSSL_NO_POSIX_IO;NO_SYSLOG;NO_SYS_PARAM_H;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;SIMULATE_TEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Lib>
@@ -852,7 +853,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TRUSTED_CODE;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
     </ClCompile>
     <Lib>
@@ -866,7 +867,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TRUSTED_CODE;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
     </ClCompile>
     <Lib>
@@ -881,7 +882,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PreprocessorDefinitions>TRUSTED_CODE;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_SGX;OPENSSL_NO_SOCK;%(PreprocessorDefinitions);USE_SGX</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OE_USE_SGX;OPENSSL_NO_SOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -895,7 +896,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PreprocessorDefinitions>TRUSTED_CODE;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
     </ClCompile>
     <Lib>
@@ -909,7 +910,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TRUSTED_CODE;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OE_USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -922,7 +923,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>TRUSTED_CODE;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OE_USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -936,7 +937,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PreprocessorDefinitions>TRUSTED_CODE;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OPENSSL_NO_SOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OPENSSL_NO_SOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -944,5 +945,12 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets" Condition="Exists('..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets'))" />
+  </Target>
 </Project>

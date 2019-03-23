@@ -1,11 +1,11 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdio.h>
 #include <stdlib.h>
-#include <sgx.h>
-#include <sgx_trts.h>
-#include <sgx_tprotected_fs.h>
+#include <openenclave/enclave.h>
+#include <openenclave/bits/stdio.h>
 #include "UntrustedTimeTALib.h"
 
+#if 0
 char *fgets(
     char *str,
     int n,
@@ -17,6 +17,7 @@ char *fgets(
     }
     return str;
 }
+#endif
 
 int vfprintf(
     FILE *stream,

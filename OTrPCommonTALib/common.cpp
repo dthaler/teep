@@ -10,40 +10,157 @@ extern "C" {
 #include "../jose/joseinit.h"
 #include "../external/jansson/include/jansson.h"
 #include "common.h"
+#include "jose/jwe.h"
+#include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/b64.h"
 };
+
+#if 0
+void TestJwLibs(void)
+{
+    const char* message;
+
+    // We do a set of operations that would normally be split between the device and the TAM, to verify correct operation.
+
+    // Verify JWS (signing).
+    json_t* jwkTam = CreateNewJwk("RS256");
+    message = json_dumps(jwkTam, 0);
+    free((char*)message);
+    json_t* jws = json_pack("{s:s}", "payload", "foo");
+    bool ok = jose_jws_sig(nullptr, jws, nullptr, jwkTam); // Sign payload.
+    message = json_dumps(jws, 0);
+    free((char*)message);
+    ok = jose_jws_ver(nullptr, jws, nullptr, jwkTam, false); // Verify the signature.
+    json_decref(jws); // Free jws.
+
+    // Convert the RS256 JWK to an RSA1_5 JWK.
+    // First, copy the JWK.
+    message = json_dumps(jwkTam, 0);
+    json_error_t error;
+    JsonAuto jwkTam2(json_loads(message, 0, &error), true);
+    free((char*)message);
+    json_t* rsa15 = json_string("RSA1_5");
+    int err;
+    err = json_object_set(jwkTam2, "alg", rsa15);
+    json_decref(rsa15);
+    json_t* key_ops = json_object_get(jwkTam2, "key_ops");
+    json_t* wrapKey = json_string("wrapKey");
+    json_t* unwrapKey = json_string("unwrapKey");
+    err = json_array_clear(key_ops);
+    err = json_array_append(key_ops, wrapKey);
+    err = json_array_append(key_ops, unwrapKey);
+    json_decref(wrapKey);
+    json_decref(unwrapKey);
+
+    message = json_dumps(jwkTam2, 0);
+    free((char*)message);
+
+    // Verify JWE (encryption).
+    json_t* jwe = json_object();
+    ok = jose_jwe_enc(nullptr, jwe, nullptr, jwkTam2, "foo", 4); // Encrypt
+    message = json_dumps(jwe, 0);
+    free((char*)message);
+    size_t ptl = 0;
+    char *pt = (char*)jose_jwe_dec(nullptr, jwe, nullptr, jwkTam2, &ptl); // Decrypt
+    json_decref(jwe); // Free jwe
+}
+#endif
 
 void ecall_Initialize()
 {
     jose_init();
 }
 
-char *DecodeJWS(const json_t *jws, const json_t *jwk)
+json_t* CreateNewJwk(const char* alg)
 {
-    char *str = NULL;
-    size_t len = 0;
-
-    if (jwk != nullptr && !jose_jws_ver(NULL, jws, NULL, jwk, false)) {
-        return NULL;
+    JsonAuto jwk(json_pack("{s:s}", "alg", alg), true);
+    if (jwk == nullptr) {
+        return nullptr;
     }
 
-    len = jose_b64_dec(json_object_get(jws, "payload"), NULL, 0);
+    bool ok = jose_jwk_gen(nullptr, jwk);
+    if (!ok) {
+        return nullptr;
+    }
+
+    return json_incref(jwk);
+}
+
+// Take a JWK created for signing, and create a copy of it usable for encryption.
+json_t* CopyToJweKey(json_t* jwk1, const char* alg)
+{
+    // First, copy the JWK.
+    const char* message = json_dumps(jwk1, 0);
+    json_error_t error;
+    JsonAuto jwk2(json_loads(message, 0, &error), true);
+    free((char*)message);
+    if (jwk2 == nullptr) {
+        return nullptr;
+    }
+    json_t* algstr = json_string(alg);
+    int err = json_object_set(jwk2, "alg", algstr);
+    if (err != 0) {
+        return nullptr;
+    }
+    json_decref(algstr);
+    json_t* key_ops = json_object_get(jwk2, "key_ops");
+    err = json_array_clear(key_ops);
+    if (err != 0) {
+        return nullptr;
+    }
+    if (json_array_append_new(key_ops, json_string("wrapKey")) < 0) {
+        return nullptr;
+    }
+    if (json_array_append_new(key_ops, json_string("unwrapKey")) < 0) {
+        return nullptr;
+    }
+
+    return jwk2.Detach();
+}
+
+json_t* CreateNewJwke(void)
+{
+    return CreateNewJwk("ECDH-ES+A128KW");
+}
+
+json_t* CreateNewJwkR1_5(void)
+{
+    return CreateNewJwk("RSA1_5");
+}
+
+json_t* CreateNewJwkRS256(void)
+{
+    return CreateNewJwk("RS256");
+}
+
+char *DecodeJWS(const json_t *jws, const json_t *jwk)
+{
+    char *str = nullptr;
+    size_t len = 0;
+
+    // Verify signature, if requested.
+    if (jwk != nullptr && !jose_jws_ver(nullptr, jws, nullptr, jwk, false)) {
+        return nullptr;
+    }
+
+    len = jose_b64_dec(json_object_get(jws, "payload"), nullptr, 0);
     str = (char*)malloc(len + 1);
     if (jose_b64_dec(json_object_get(jws, "payload"), str, len) == SIZE_MAX) {
         free(str);
-        return NULL;
+        return nullptr;
     }
     str[len] = 0;
     return str;
 }
 
 int ecall_ProcessOTrPMessage(
+    void* sessionHandle,
     const char* message,
     int messageLength)
 {
     int err = 1;
-    char *newstr = NULL;
+    char *newstr = nullptr;
 
     if (messageLength < 1) {
         return 1; /* error */
@@ -53,10 +170,9 @@ int ecall_ProcessOTrPMessage(
     const char* str = message;
     if (message[messageLength - 1] == 0) {
         str = message;
-    }
-    else {
+    } else {
         newstr = (char*)malloc(messageLength + 1);
-        if (newstr == NULL) {
+        if (newstr == nullptr) {
             return 1; /* error */
         }
         memcpy(newstr, message, messageLength);
@@ -68,9 +184,9 @@ int ecall_ProcessOTrPMessage(
     JsonAuto object(json_loads(str, 0, &error), true);
 
     free(newstr);
-    newstr = NULL;
+    newstr = nullptr;
 
-    if ((object == NULL) || !json_is_object((json_t*)object)) {
+    if ((object == nullptr) || !json_is_object((json_t*)object)) {
         return 1; /* Error */
     }
     const char* key = json_object_iter_key(json_object_iter(object));
@@ -80,11 +196,8 @@ int ecall_ProcessOTrPMessage(
     ocall_print("\n");
 
     JsonAuto messageObject = json_object_get(object, key);
-    if (!json_is_object((json_t*)messageObject)) {
-        return 1; /* Error */
-    }
 
-    err = OTrPHandleMessage(key, messageObject);
+    err = OTrPHandleMessage(sessionHandle, key, messageObject);
 
     return err;
 }

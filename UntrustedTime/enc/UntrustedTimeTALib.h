@@ -4,18 +4,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define stderr NULL
-#define FILE   SGX_FILE
-#define fopen  sgx_fopen_auto_key
-#define fclose sgx_fclose
-#define fread  sgx_fread
-#define fwrite sgx_fwrite
-#define fflush sgx_fflush
-#define ftell  sgx_ftell
-#define fseek  sgx_fseek
-#define feof   sgx_feof
-#define ferror sgx_ferror
-
 int strncasecmp(
     const char *string1,
     const char *string2,

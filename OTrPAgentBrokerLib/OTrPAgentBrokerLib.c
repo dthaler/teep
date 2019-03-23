@@ -1,25 +1,63 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include "OTrPAgentBrokerLib.h"
 #include "OTrPAgent_u.h"
+#include "OTrPSession.h"
+#ifdef USE_TCP
+#include "TcpClient.h"
+#else
+#include "HttpClient.h"
+#endif
+#include <windows.h> // for Sleep()
+
+#define ASSERT(x) if (!(x)) { DebugBreak(); }
 
 oe_enclave_t* g_ta_eid = NULL;
 
-int OTrPHandleMessage(const char *message, int messageLength)
+int AgentBrokerRequestTA(
+    const char *taid,
+    const char *tamUri)
 {
-    int err = 0;
-    oe_result_t result = ecall_ProcessOTrPMessage(g_ta_eid, &err, message, messageLength);
-    if (result != OE_OK) {
-        return result;
-    }
-    return err;
-}
+    int err;
 
-int OTrPHandleConnect(void)
-{
-    int err = 0;
-    oe_result_t result = ecall_ProcessOTrPConnect(g_ta_eid, &err);
+    // Invoke a "RequestTA" API in the agent.
+    oe_result_t result = ecall_RequestTA(g_ta_eid, &err, taid, tamUri);
     if (result != OE_OK) {
         return result;
     }
-    return err;
+    if (err != 0) {
+        return err;
+    }
+
+    // Handle messages until we have no outstanding HTTP responses.
+    while (g_Session.InboundMessage != NULL || g_Session.OutboundMessage != NULL) {
+        if (g_Session.OutboundMessage != NULL) {
+            // Send outbound message and get the response.
+            const char* inboundMessage = SendOTrPMessage(&g_Session);
+            if (inboundMessage != NULL) {
+                ASSERT(g_Session.InboundMessage == NULL);
+                g_Session.InboundMessage = inboundMessage;
+            }
+        }
+
+        if (g_Session.InboundMessage != NULL) {
+            result = ecall_ProcessOTrPMessage(
+                g_ta_eid,
+                &err,
+                &g_Session,
+                g_Session.InboundMessage,
+                strlen(g_Session.InboundMessage));
+
+            free(g_Session.InboundMessage);
+            g_Session.InboundMessage = NULL;
+
+            if (result != OE_OK) {
+                return result;
+            }
+            if (err != 0) {
+                return err;
+            }
+        }
+    }
+
+    return 0;
 }

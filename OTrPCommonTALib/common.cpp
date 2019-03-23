@@ -17,6 +17,11 @@ extern "C" {
 };
 
 #if 0
+#define ASSERT(x) if (!(x)) { printf("wrong\n"); }
+extern "C" {
+#include "jose/openssl.h"
+#include "openssl/x509.h"
+}
 void TestJwLibs(void)
 {
     const char* message;
@@ -59,17 +64,63 @@ void TestJwLibs(void)
     // Verify JWE (encryption).
     json_t* jwe = json_object();
     ok = jose_jwe_enc(nullptr, jwe, nullptr, jwkTam2, "foo", 4); // Encrypt
-    message = json_dumps(jwe, 0);
-    free((char*)message);
+    ASSERT(ok);
+    char* jwestr = json_dumps(jwe, 0);
     size_t ptl = 0;
     char *pt = (char*)jose_jwe_dec(nullptr, jwe, nullptr, jwkTam2, &ptl); // Decrypt
+    ASSERT(strcmp(pt, "foo") == 0);
     json_decref(jwe); // Free jwe
+
+    // Generate a cert from jwkTam2.
+    RSA *rsa = jose_openssl_jwk_to_RSA(nullptr, jwkTam2);
+    EVP_PKEY* pkey = EVP_PKEY_new();
+    EVP_PKEY_assign_RSA(pkey, rsa);
+    X509* x509 = X509_new();
+    ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
+    X509_gmtime_adj(X509_get_notBefore(x509), 0); // Current time
+    X509_gmtime_adj(X509_get_notAfter(x509), 31536000L); // 1 year from now
+    X509_set_pubkey(x509, pkey);
+    X509_NAME* name = X509_get_subject_name(x509);
+    X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0);
+    X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)"MyCompany Inc.", -1, -1, 0);
+    X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)"localhost", -1, -1, 0);
+    X509_set_issuer_name(x509, name);
+    X509_sign(x509, pkey, EVP_sha1());
+
+    // Now we want to verify we can generate a JWE that is encrypted with the public key,
+    // and decrypted with the private key.
+
+    EVP_PKEY *pkey3 = X509_get_pubkey(x509);
+    RSA* rsa3 = EVP_PKEY_get1_RSA(pkey3); // This will only have the public key, no private key.
+    JsonAuto jwkTam3(jose_openssl_jwk_from_RSA(nullptr, rsa3), true);
+    JsonAuto jwkTam4(CopyToJweKey(jwkTam3, "RSA1_5"), true);
+    char* jwkTam2str = json_dumps(jwkTam2, 0);
+    char* jwkTam4str = json_dumps(jwkTam4, 0);
+    
+    json_t* jwe2 = json_object();
+    ok = jose_jwe_enc(nullptr, jwe2, nullptr, jwkTam4, "foo", 4); // Encrypt with public key
+    ASSERT(ok);
+    char* jwestr2 = json_dumps(jwe2, 0);
+    free((char*)jwestr2);
+
+    ptl = 0;
+    pt = (char*)jose_jwe_dec(nullptr, jwe2, nullptr, jwkTam2, &ptl); // Decrypt with private key
+    ASSERT(strcmp(pt, "foo") == 0);
+    json_decref(jwe); // Free jwe
+
+    X509_free(x509);
+    EVP_PKEY_free(pkey);
+    free((char*)jwestr);
 }
 #endif
 
 void ecall_Initialize()
 {
     jose_init();
+
+#if 0
+    TestJwLibs();
+#endif
 }
 
 json_t* CreateNewJwk(const char* alg)
@@ -105,7 +156,12 @@ json_t* CopyToJweKey(json_t* jwk1, const char* alg)
     }
     json_decref(algstr);
     json_t* key_ops = json_object_get(jwk2, "key_ops");
-    err = json_array_clear(key_ops);
+    if (key_ops != nullptr) {
+        err = json_array_clear(key_ops);
+    } else {
+        key_ops = json_array();
+        err = json_object_set_new(jwk2, "key_ops", key_ops);
+    }
     if (err != 0) {
         return nullptr;
     }

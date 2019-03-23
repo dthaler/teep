@@ -83,7 +83,7 @@ void* GetTamDerCertificate(size_t *pCertLen)
         // Construct a self-signed DER certificate based on the JWK.
 
         // First get the RSA key.
-        json_t* jwk = GetTamSigningKey();
+        json_t* jwk = GetTamEncryptionKey();
         RSA *rsa = jose_openssl_jwk_to_RSA(nullptr, jwk);
 
         // Now that we have the RSA key we can do the rest by following the steps at

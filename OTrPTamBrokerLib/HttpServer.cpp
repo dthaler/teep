@@ -68,6 +68,8 @@ int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
 
 #define MAX_ULONG_STR ((ULONG) sizeof("4294967295"))
 
+// The following functions are based on code from https://docs.microsoft.com/en-us/windows/desktop/Http/http-server-sample-application
+
 DWORD SendHttpResponse(
     IN HANDLE        hReqQueue,
     IN PHTTP_REQUEST pRequest,
@@ -142,7 +144,39 @@ DWORD HandleOtrpHttpPost(
     OTrPSession* session = &g_Session;
     int result = 0;
 
-    if (pRequest->EntityChunkCount == 0) {
+    // Allocate a buffer for the content.
+    int contentBufferSize = 4096;
+    char* contentBuffer = (PCHAR)ALLOC_MEM(contentBufferSize);
+    if (contentBuffer == nullptr) {
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+    int totalBytesRead = 0;
+
+    // Read the entire body into a buffer.
+    if (pRequest->Flags & HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS) {
+        do {
+            DWORD bytesRead = 0;
+            result = HttpReceiveRequestEntityBody(
+                hReqQueue,
+                pRequest->RequestId,
+                HTTP_RECEIVE_REQUEST_ENTITY_BODY_FLAG_FILL_BUFFER,
+                contentBuffer + totalBytesRead,
+                contentBufferSize - totalBytesRead,
+                &bytesRead,
+                NULL);
+
+            if (result == NO_ERROR || result == ERROR_HANDLE_EOF) {
+                totalBytesRead += bytesRead;
+            }
+        } while (result == NO_ERROR);
+    }
+    if (totalBytesRead < contentBufferSize) {
+        contentBuffer[totalBytesRead] = 0; // Add null termination for debugging ease.
+    }
+
+    if (totalBytesRead == 0) {
+        FREE_MEM(contentBuffer);
+
         // A 0-byte post is a connect.
         if (OTrPHandleConnect(session) != 0) {
             return SendHttpResponse(
@@ -171,11 +205,7 @@ DWORD HandleOtrpHttpPost(
         return result;
     }
 
-    ASSERT(pRequest->EntityChunkCount == 1);
-    ASSERT(pRequest->pEntityChunks[0].DataChunkType == HttpDataChunkFromMemory);
-    int size = pRequest->pEntityChunks[0].FromMemory.BufferLength;
-    const char* message = (char*)pRequest->pEntityChunks[0].FromMemory.pBuffer;
-    if (OTrPHandleMessage(session, message, size) != 0) {
+    if (OTrPHandleMessage(session, contentBuffer, totalBytesRead) != 0) {
         (void)SendHttpResponse(
             hReqQueue,
             pRequest,
@@ -185,6 +215,7 @@ DWORD HandleOtrpHttpPost(
             NULL,
             0);
     }
+    FREE_MEM(contentBuffer);
     return 0;
 }
 
@@ -194,7 +225,7 @@ DWORD DoReceiveRequests(
 {
     ULONG              result;
     HTTP_REQUEST_ID    requestId;
-    DWORD              bytesRead;
+    DWORD              totalBytesRead;
     PHTTP_REQUEST      pRequest;
     PCHAR              pRequestBuffer;
     ULONG              RequestBufferLength;
@@ -230,13 +261,11 @@ DWORD DoReceiveRequests(
         result = HttpReceiveHttpRequest(
             hReqQueue,          // Req Queue
             requestId,          // Req ID
-            HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY, // Flags
+            0,                  // Flags
             pRequest,           // HTTP request buffer
             RequestBufferLength,// req buffer length
-            &bytesRead,         // bytes received
-            NULL                // LPOVERLAPPED
-        );
-
+            &totalBytesRead,    // bytes received
+            NULL);              // LPOVERLAPPED
 
         if (NO_ERROR == result)
         {
@@ -340,7 +369,7 @@ DWORD DoReceiveRequests(
             //
             // Free the old buffer and allocate a new buffer.
             //
-            RequestBufferLength = bytesRead;
+            RequestBufferLength = totalBytesRead;
             FREE_MEM(pRequestBuffer);
             pRequestBuffer = (PCHAR)ALLOC_MEM(RequestBufferLength);
 

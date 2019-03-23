@@ -13,10 +13,14 @@ extern "C" {
 #include "jose/jwe.h"
 #include "jose/jwk.h"
 #include "jose/jws.h"
+#include "jose/openssl.h"
 char* strdup(const char* str);
 #include "../OTrPCommonTALib/common.h"
 };
 #include "../jansson/JsonAuto.h"
+#include "openssl/bio.h"
+#include "openssl/evp.h"
+#include "openssl/x509.h"
 
 #ifdef OE_USE_SGX
 # define TEE_NAME "Intel SGX"
@@ -343,36 +347,44 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
     }
 
     // Get the TAM's cert from the request.
-    // Each string in the x5c array is a base64 (not base64url) encoded  DER
-    // PKIX certificate value.
+    // Each string in the x5c array is a base64 (not base64url) encoded DER certificate.
     json_t* header = json_object_get(request, "header");
     if (header == nullptr) {
         return 1;
     }
     json_t* x5c = json_object_get(header, "x5c");
-    if (x5c == nullptr) {
+    if (x5c == nullptr || !json_is_array(x5c) || json_array_size(x5c) == 0) {
         return 1;
     }
-    size_t certChainSize = jose_b64_dec(x5c, nullptr, 0);
-    void* certChain = malloc(certChainSize);
-    if (certChain == nullptr) {
+    json_t* x5celt = json_array_get(x5c, 0);
+    size_t certSize = jose_b64_dec(x5celt, nullptr, 0);
+    void* certBuffer = malloc(certSize);
+    if (certBuffer == nullptr) {
         return 1;
     }
-    if (jose_b64_dec(x5c, certChain, certChainSize) != certChainSize) {
-        free(certChain);
+    if (jose_b64_dec(x5celt, certBuffer, certSize) != certSize) {
+        free(certBuffer);
         return 1;
     }
-    // certChain is now a certificate chain that chains up to the root CA certificate.
 
     // TODO: Validate that the request TAM certificate is chained to a trusted
     //       CA that the TEE embeds as its trust anchor.
 
-    // Get the TAM's public key from the TAM's cert.
-    // TODO: Get the TAM's public key from the TAM's cert.
-    free(certChain);
+    // Create a JWK from the server's cert.
 
-    // Create a JWK from the server's public key.
-    JsonAuto jwkTam(CreateNewJwkR1_5(), true); // TODO: fix this
+    // Read DER buffer into X509 structure per https://stackoverflow.com/questions/6689584/how-to-convert-the-certificate-string-into-x509-structure
+    // since the openssl version we currently use does not have d2i_x509() directly.
+    BIO* bio = BIO_new(BIO_s_mem());
+    BIO_write(bio, certBuffer, certSize);
+    X509* x509 = d2i_X509_bio(bio, nullptr);
+    free(certBuffer);
+    BIO_free(bio);
+
+    EVP_PKEY *pkey = X509_get_pubkey(x509);
+    RSA* rsa = EVP_PKEY_get1_RSA(pkey);
+    JsonAuto jwkTemp(jose_openssl_jwk_from_RSA(nullptr, rsa), true);
+    JsonAuto jwkTam(CopyToJweKey(jwkTemp, "RSA1_5"), true);
+    EVP_PKEY_free(pkey);
 
     /* TODO: Cache the CA OCSP stapling data and certificate revocation
     *        check status for other subsequent requests.

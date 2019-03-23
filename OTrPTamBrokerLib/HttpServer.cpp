@@ -24,7 +24,7 @@ typedef struct {
 
 OTrPSession g_Session = { NULL, 0 };
 
-int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
+int ocall_QueueOutboundOTrPMessage(void* sessionHandle, const char* message)
 {
     OTrPSession* session = (OTrPSession*)sessionHandle;
 
@@ -145,9 +145,9 @@ DWORD HandleOtrpHttpPost(
     int result = 0;
 
     // Allocate a buffer for the content.
-    int contentBufferSize = 4096;
-    char* contentBuffer = (PCHAR)ALLOC_MEM(contentBufferSize);
-    if (contentBuffer == nullptr) {
+    int inputBufferSize = 4096;
+    char* inputBuffer = (PCHAR)ALLOC_MEM(inputBufferSize);
+    if (inputBuffer == nullptr) {
         return ERROR_NOT_ENOUGH_MEMORY;
     }
     int totalBytesRead = 0;
@@ -160,8 +160,8 @@ DWORD HandleOtrpHttpPost(
                 hReqQueue,
                 pRequest->RequestId,
                 HTTP_RECEIVE_REQUEST_ENTITY_BODY_FLAG_FILL_BUFFER,
-                contentBuffer + totalBytesRead,
-                contentBufferSize - totalBytesRead,
+                inputBuffer + totalBytesRead,
+                inputBufferSize - totalBytesRead,
                 &bytesRead,
                 NULL);
 
@@ -170,12 +170,12 @@ DWORD HandleOtrpHttpPost(
             }
         } while (result == NO_ERROR);
     }
-    if (totalBytesRead < contentBufferSize) {
-        contentBuffer[totalBytesRead] = 0; // Add null termination for debugging ease.
+    if (totalBytesRead < inputBufferSize) {
+        inputBuffer[totalBytesRead] = 0; // Add null termination for debugging ease.
     }
 
     if (totalBytesRead == 0) {
-        FREE_MEM(contentBuffer);
+        FREE_MEM(inputBuffer);
 
         // A 0-byte post is a connect.
         if (OTrPHandleConnect(session) != 0) {
@@ -205,7 +205,7 @@ DWORD HandleOtrpHttpPost(
         return result;
     }
 
-    if (OTrPHandleMessage(session, contentBuffer, totalBytesRead) != 0) {
+    if (OTrPHandleMessage(session, inputBuffer, totalBytesRead) != 0) {
         (void)SendHttpResponse(
             hReqQueue,
             pRequest,
@@ -215,7 +215,23 @@ DWORD HandleOtrpHttpPost(
             NULL,
             0);
     }
-    FREE_MEM(contentBuffer);
+
+    result = SendHttpResponse(
+        hReqQueue,
+        pRequest,
+        200,
+        "OK",
+        OTRP_JSON_MEDIA_TYPE,
+        session->OutboundMessage,
+        session->MessageLength);
+
+    if (session->OutboundMessage != nullptr) {
+        free((char*)session->OutboundMessage);
+        session->OutboundMessage = nullptr;
+        session->MessageLength = 0;
+    }
+
+    FREE_MEM(inputBuffer);
     return 0;
 }
 

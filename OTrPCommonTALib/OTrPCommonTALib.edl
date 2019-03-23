@@ -15,11 +15,9 @@ enclave {
 
     untrusted {
         /* define OCALLs here. */
-        int ocall_SendOTrPMessage(
+        int ocall_QueueOutboundOTrPMessage(
 		    [user_check] void* sessionHandle,
             [in, string] const char* message);
-
-        void ocall_print([in, string] const char* message);
     };
 };
 

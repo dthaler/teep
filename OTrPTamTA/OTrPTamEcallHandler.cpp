@@ -74,51 +74,17 @@ json_t* GetTamEncryptionKey()
     return g_TamEncryptionKey;
 }
 
-unsigned char* g_TamDerCertificate = nullptr;
+const unsigned char* g_TamDerCertificate = nullptr;
 size_t g_TamDerCertificateSize = 0;
 
-void* GetTamDerCertificate(size_t *pCertLen)
+const unsigned char* GetTamDerCertificate(size_t *pCertLen)
 {
     if (g_TamDerCertificate == nullptr) {
         // Construct a self-signed DER certificate based on the JWK.
 
         // First get the RSA key.
         json_t* jwk = GetTamEncryptionKey();
-        RSA *rsa = jose_openssl_jwk_to_RSA(nullptr, jwk);
-
-        // Now that we have the RSA key we can do the rest by following the steps at
-        // https://stackoverflow.com/questions/256405/programmatically-create-x509-certificate-using-openssl
-
-        // Get the private key.
-        EVP_PKEY* pkey = EVP_PKEY_new();
-        EVP_PKEY_assign_RSA(pkey, rsa);
-
-        // Create a certificate.
-        X509* x509 = X509_new();
-        ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
-        X509_gmtime_adj(X509_get_notBefore(x509), 0); // Current time
-        X509_gmtime_adj(X509_get_notAfter(x509), 31536000L); // 1 year from now
-        X509_set_pubkey(x509, pkey);
-
-        // We set the name of the issuer to the name of the subject, for a self-signed cert.
-        X509_NAME* name = X509_get_subject_name(x509);
-
-        X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0);
-        X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)"MyCompany Inc.", -1, -1, 0);
-        X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)"localhost", -1, -1, 0);
-        X509_set_issuer_name(x509, name);
-
-        // Now sign the certificate with the private key using SHA1.
-        X509_sign(x509, pkey, EVP_sha1());
-
-        // We now have a self-signed certificate and need to get the DER form of it.
-        g_TamDerCertificateSize = i2d_X509(x509, nullptr);
-        g_TamDerCertificate = (unsigned char*)malloc(g_TamDerCertificateSize);
-        unsigned char* out = g_TamDerCertificate;
-        g_TamDerCertificateSize = i2d_X509(x509, &out);
-
-        X509_free(x509);
-        EVP_PKEY_free(pkey); // This also frees rsa.
+        g_TamDerCertificate = GetDerCertificate(jwk, &g_TamDerCertificateSize);
     }
 
     *pCertLen = g_TamDerCertificateSize;
@@ -171,8 +137,7 @@ const char* ComposeGetDeviceStateRequest(void)
         return nullptr;
     }
 #ifdef _DEBUG
-    ocall_print("Sending TBS: ");
-    ocall_print(tbsRequest);
+    printf("Sending TBS: %s\n", tbsRequest);
 #endif
 
     /* Base64 encode it. */
@@ -201,7 +166,7 @@ const char* ComposeGetDeviceStateRequest(void)
 
     // Get TAM DER cert.
     size_t certLen;
-    void* cert = GetTamDerCertificate(&certLen);
+    const unsigned char* cert = GetTamDerCertificate(&certLen);
     json_t* certJson = jose_b64_enc(cert, certLen);
     if (json_array_append(x5c, certJson) < 0) {
         return nullptr;
@@ -233,17 +198,17 @@ const char* ComposeGetDeviceStateRequest(void)
 /* Handle a new incoming connection from a device. */
 int ecall_ProcessOTrPConnect(void* sessionHandle)
 {
-    ocall_print("Received client connection\n");
+    printf("Received client connection\n");
 
     const char* message = ComposeGetDeviceStateRequest();
     if (message == nullptr) {
         return 1; /* Error */
     }
 
-    ocall_print("Sending GetDeviceStateRequest...\n");
+    printf("Sending GetDeviceStateRequest...\n");
 
     int err = 0;
-    oe_result_t result = ocall_SendOTrPMessage(&err, sessionHandle, message);
+    oe_result_t result = ocall_QueueOutboundOTrPMessage(&err, sessionHandle, message);
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -298,20 +263,101 @@ int OTrPHandleGetDeviceTEEStateResponse(void* sessionHandle, const json_t* messa
     /* Decrypt the edsi. */
     json_t* jwkEncryption = GetTamEncryptionKey();
     size_t len = 0;
-    char* dsistr = (char*)jose_jwe_dec(nullptr, edsi, nullptr, jwkEncryption, &len);
+    void* dsibuffer = jose_jwe_dec(nullptr, edsi, nullptr, jwkEncryption, &len);
+
+    /* Copy it to a string buffer. */
+    char* dsistr = (char*)malloc(len + 1);
     if (dsistr == nullptr) {
         return 1; /* Error */
     }
+    memcpy(dsistr, dsibuffer, len);
+    dsistr[len] = 0;
+
+    /* Deserialize it into a JSON object. */
     json_error_t error;
-    JsonAuto dsi(json_loads(dsistr, 0, &error), true);
+    JsonAuto dsiWrapper(json_loads(dsistr, 0, &error), true);
     free(dsistr);
-    if ((json_t*)dsi == nullptr) {
+    if ((json_t*)dsiWrapper == nullptr) {
         return 1; /* Error */
     }
 
-    /* Verify the signature. */
-    json_t* jwkSigning = GetTamSigningKey();
+    // Extract the signer certificate from dsi.tee.cert.
+    json_t* dsi = json_object_get(dsiWrapper, "dsi");
+    if (dsi == nullptr || !json_is_object(dsi)) {
+        return 1;
+    }
+    json_t* tee = json_object_get(dsi, "tee");
+    if (tee == nullptr || !json_is_object(tee)) {
+        return 1;
+    }
+    json_t* cert = json_object_get(tee, "cert");
+    if (cert == nullptr || !json_is_string(cert)) {
+        return 1;
+    }
+    size_t certSize = jose_b64_dec(cert, nullptr, 0);
+    void* certBuffer = malloc(certSize);
+    if (certBuffer == nullptr) {
+        return 1;
+    }
+    if (jose_b64_dec(cert, certBuffer, certSize) != certSize) {
+        free(certBuffer);
+        return 1;
+    }
+
+    // Create a JWK from the device agent's cert.
+
+    // Read DER buffer into X509 structure per https://stackoverflow.com/questions/6689584/how-to-convert-the-certificate-string-into-x509-structure
+    // since the openssl version we currently use does not have d2i_x509() directly.
+    BIO* bio = BIO_new(BIO_s_mem());
+    BIO_write(bio, certBuffer, certSize);
+    X509* x509 = d2i_X509_bio(bio, nullptr);
+    free(certBuffer);
+    BIO_free(bio);
+
+    EVP_PKEY *pkey = X509_get_pubkey(x509);
+    RSA* rsa = EVP_PKEY_get1_RSA(pkey);
+    JsonAuto jwkTemp(jose_openssl_jwk_from_RSA(nullptr, rsa), true);
+    JsonAuto jwkAgent(CopyToJweKey(jwkTemp, "RS256"), true);
+    EVP_PKEY_free(pkey);
+
+    // Verify the signature using the signer certificate.
+    bool ok = jose_jws_ver(nullptr, jws, nullptr, jwkAgent, false);
+    if (!ok) {
+        return 1;
+    }
+
+    // Extract TEE information and check it against TEE acceptance policy.
     // TODO
+
+    // Extract the TFW signed element, and check the signer and data
+    // integration against its TFW policy.
+    // TODO
+
+    // Check the SD list and TA list and prepare for a subsequent command
+    // such as "CreateSD" if it needs to have a new SD for an SP.
+    // TODO
+    json_t* tarequestlist = json_object_get(tee, "tarequestlist");
+    if (tarequestlist != nullptr) {
+        if (!json_is_array(tarequestlist)) {
+            return 1;
+        }
+        size_t index;
+        json_t* ta;
+        const char* taid = nullptr;
+        json_array_foreach(tarequestlist, index, ta) {
+            json_t* jtaid = json_object_get(messageObject, "taid");
+            taid = json_string_value(jtaid);
+
+            // TODO: decide whether taid should be installed.
+            bool okToInstall = true;
+            if (!okToInstall) {
+                continue;
+            }
+
+            // TODO: send an InstallTARequest message.
+            break;
+        }
+    }
 
     return 0; /* no error */
 }

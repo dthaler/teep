@@ -61,7 +61,7 @@ int ocall_Connect(const char* tamUri)
     return 0;
 }
 
-int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
+int ocall_QueueOutboundOTrPMessage(void* sessionHandle, const char* message)
 {
     OTrPSession* session = (OTrPSession*)sessionHandle;
 
@@ -73,6 +73,7 @@ int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
     return (session->OutboundMessage == nullptr);
 }
 
+// The caller is responsible for freeing the returned buffer if non-null.
 const char* SendOTrPMessage(OTrPSession* session)
 {
     char authority[266];

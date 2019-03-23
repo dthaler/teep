@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include "TrustedApplication.h"
 #define FILE void
 extern "C" {
 #include "jansson.h"
@@ -25,6 +26,36 @@ char* strdup(const char* str);
 #ifdef OE_USE_SGX
 # define TEE_NAME "Intel SGX"
 #endif
+
+// List of TA's requested.
+TrustedApplication* g_TARequestList = nullptr;
+
+JsonAuto g_AgentSigningKey;
+
+json_t* GetAgentSigningKey()
+{
+    if ((json_t*)g_AgentSigningKey == nullptr) {
+        g_AgentSigningKey = CreateNewJwkRS256();
+    }
+    return (json_t*)g_AgentSigningKey;
+}
+
+const unsigned char* g_AgentDerCertificate = nullptr;
+size_t g_AgentDerCertificateSize = 0;
+
+const unsigned char* GetAgentDerCertificate(size_t *pCertLen)
+{
+    if (g_AgentDerCertificate == nullptr) {
+        // Construct a self-signed DER certificate based on the JWK.
+
+        // First get the RSA key.
+        json_t* jwk = GetAgentSigningKey();
+        g_AgentDerCertificate = GetDerCertificate(jwk, &g_AgentDerCertificateSize);
+    }
+
+    *pCertLen = g_AgentDerCertificateSize;
+    return g_AgentDerCertificate;
+}
 
 /* Compose a DeviceStateInformation message. */
 const char* ComposeDeviceStateInformation(void)
@@ -70,10 +101,13 @@ const char* ComposeDeviceStateInformation(void)
     if (tee.AddStringToObject("ver", "<TEE version>") == nullptr) {
         return nullptr;
     }
-    if (tee.AddStringToObject("cert", "<BASE64 encoded TEE cert>") == nullptr) {
+    size_t certLen;
+    const unsigned char* cert = GetAgentDerCertificate(&certLen);
+    json_t* certJson = jose_b64_enc(cert, certLen);
+    if (tee.AddObjectToObject("cert", certJson) == nullptr) {
         return nullptr;
     }
-    if (tee.AddStringToObject("cacert", "<JSON array value of CA certificates up to the root CA>") == nullptr) {
+    if (tee.AddObjectToObject("cacert", json_array()) == nullptr) {
         return nullptr;
     }
 
@@ -87,6 +121,7 @@ const char* ComposeDeviceStateInformation(void)
     if (teeaik == nullptr) {
         return nullptr;
     }
+#if 0
     if (teeaik.AddStringToObject("spaik", "<SP AIK public key, BASE64 encoded>") == nullptr) {
         return nullptr;
     }
@@ -96,19 +131,44 @@ const char* ComposeDeviceStateInformation(void)
     if (teeaik.AddStringToObject("spid", "<sp id>") == nullptr) {
         return nullptr;
     }
+#endif
 
     JsonAuto talist = tee.AddArrayToObject("talist");
     if (talist == nullptr) {
         return nullptr;
     }
-    JsonAuto ta = talist.AddObjectToArray();
-    if (ta == nullptr) {
+#if 0
+    // TODO: for each TA installed...
+    {
+        JsonAuto ta = talist.AddObjectToArray();
+        if (ta == nullptr) {
+            return nullptr;
+        }
+        if (ta.AddStringToObject("taid", "<TA application identifier>") == nullptr) {
+            return nullptr;
+        }
+        // "taname" field is optional
+    }
+#endif
+
+    JsonAuto tarequestlist = tee.AddArrayToObject("tarequestlist");
+    if (tarequestlist == nullptr) {
         return nullptr;
     }
-    if (ta.AddStringToObject("taid", "<TA application identifier>") == nullptr) {
-        return nullptr;
+    for (TrustedApplication* ta = g_TARequestList; ta != nullptr; ta = ta->Next) {
+        JsonAuto jta(tarequestlist.AddObjectToArray());
+        if (jta == nullptr) {
+            return nullptr;
+        }
+        if (jta.AddStringToObject("taid", ta->ID) == nullptr) {
+            return nullptr;
+        }
+        if (ta->Name[0] != 0) {  // "taname" field is optional
+            if (jta.AddStringToObject("taname", ta->Name) == nullptr) {
+                return nullptr;
+            }
+        }
     }
-    // taname is optional
 
     /* Convert to message buffer. */
     const char* message = json_dumps(object, 0);
@@ -142,17 +202,6 @@ json_t* AddEdsiToObject(JsonAuto& request, const json_t* jwke)
         return nullptr;
     }
     return request.AddObjectToObject("edsi", jwe);
-}
-
-
-JsonAuto g_AgentKey;
-
-json_t* GetAgentKey()
-{
-    if ((json_t*)g_AgentKey == nullptr) {
-        g_AgentKey = CreateNewJwkRS256();
-    }
-    return (json_t*)g_AgentKey;
 }
 
 int ecall_ProcessError(void* sessionHandle)
@@ -243,9 +292,7 @@ json_t* ComposeGetDeviceTEEStateResponse(
         return nullptr;
     }
 #ifdef _DEBUG
-    ocall_print("Sending TBS: ");
-    ocall_print(tbsResponse);
-    ocall_print("\n");
+    printf("Sending TBS: %s\n", tbsResponse);
 #endif
     size_t len = strlen(tbsResponse);
     json_t* b64Response = jose_b64_enc(tbsResponse, len);
@@ -322,9 +369,7 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
         return 1; /* Error */
     }
 #ifdef _DEBUG
-    ocall_print("Received TBS: ");
-    ocall_print(payload);
-    ocall_print("\n");
+    printf("Received TBS: %s\n", payload);
 #endif
     json_error_t error;
     JsonAuto object(json_loads(payload, 0, &error), true);
@@ -406,15 +451,15 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
 
     statusValue = "pass";
 
-    json_t* jwkAgent = GetAgentKey();
+    json_t* jwkAgent = GetAgentSigningKey();
     const char* message = ComposeGetDeviceStateResponse(tbsRequest, statusValue, jwkTam, jwkAgent);
     if (message == nullptr) {
         return 1; /* Error */
     }
 
-    ocall_print("Sending GetDeviceStateResponse...\n");
+    printf("Sending GetDeviceStateResponse...\n");
 
-    result = ocall_SendOTrPMessage(&err, sessionHandle, message);
+    result = ocall_QueueOutboundOTrPMessage(&err, sessionHandle, message);
     if (result != OE_OK) {
         return result;
     }
@@ -449,6 +494,21 @@ int ecall_RequestTA(
         // This counts as "pass no data back" in the broker spec.
         return 0;
     }
+
+    // See whether taid is already requested.
+    TrustedApplication* ta;
+    for (ta = g_TARequestList; ta != nullptr; ta = ta->Next) {
+        if (strcmp(ta->ID, taid) == 0) {
+            // Already requested, nothing to do.
+            // This counts as "pass no data back" in the broker spec.
+            return 0;
+        }
+    }
+
+    // Add taid to the request list.
+    ta = new TrustedApplication(taid);
+    ta->Next = g_TARequestList;
+    g_TARequestList = ta;
 
     // TODO: we may want to modify the TAM URI here.
 

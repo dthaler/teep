@@ -34,8 +34,13 @@ int AgentBrokerRequestTA(
             // Send outbound message and get the response.
             const char* inboundMessage = SendOTrPMessage(&g_Session);
             if (inboundMessage != NULL) {
-                ASSERT(g_Session.InboundMessage == NULL);
-                g_Session.InboundMessage = inboundMessage;
+                if (inboundMessage[0] == 0) {
+                    // Empty buffer, meaning the TAM is done.
+                    free(inboundMessage);
+                } else {
+                    ASSERT(g_Session.InboundMessage == NULL);
+                    g_Session.InboundMessage = inboundMessage;
+                }
             }
         }
 
@@ -59,5 +64,6 @@ int AgentBrokerRequestTA(
         }
     }
 
+    printf("Done with request\n");
     return 0;
 }

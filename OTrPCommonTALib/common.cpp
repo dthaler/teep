@@ -14,6 +14,10 @@ extern "C" {
 #include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/b64.h"
+#include "jose/openssl.h"
+#include "openssl/rsa.h"
+#include "openssl/evp.h"
+#include "openssl/x509.h"
 };
 
 #if 0
@@ -165,11 +169,21 @@ json_t* CopyToJweKey(json_t* jwk1, const char* alg)
     if (err != 0) {
         return nullptr;
     }
-    if (json_array_append_new(key_ops, json_string("wrapKey")) < 0) {
-        return nullptr;
-    }
-    if (json_array_append_new(key_ops, json_string("unwrapKey")) < 0) {
-        return nullptr;
+
+    if (strcmp(alg, "RSA1_5") == 0) {
+        if (json_array_append_new(key_ops, json_string("wrapKey")) < 0) {
+            return nullptr;
+        }
+        if (json_array_append_new(key_ops, json_string("unwrapKey")) < 0) {
+            return nullptr;
+        }
+    } else {
+        if (json_array_append_new(key_ops, json_string("sign")) < 0) {
+            return nullptr;
+        }
+        if (json_array_append_new(key_ops, json_string("verify")) < 0) {
+            return nullptr;
+        }
     }
 
     return jwk2.Detach();
@@ -188,6 +202,47 @@ json_t* CreateNewJwkR1_5(void)
 json_t* CreateNewJwkRS256(void)
 {
     return CreateNewJwk("RS256");
+}
+
+const unsigned char* GetDerCertificate(json_t* jwk, size_t *pCertificateSize)
+{
+    RSA *rsa = jose_openssl_jwk_to_RSA(nullptr, jwk);
+
+    // Now that we have the RSA key we can do the rest by following the steps at
+    // https://stackoverflow.com/questions/256405/programmatically-create-x509-certificate-using-openssl
+
+    // Get the private key.
+    EVP_PKEY* pkey = EVP_PKEY_new();
+    EVP_PKEY_assign_RSA(pkey, rsa);
+
+    // Create a certificate.
+    X509* x509 = X509_new();
+    ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
+    X509_gmtime_adj(X509_get_notBefore(x509), 0); // Current time
+    X509_gmtime_adj(X509_get_notAfter(x509), 31536000L); // 1 year from now
+    X509_set_pubkey(x509, pkey);
+
+    // We set the name of the issuer to the name of the subject, for a self-signed cert.
+    X509_NAME* name = X509_get_subject_name(x509);
+
+    X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0);
+    X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char *)"MyCompany Inc.", -1, -1, 0);
+    X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)"localhost", -1, -1, 0);
+    X509_set_issuer_name(x509, name);
+
+    // Now sign the certificate with the private key using SHA1.
+    X509_sign(x509, pkey, EVP_sha1());
+
+    // We now have a self-signed certificate and need to get the DER form of it.
+    *pCertificateSize = i2d_X509(x509, nullptr);
+    unsigned char* cert = (unsigned char*)malloc(*pCertificateSize);
+    unsigned char* out = cert;
+    i2d_X509(x509, &out);
+
+    X509_free(x509);
+    EVP_PKEY_free(pkey); // This also frees rsa.
+
+    return cert;
 }
 
 char *DecodeJWS(const json_t *jws, const json_t *jwk)
@@ -247,9 +302,7 @@ int ecall_ProcessOTrPMessage(
     }
     const char* key = json_object_iter_key(json_object_iter(object));
 
-    ocall_print("Received ");
-    ocall_print(key);
-    ocall_print("\n");
+    printf("Received %s\n", key);
 
     JsonAuto messageObject = json_object_get(object, key);
 

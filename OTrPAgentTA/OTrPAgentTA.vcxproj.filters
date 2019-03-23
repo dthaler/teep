@@ -24,6 +24,9 @@
     <ClCompile Include="OTrPDeviceEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TrustedApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="optee/user_ta_header_defines.h">
@@ -31,6 +34,9 @@
     </ClInclude>
     <ClInclude Include="OTrPAgent_t.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrustedApplication.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

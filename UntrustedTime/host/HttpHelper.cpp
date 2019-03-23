@@ -21,6 +21,7 @@ PCSTR ConvertToUtf8(_Out_writes_(cchBuffer) PSTR buffer, _In_ int cchBuffer, _In
     return buffer;
 }
 
+// The caller is responsible for freeing the buffer if one is returned.
 _Success_(return == NO_ERROR)
 int
 MakeHttpCall(

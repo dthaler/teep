@@ -352,10 +352,12 @@
   <ItemGroup>
     <ClCompile Include="OTrPAgent_t.c" />
     <ClCompile Include="OTrPDeviceEcallHandler.cpp" />
+    <ClCompile Include="TrustedApplication.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OTrPAgent_t.h" />
     <ClInclude Include="optee/user_ta_header_defines.h" />
+    <ClInclude Include="TrustedApplication.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="OTrPAgent.edl">

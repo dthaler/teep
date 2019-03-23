@@ -28,10 +28,10 @@ void TestJwLibs(void)
     message = json_dumps(jwkTam, 0);
     free((char*)message);
     json_t* jws = json_pack("{s:s}", "payload", "foo");
-    bool ok = jose_jws_sig(NULL, jws, NULL, jwkTam); // Sign payload.
+    bool ok = jose_jws_sig(nullptr, jws, nullptr, jwkTam); // Sign payload.
     message = json_dumps(jws, 0);
     free((char*)message);
-    ok = jose_jws_ver(NULL, jws, NULL, jwkTam, false); // Verify the signature.
+    ok = jose_jws_ver(nullptr, jws, nullptr, jwkTam, false); // Verify the signature.
     json_decref(jws); // Free jws.
 
     // Convert the RS256 JWK to an RSA1_5 JWK.
@@ -58,11 +58,11 @@ void TestJwLibs(void)
 
     // Verify JWE (encryption).
     json_t* jwe = json_object();
-    ok = jose_jwe_enc(NULL, jwe, NULL, jwkTam2, "foo", 4); // Encrypt
+    ok = jose_jwe_enc(nullptr, jwe, nullptr, jwkTam2, "foo", 4); // Encrypt
     message = json_dumps(jwe, 0);
     free((char*)message);
     size_t ptl = 0;
-    char *pt = (char*)jose_jwe_dec(NULL, jwe, NULL, jwkTam2, &ptl); // Decrypt
+    char *pt = (char*)jose_jwe_dec(nullptr, jwe, nullptr, jwkTam2, &ptl); // Decrypt
     json_decref(jwe); // Free jwe
 }
 #endif
@@ -75,13 +75,13 @@ void ecall_Initialize()
 json_t* CreateNewJwk(const char* alg)
 {
     JsonAuto jwk(json_pack("{s:s}", "alg", alg), true);
-    if (jwk == NULL) {
-        return NULL;
+    if (jwk == nullptr) {
+        return nullptr;
     }
 
-    bool ok = jose_jwk_gen(NULL, jwk);
+    bool ok = jose_jwk_gen(nullptr, jwk);
     if (!ok) {
-        return NULL;
+        return nullptr;
     }
 
     return json_incref(jwk);
@@ -105,22 +105,17 @@ json_t* CopyToJweKey(json_t* jwk1, const char* alg)
     }
     json_decref(algstr);
     json_t* key_ops = json_object_get(jwk2, "key_ops");
-    json_t* wrapKey = json_string("wrapKey");
-    json_t* unwrapKey = json_string("unwrapKey");
     err = json_array_clear(key_ops);
     if (err != 0) {
         return nullptr;
     }
-    err = json_array_append(key_ops, wrapKey);
-    if (err != 0) {
+    if (json_array_append_new(key_ops, json_string("wrapKey")) < 0) {
         return nullptr;
     }
-    err = json_array_append(key_ops, unwrapKey);
-    if (err != 0) {
+    if (json_array_append_new(key_ops, json_string("unwrapKey")) < 0) {
         return nullptr;
     }
-    json_decref(wrapKey);
-    json_decref(unwrapKey);
+
     return jwk2.Detach();
 }
 
@@ -141,19 +136,19 @@ json_t* CreateNewJwkRS256(void)
 
 char *DecodeJWS(const json_t *jws, const json_t *jwk)
 {
-    char *str = NULL;
+    char *str = nullptr;
     size_t len = 0;
 
     // Verify signature, if requested.
-    if (jwk != nullptr && !jose_jws_ver(NULL, jws, NULL, jwk, false)) {
-        return NULL;
+    if (jwk != nullptr && !jose_jws_ver(nullptr, jws, nullptr, jwk, false)) {
+        return nullptr;
     }
 
-    len = jose_b64_dec(json_object_get(jws, "payload"), NULL, 0);
+    len = jose_b64_dec(json_object_get(jws, "payload"), nullptr, 0);
     str = (char*)malloc(len + 1);
     if (jose_b64_dec(json_object_get(jws, "payload"), str, len) == SIZE_MAX) {
         free(str);
-        return NULL;
+        return nullptr;
     }
     str[len] = 0;
     return str;
@@ -165,7 +160,7 @@ int ecall_ProcessOTrPMessage(
     int messageLength)
 {
     int err = 1;
-    char *newstr = NULL;
+    char *newstr = nullptr;
 
     if (messageLength < 1) {
         return 1; /* error */
@@ -177,7 +172,7 @@ int ecall_ProcessOTrPMessage(
         str = message;
     } else {
         newstr = (char*)malloc(messageLength + 1);
-        if (newstr == NULL) {
+        if (newstr == nullptr) {
             return 1; /* error */
         }
         memcpy(newstr, message, messageLength);
@@ -189,9 +184,9 @@ int ecall_ProcessOTrPMessage(
     JsonAuto object(json_loads(str, 0, &error), true);
 
     free(newstr);
-    newstr = NULL;
+    newstr = nullptr;
 
-    if ((object == NULL) || !json_is_object((json_t*)object)) {
+    if ((object == nullptr) || !json_is_object((json_t*)object)) {
         return 1; /* Error */
     }
     const char* key = json_object_iter_key(json_object_iter(object));

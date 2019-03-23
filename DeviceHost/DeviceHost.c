@@ -7,14 +7,19 @@
 
 int main(int argc, char** argv)
 {
-    int err;
+    const char* taNeeded;
+    if (argc > 1) {
+        taNeeded = argv[1];
+    } else {
+        taNeeded = "X";
+    }
 
-    err = StartAgentBroker();
+    int err = StartAgentBroker();
     if (err != 0) {
         return err;
     }
 
-    err = AgentBrokerRequestTA("X", DEFAULT_TAM_URI);
+    err = AgentBrokerRequestTA(taNeeded, DEFAULT_TAM_URI);
     if (err != 0) {
         goto exit;
     }

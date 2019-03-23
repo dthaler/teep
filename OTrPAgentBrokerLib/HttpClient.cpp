@@ -13,7 +13,7 @@ extern "C" {
 
 #define OTRP_JSON_MEDIA_TYPE "application/otrp+json"
 
-OTrPSession g_Session = { NULL };
+OTrPSession g_Session = { 0 };
 
 // Send an empty POST to the indicated URI.
 int ocall_Connect(const char* tamUri)
@@ -43,8 +43,8 @@ int ocall_Connect(const char* tamUri)
         "POST",
         authority,
         path,
-        NULL,
-        NULL,
+        nullptr,
+        nullptr,
         OTRP_JSON_MEDIA_TYPE,
         &statusCode,
         &responseBuffer);
@@ -66,11 +66,11 @@ int ocall_SendOTrPMessage(void* sessionHandle, const char* message)
     OTrPSession* session = (OTrPSession*)sessionHandle;
 
     size_t messageLength = strlen(message);
-    assert(session->OutboundMessage == NULL);
+    assert(session->OutboundMessage == nullptr);
 
     // Save message for later transmission after the ECALL returns.
     session->OutboundMessage = _strdup(message);
-    return (session->OutboundMessage == NULL);
+    return (session->OutboundMessage == nullptr);
 }
 
 const char* SendOTrPMessage(OTrPSession* session)
@@ -89,7 +89,7 @@ const char* SendOTrPMessage(OTrPSession* session)
     components.dwUrlPathLength = 255;
     components.lpszUrlPath = path;
     if (!InternetCrackUrl(session->TamUri, 0, 0, &components)) {
-        return NULL;
+        return nullptr;
     }
     sprintf_s(authority, sizeof(authority), "%s:%d", components.lpszHostName, components.nPort);
 
@@ -103,16 +103,16 @@ const char* SendOTrPMessage(OTrPSession* session)
         &statusCode,
         &responseBuffer);
 
-    if (session->OutboundMessage != NULL) {
+    if (session->OutboundMessage != nullptr) {
         free((char*)session->OutboundMessage);
-        session->OutboundMessage = NULL;
+        session->OutboundMessage = nullptr;
     }
 
     if (err != 0) {
-        return NULL;
+        return nullptr;
     }
     if (statusCode != 200) {
-        return NULL;
+        return nullptr;
     }
     return responseBuffer;
 }

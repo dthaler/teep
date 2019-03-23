@@ -12,7 +12,9 @@ enclave {
             [in, string] const char* taid,
             [in, string] const char* tamUri);
 
-        public int ecall_ProcessOTrPConnect([user_check] void* sessionHandle);
+        public int ecall_ProcessError([user_check] void* sessionHandle);
+
+        public int ecall_RequestPolicyCheck();
     };
 
     untrusted {

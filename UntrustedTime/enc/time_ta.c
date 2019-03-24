@@ -1,7 +1,7 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+#include <openenclave/enclave.h>
 #include <assert.h>
 #include <stddef.h>
-#include <sgx.h>
 #include "time.h"
 #include "UntrustedTime_t.h"
 

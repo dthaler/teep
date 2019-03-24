@@ -36,7 +36,7 @@ int AgentBrokerRequestTA(
             if (inboundMessage != NULL) {
                 if (inboundMessage[0] == 0) {
                     // Empty buffer, meaning the TAM is done.
-                    free(inboundMessage);
+                    free((void*)inboundMessage);
                 } else {
                     ASSERT(g_Session.InboundMessage == NULL);
                     g_Session.InboundMessage = inboundMessage;
@@ -52,7 +52,7 @@ int AgentBrokerRequestTA(
                 g_Session.InboundMessage,
                 strlen(g_Session.InboundMessage));
 
-            free(g_Session.InboundMessage);
+            free((void*)g_Session.InboundMessage);
             g_Session.InboundMessage = NULL;
 
             if (result != OE_OK) {

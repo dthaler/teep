@@ -2,6 +2,7 @@ openssl/
 bin/
 obj/
 Debug/
+OPTEE-Simulation-Debug/
 packages/
 
 # Visual Studio generated files

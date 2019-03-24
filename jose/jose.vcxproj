@@ -147,7 +147,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -160,7 +160,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -174,7 +174,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -188,7 +188,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -201,7 +201,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -214,7 +214,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -228,7 +228,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -242,7 +242,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\LibEay32;..\jansson;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)external\jose;$(SolutionDir)external\jansson\src;$(SolutionDir)openssl\include;$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PreprocessorDefinitions>OE_USE_SGX;OE_NO_SAL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>OPENENCLAVE;OE_NO_SAL</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -261,6 +261,13 @@
     <ClCompile Include="joseinit.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\external\jose\jose\b64.h" />
+    <ClInclude Include="..\external\jose\jose\cfg.h" />
+    <ClInclude Include="..\external\jose\jose\io.h" />
+    <ClInclude Include="..\external\jose\jose\jwe.h" />
+    <ClInclude Include="..\external\jose\jose\jwk.h" />
+    <ClInclude Include="..\external\jose\jose\jws.h" />
+    <ClInclude Include="..\external\jose\jose\openssl.h" />
     <ClInclude Include="..\external\jose\lib\hooks.h" />
     <ClInclude Include="..\external\jose\lib\hsh.h" />
     <ClInclude Include="..\external\jose\lib\misc.h" />

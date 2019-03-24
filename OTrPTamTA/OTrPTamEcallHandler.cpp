@@ -4,7 +4,6 @@
 
 #include <stdbool.h>
 #include <string.h>
-#define FILE void
 extern "C" {
 #include "jansson.h"
 #include "joseinit.h"

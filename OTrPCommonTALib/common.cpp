@@ -1,7 +1,5 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#include <sgx.h>
-#include <sgx_trts.h>
-#include <sgx_tprotected_fs.h>
+#include <openenclave/enclave.h>
 #include <string.h>
 #include "../UntrustedTime/enc/UntrustedTimeTALib.h"
 #include "OTrPCommonTALib_t.h"

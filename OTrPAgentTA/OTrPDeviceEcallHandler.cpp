@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include "TrustedApplication.h"
-#define FILE void
 extern "C" {
 #include "jansson.h"
 #include "joseinit.h"
@@ -25,6 +24,9 @@ char* strdup(const char* str);
 
 #ifdef OE_USE_SGX
 # define TEE_NAME "Intel SGX"
+#endif
+#ifdef OE_USE_OPTEE
+# define TEE_NAME "OP-TEE"
 #endif
 
 // List of TA's requested.

@@ -35,6 +35,6 @@ OTrP:
 
 Sample:
 
-* DeviceTest: Sample test app to run an OTrP Agent Broker.
+* DeviceHost: Sample host app to run an OTrP Agent Broker.
 
-* TamTest: Sample test app to run an OTrP TAM Broker.
+* TamHost: Sample host app to run an OTrP TAM Broker.

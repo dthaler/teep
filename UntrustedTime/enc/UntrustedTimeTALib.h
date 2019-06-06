@@ -14,7 +14,7 @@ int _vsnprintf(
     size_t count,
     const char* format,
     va_list argptr)
-#ifdef USE_OPTEE
+#ifdef OE_USE_OPTEE
     __attribute__((format(printf, 3, 0)))
 #endif
     ;

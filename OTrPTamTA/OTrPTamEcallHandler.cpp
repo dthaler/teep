@@ -595,6 +595,8 @@ int OTrPHandleInstallTAResponse(void* sessionHandle, const json_t* messageObject
         return 1; /* Error */
     }
 
+    // At the last TAM and TEE operation, the TAM returns the signed
+    // TEE SP AIK public key to the application.
     // TODO: fill this in
 
     return 0; /* no error */

@@ -1,6 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdio.h>
-#include "../OTrPTamBrokerLib/OTrPTamBrokerLib.h"
+#include "../TeepTamBrokerLib/TeepTamBrokerLib.h"
 
 int main(int argc, char** argv)
 {

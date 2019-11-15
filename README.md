@@ -1,4 +1,4 @@
-# OTrP
+# TEEP
 
 C Implementation of draft-ietf-teep-opentrustprotocol and 
 https://tools.ietf.org/html/draft-thaler-teep-otrp-over-http
@@ -13,7 +13,7 @@ External:
 
 * jose_openssl: Static lib implementation of JOSE's use of OpenSSL crypto library, ported to run in a TA.
 
-* LibEay32: Static lib implemenation of OpenSSL crypto library, ported to run in a TA.
+* LibEay32: Static lib implementation of OpenSSL crypto library, ported to run in a TA.
 
 Time:
 
@@ -21,20 +21,20 @@ Time:
 
 * UntrustedTimeTALib: Static lib TA-side support for calling untrusted absolute time APIs from a TA.
 
-OTrP:
+TEEP:
 
-* OTrPAgentBrokerLib: OTrP Agent Broker in a static lib.
+* TeepAgentBrokerLib: TEEP Agent Broker in a static lib.
 
-* OTrPAgentTA: OTrP Agent in a TA.
+* TeepAgentTA: TEEP Agent in a TA.
 
-* OTrPTamBrokerLib: OTrP TAM Broker in a static lib.
+* TeepTamBrokerLib: TEEP TAM Broker in a static lib.
 
-* OTrPTamTA: OTrP TAM in a TA.
+* TeepTamTA: TEEP TAM in a TA.
 
-* OTrPCommonTALib: OTrP trusted code that is needed by both an Agent and a TAM.
+* TeepCommonTALib: TEEP trusted code that is needed by both an Agent and a TAM.
 
 Sample:
 
-* DeviceHost: Sample host app to run an OTrP Agent Broker.
+* DeviceHost: Sample host app to run an TEEP Agent Broker.
 
-* TamHost: Sample host app to run an OTrP TAM Broker.
+* TamHost: Sample host app to run an TEEP TAM Broker.

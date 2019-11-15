@@ -1,0 +1,23 @@
+/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+enclave {
+    /* Include the following line to use stdio APIs from inside an enclave. */
+    from "openenclave/stdio.edl" import *;
+
+    trusted {
+        /* define ECALLs here. */
+        public void ecall_Initialize();
+
+		public int ecall_ProcessTeepMessage(
+		    [user_check] void* sessionHandle,
+            [in, size=messageLength] const char* message, 
+            int messageLength);
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        int ocall_QueueOutboundTeepMessage(
+		    [user_check] void* sessionHandle,
+            [in, string] const char* message);
+    };
+};
+

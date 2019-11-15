@@ -1,0 +1,25 @@
+enclave {
+    /* Include the following line to use stdio APIs from inside an enclave. */
+    from "openenclave/stdio.edl" import *;
+
+    from "UntrustedTime.edl" import *;
+    from "TeepCommonTALib.edl" import *;
+
+    trusted {
+        /* define ECALLs here. */
+
+        public int ecall_RequestTA(
+            [in, string] const char* taid,
+            [in, string] const char* tamUri);
+
+        public int ecall_ProcessError([user_check] void* sessionHandle);
+
+        public int ecall_RequestPolicyCheck();
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+
+        int ocall_Connect([in, string] const char* tamUri);
+    };
+};

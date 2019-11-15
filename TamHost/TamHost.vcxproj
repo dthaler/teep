@@ -168,7 +168,7 @@
     <ClInclude Include="TcpServer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OTrPTamBrokerLib\OTrPTamBrokerLib.vcxproj">
+    <ProjectReference Include="..\TeepTamBrokerLib\TeepTamBrokerLib.vcxproj">
       <Project>{b1903274-432e-483e-9689-87086c80db54}</Project>
     </ProjectReference>
     <ProjectReference Include="..\UntrustedTime\host\UntrustedTimeLib.vcxproj">

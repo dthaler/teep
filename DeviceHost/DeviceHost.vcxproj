@@ -177,7 +177,7 @@
     <ProjectReference Include="..\jansson\jansson.vcxproj">
       <Project>{0ba01906-2dae-48e9-8044-4a631267b4ba}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\OTrPAgentBrokerLib\OTrPAgentBrokerLib.vcxproj">
+    <ProjectReference Include="..\TeepAgentBrokerLib\TeepAgentBrokerLib.vcxproj">
       <Project>{0d5ac8ae-35d9-4f5c-b74c-f0ff75f03497}</Project>
     </ProjectReference>
     <ProjectReference Include="..\UntrustedTime\host\UntrustedTimeLib.vcxproj">

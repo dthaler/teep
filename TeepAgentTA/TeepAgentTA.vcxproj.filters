@@ -27,6 +27,9 @@
     <ClCompile Include="TrustedApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TeepDeviceEcallHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="optee/user_ta_header_defines.h">
@@ -36,6 +39,12 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="TrustedApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OTrPDeviceEcallHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TeepDeviceEcallHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

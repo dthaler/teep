@@ -32,7 +32,8 @@ int AgentBrokerRequestTA(
     while (g_Session.InboundMessage != NULL || g_Session.OutboundMessage != NULL) {
         if (g_Session.OutboundMessage != NULL) {
             // Send outbound message and get the response.
-            const char* inboundMessage = SendTeepMessage(&g_Session);
+            char* inboundMediaType;
+            const char* inboundMessage = SendTeepMessage(&g_Session, &inboundMediaType);
             if (inboundMessage != NULL) {
                 if (inboundMessage[0] == 0) {
                     // Empty buffer, meaning the TAM is done.
@@ -40,7 +41,9 @@ int AgentBrokerRequestTA(
                 } else {
                     ASSERT(g_Session.InboundMessage == NULL);
                     g_Session.InboundMessage = inboundMessage;
+                    strcpy_s(g_Session.InboundMediaType, sizeof(g_Session.InboundMediaType), inboundMediaType);
                 }
+                free((void*)inboundMediaType);
             }
         }
 

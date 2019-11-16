@@ -25,10 +25,10 @@ int TeepHandleMessage(
     return err;
 }
 
-int TeepHandleConnect(void* sessionHandle)
+int TeepHandleConnect(void* sessionHandle, const char* acceptMediaType)
 {
     int err = 0;
-    oe_result_t result = ecall_ProcessTeepConnect(g_ta_eid, &err, sessionHandle);
+    oe_result_t result = ecall_ProcessTeepConnect(g_ta_eid, &err, sessionHandle, acceptMediaType);
     if (result != OE_OK) {
         return result;
     }

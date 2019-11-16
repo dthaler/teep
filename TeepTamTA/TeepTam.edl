@@ -7,7 +7,7 @@ enclave {
 
     trusted {
         /* define ECALLs here. */
-        public int ecall_ProcessTeepConnect([user_check] void* sessionHandle);
+        public int ecall_ProcessTeepConnect([user_check] void* sessionHandle, [in, string] const char* acceptMediaType);
     };
 
     untrusted {

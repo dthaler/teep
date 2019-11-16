@@ -176,10 +176,22 @@ DWORD HandleOtrpHttpPost(
     }
 
     if (totalBytesRead == 0) {
+        // A 0-byte post is a connect.
         FREE_MEM(inputBuffer);
 
-        // A 0-byte post is a connect.
-        if (TeepHandleConnect(session) != 0) {
+        // Get the Accept header value, if any.
+        HTTP_KNOWN_HEADER* acceptHeader = &pRequest->Headers.KnownHeaders[HttpHeaderAccept];
+        int mediaTypeLength = acceptHeader->RawValueLength;
+        char* mediaType = nullptr;
+        if (mediaTypeLength > 0) {
+            mediaType = new char[mediaTypeLength + 1];
+            memcpy(mediaType, acceptHeader->pRawValue, mediaTypeLength);
+            mediaType[mediaTypeLength] = 0;
+        }
+
+        int connectResult = TeepHandleConnect(session, mediaType);
+        delete mediaType;
+        if (connectResult != 0) {
             return SendHttpResponse(
                 hReqQueue,
                 pRequest,
@@ -206,7 +218,17 @@ DWORD HandleOtrpHttpPost(
         return result;
     }
 
-    if (TeepHandleMessage(session, inputBuffer, totalBytesRead) != 0) {
+    // Get the Content-Type header value, if any.
+    HTTP_KNOWN_HEADER* contentTypeHeader = &pRequest->Headers.KnownHeaders[HttpHeaderContentType];
+    int mediaTypeLength = contentTypeHeader->RawValueLength;
+    char* mediaType = nullptr;
+    if (mediaTypeLength > 0) {
+        mediaType = new char[mediaTypeLength + 1];
+        memcpy(mediaType, contentTypeHeader->pRawValue, mediaTypeLength);
+        mediaType[mediaTypeLength] = 0;
+    }
+
+    if (TeepHandleMessage(session, mediaType, inputBuffer, totalBytesRead) != 0) {
         (void)SendHttpResponse(
             hReqQueue,
             pRequest,
@@ -216,6 +238,8 @@ DWORD HandleOtrpHttpPost(
             NULL,
             0);
     }
+
+    delete mediaType;
 
     result = SendHttpResponse(
         hReqQueue,
@@ -298,7 +322,19 @@ DWORD DoReceiveRequests(
                     pRequest->CookedUrl.pFullUrl);
 
                 if (wcscmp(pRequest->CookedUrl.pAbsPath, TEEP_PATH) == 0) {
-                    if (TeepHandleConnect(session) != 0) {
+                    // Get the Accept header value, if any.
+                    HTTP_KNOWN_HEADER* acceptHeader = &pRequest->Headers.KnownHeaders[HttpHeaderAccept];
+                    int mediaTypeLength = acceptHeader->RawValueLength;
+                    char* mediaType = nullptr;
+                    if (mediaTypeLength > 0) {
+                        mediaType = new char[mediaTypeLength + 1];
+                        memcpy(mediaType, acceptHeader->pRawValue, mediaTypeLength);
+                        mediaType[mediaTypeLength] = 0;
+                    }
+
+                    int connectResult = TeepHandleConnect(session, mediaType);
+                    delete mediaType;
+                    if (connectResult != 0) {
                         break;
                     }
 

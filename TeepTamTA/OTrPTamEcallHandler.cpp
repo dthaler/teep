@@ -18,6 +18,8 @@ extern "C" {
 #include "../jansson/JsonAuto.h"
 #include "openssl/x509.h"
 #include "openssl/evp.h"
+#include "OTrPTamEcallHandler.h"
+#include "TeepTamEcallHandler.h"
 
 #define UNIQUE_ID_LEN 16
 
@@ -53,43 +55,6 @@ json_t* GetNewTransactionID(void)
     return GetNewGloballyUniqueID();
 }
 
-JsonAuto g_TamSigningKey;
-
-json_t* GetTamSigningKey()
-{
-    if ((json_t*)g_TamSigningKey == nullptr) {
-        g_TamSigningKey = CreateNewJwkRS256();
-    }
-    return (json_t*)g_TamSigningKey;
-}
-
-JsonAuto g_TamEncryptionKey;
-
-json_t* GetTamEncryptionKey()
-{
-    if ((json_t*)g_TamEncryptionKey == nullptr) {
-        g_TamEncryptionKey = CopyToJweKey(GetTamSigningKey(), "RSA1_5");
-    }
-    return g_TamEncryptionKey;
-}
-
-const unsigned char* g_TamDerCertificate = nullptr;
-size_t g_TamDerCertificateSize = 0;
-
-const unsigned char* GetTamDerCertificate(size_t *pCertLen)
-{
-    if (g_TamDerCertificate == nullptr) {
-        // Construct a self-signed DER certificate based on the JWK.
-
-        // First get the RSA key.
-        json_t* jwk = GetTamEncryptionKey();
-        g_TamDerCertificate = GetDerCertificate(jwk, &g_TamDerCertificateSize);
-    }
-
-    *pCertLen = g_TamDerCertificateSize;
-    return g_TamDerCertificate;
-}
-
 /* Compose the following encrypted content:
        ENCRYPTED {
          "tamid": "<TAM ID previously assigned to the SD>",
@@ -99,7 +64,7 @@ const unsigned char* GetTamDerCertificate(size_t *pCertLen)
          "taid": "<TA identifier>"
        },
 */
-json_t* ComposeInstallTAContent(json_t* taid, json_t* jwkAgentSigning)
+json_t* OTrPComposeInstallTAContent(json_t* taid, json_t* jwkAgentSigning)
 {
     JsonAuto content(json_object());
     if (content.AddStringToObject("tamid", "<TAM ID previously assigned to the SD>") == nullptr) {
@@ -146,7 +111,7 @@ json_t* ComposeInstallTAContent(json_t* taid, json_t* jwkAgentSigning)
 }
 
 /* Compose a GetDeviceStateTBSRequest message. */
-const char* ComposeGetDeviceStateTBSRequest(void)
+const char* OTrPComposeGetDeviceStateTBSRequest(void)
 {
     JsonAuto object(json_object(), true);
     if (object == nullptr) {
@@ -181,12 +146,12 @@ const char* ComposeGetDeviceStateTBSRequest(void)
     return strdup(message);
 }
 
-const char* ComposeGetDeviceStateRequest(void)
+const char* OTrPComposeGetDeviceStateRequest(void)
 {
     json_t* jwk = GetTamSigningKey();
 
     /* Compose a raw GetDeviceState request to be signed. */
-    const char* tbsRequest = ComposeGetDeviceStateTBSRequest();
+    const char* tbsRequest = OTrPComposeGetDeviceStateTBSRequest();
     if (tbsRequest == nullptr) {
         return nullptr;
     }
@@ -250,11 +215,11 @@ const char* ComposeGetDeviceStateRequest(void)
 }
 
 /* Handle a new incoming connection from a device. */
-int ecall_ProcessTeepConnect(void* sessionHandle)
+int OTrPProcessConnect(void* sessionHandle)
 {
     printf("Received client connection\n");
 
-    const char* message = ComposeGetDeviceStateRequest();
+    const char* message = OTrPComposeGetDeviceStateRequest();
     if (message == nullptr) {
         return 1; /* Error */
     }
@@ -272,7 +237,7 @@ int ecall_ProcessTeepConnect(void* sessionHandle)
 }
 
 /* Compose an InstallTATBSRequest message. */
-const char* ComposeInstallTATBSRequest(json_t* teeName, json_t* dsiHash, json_t* taid, json_t* jwkAgent)
+const char* OTrPComposeInstallTATBSRequest(json_t* teeName, json_t* dsiHash, json_t* taid, json_t* jwkAgent)
 {
     JsonAuto object(json_object(), true);
     if (object == nullptr) {
@@ -309,7 +274,7 @@ const char* ComposeInstallTATBSRequest(json_t* teeName, json_t* dsiHash, json_t*
         return nullptr;
     }
 
-    JsonAuto jweContent(ComposeInstallTAContent(taid, jwkAgent));
+    JsonAuto jweContent(OTrPComposeInstallTAContent(taid, jwkAgent));
     if ((json_t*)jweContent == nullptr) {
         return nullptr;
     }
@@ -331,12 +296,12 @@ const char* ComposeInstallTATBSRequest(json_t* teeName, json_t* dsiHash, json_t*
 }
 
 /* Compose an InstallTARequest message. */
-const char* ComposeInstallTARequest(json_t* teeName, json_t* dsiHash, json_t* taid, json_t* jwkAgent)
+const char* OTrPComposeInstallTARequest(json_t* teeName, json_t* dsiHash, json_t* taid, json_t* jwkAgent)
 {
     json_t* jwk = GetTamSigningKey();
 
     /* Compose a raw InstallTA request to be signed. */
-    const char* tbsRequest = ComposeInstallTATBSRequest(teeName, dsiHash, taid, jwkAgent);
+    const char* tbsRequest = OTrPComposeInstallTATBSRequest(teeName, dsiHash, taid, jwkAgent);
     if (tbsRequest == nullptr) {
         return nullptr;
     }
@@ -397,18 +362,6 @@ const char* ComposeInstallTARequest(json_t* teeName, json_t* dsiHash, json_t* ta
     /* Serialize it to a single string. */
     const char* message = json_dumps(object, 0);
     return message;
-}
-
-// Get the BASE64-encoded SHA256 hash value of the buffer.
-json_t* GetSha256Hash(void* buffer, int len)
-{
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, buffer, len);
-    SHA256_Final(hash, &sha256);
-
-    return jose_b64_enc(hash, sizeof(hash));
 }
 
 /* Handle a GetDeviceTEEStateResponse from an OTrP Agent. */
@@ -554,7 +507,7 @@ int OTrPHandleGetDeviceTEEStateResponse(void* sessionHandle, const json_t* messa
                 continue;
             }
 
-            const char* message = ComposeInstallTARequest(teeName, dsiHash, taid, jwkAgent);
+            const char* message = OTrPComposeInstallTARequest(teeName, dsiHash, taid, jwkAgent);
             if (message == nullptr) {
                 return 1;
             }
@@ -604,7 +557,7 @@ int OTrPHandleInstallTAResponse(void* sessionHandle, const json_t* messageObject
 
 /* Handle an incoming message from an OTrP Agent. */
 /* Returns 0 on success, or non-zero if error. */
-int TeepHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
+int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
 {
     if (strcmp(key, "GetDeviceStateResponse") == 0) {
         return OTrPHandleGetDeviceStateResponse(sessionHandle, messageObject);

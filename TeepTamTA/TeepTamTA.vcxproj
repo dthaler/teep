@@ -359,6 +359,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="OTrPTamEcallHandler.cpp" />
+    <ClCompile Include="TeepTamEcallHandler.cpp" />
     <ClCompile Include="TeepTam_t.c" />
   </ItemGroup>
   <ItemGroup>

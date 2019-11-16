@@ -21,6 +21,8 @@ char* strdup(const char* str);
 #include "openssl/bio.h"
 #include "openssl/evp.h"
 #include "openssl/x509.h"
+#include "TeepDeviceEcallHandler.h"
+#include "OTrPDeviceEcallHandler.h"
 
 #ifdef OE_USE_SGX
 # define TEE_NAME "Intel SGX"
@@ -29,48 +31,8 @@ char* strdup(const char* str);
 # define TEE_NAME "OP-TEE"
 #endif
 
-// List of TA's requested.
-TrustedApplication* g_TARequestList = nullptr;
-
-JsonAuto g_AgentSigningKey;
-
-json_t* GetAgentSigningKey()
-{
-    if ((json_t*)g_AgentSigningKey == nullptr) {
-        g_AgentSigningKey = CreateNewJwkRS256();
-    }
-    return (json_t*)g_AgentSigningKey;
-}
-
-JsonAuto g_AgentEncryptionKey;
-
-json_t* GetAgentEncryptionKey()
-{
-    if ((json_t*)g_AgentEncryptionKey == nullptr) {
-        g_AgentEncryptionKey = CopyToJweKey(GetAgentSigningKey(), "RSA1_5");
-    }
-    return g_AgentEncryptionKey;
-}
-
-const unsigned char* g_AgentDerCertificate = nullptr;
-size_t g_AgentDerCertificateSize = 0;
-
-const unsigned char* GetAgentDerCertificate(size_t *pCertLen)
-{
-    if (g_AgentDerCertificate == nullptr) {
-        // Construct a self-signed DER certificate based on the JWK.
-
-        // First get the RSA key.
-        json_t* jwk = GetAgentSigningKey();
-        g_AgentDerCertificate = GetDerCertificate(jwk, &g_AgentDerCertificateSize);
-    }
-
-    *pCertLen = g_AgentDerCertificateSize;
-    return g_AgentDerCertificate;
-}
-
 /* Compose a DeviceStateInformation message. */
-const char* ComposeDeviceStateInformation(void)
+const char* OTrPComposeDeviceStateInformation(void)
 {
     JsonAuto object(json_object(), true);
     if ((json_t*)object == nullptr) {
@@ -190,9 +152,9 @@ const char* ComposeDeviceStateInformation(void)
     return strdup(message);
 }
 
-json_t* AddEdsiToObject(JsonAuto& request, const json_t* jwke)
+json_t* OTrPAddEdsiToObject(JsonAuto& request, const json_t* jwke)
 {
-    const char* dsi = ComposeDeviceStateInformation();
+    const char* dsi = OTrPComposeDeviceStateInformation();
     if (dsi == nullptr) {
         return nullptr;
     }
@@ -216,20 +178,8 @@ json_t* AddEdsiToObject(JsonAuto& request, const json_t* jwke)
     return request.AddObjectToObject("edsi", jwe);
 }
 
-int ecall_ProcessError(void* sessionHandle)
-{
-    // TODO: process transport error
-    return 0;
-}
-
-int ecall_RequestPolicyCheck(void)
-{
-    // TODO: request policy check
-    return 0;
-}
-
 /* Compose a GetDeviceTEEStateTBSResponse message. */
-const char* ComposeGetDeviceTEEStateTBSResponse(
+const char* OTrPComposeGetDeviceTEEStateTBSResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
     const json_t* jwkTam)     // TAM public key to encrypt with.
@@ -278,7 +228,7 @@ const char* ComposeGetDeviceTEEStateTBSResponse(
         return nullptr;
     }
 
-    if (AddEdsiToObject(response, jwkTam) == nullptr) {
+    if (OTrPAddEdsiToObject(response, jwkTam) == nullptr) {
         return nullptr;
     }
 
@@ -292,13 +242,13 @@ const char* ComposeGetDeviceTEEStateTBSResponse(
 }
 
 /* Compose a GetDeviceTEEStateResponse message. */
-json_t* ComposeGetDeviceTEEStateResponse(
+json_t* OTrPComposeGetDeviceTEEStateResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
     const json_t* jwkTam)     // TAM Public key to encrypt with.
 {
     /* Get a GetDeviceTEEStateTBSResponse. */
-    const char* tbsResponse = ComposeGetDeviceTEEStateTBSResponse(request, statusValue, jwkTam);
+    const char* tbsResponse = OTrPComposeGetDeviceTEEStateTBSResponse(request, statusValue, jwkTam);
     if (tbsResponse == nullptr) {
         return nullptr;
     }
@@ -332,12 +282,12 @@ json_t* ComposeGetDeviceTEEStateResponse(
 
 // Compose a GetDeviceStateResponse message.
 // Returns the message composed, or nullptr on error.
-const char* ComposeGetDeviceStateResponse(
+const char* OTrPComposeGetDeviceStateResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
     const json_t* jwkTam)     // TAM public key to encrypt with.
 {
-    JsonAuto jws(ComposeGetDeviceTEEStateResponse(request, statusValue, jwkTam), true);
+    JsonAuto jws(OTrPComposeGetDeviceTEEStateResponse(request, statusValue, jwkTam), true);
     if ((json_t*)jws == nullptr) {
         return nullptr;
     }
@@ -462,7 +412,7 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
 
     statusValue = "pass";
 
-    const char* message = ComposeGetDeviceStateResponse(tbsRequest, statusValue, jwkTam);
+    const char* message = OTrPComposeGetDeviceStateResponse(tbsRequest, statusValue, jwkTam);
     if (message == nullptr) {
         return 1; /* Error */
     }
@@ -484,7 +434,7 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
            this TAM>"
        }
 */
-json_t* ComposeInstallTAResponseContent(const char* failureReason, const json_t *jwkTamEncryption)
+json_t* OTrPComposeInstallTAResponseContent(const char* failureReason, const json_t *jwkTamEncryption)
 {
     JsonAuto content(json_object());
     if (failureReason != nullptr) {
@@ -498,7 +448,7 @@ json_t* ComposeInstallTAResponseContent(const char* failureReason, const json_t 
         return nullptr;
     }
 
-    const char* dsi = ComposeDeviceStateInformation();
+    const char* dsi = OTrPComposeDeviceStateInformation();
     if (dsi == nullptr) {
         return nullptr;
     }
@@ -530,7 +480,7 @@ json_t* ComposeInstallTAResponseContent(const char* failureReason, const json_t 
 }
 
 /* Compose an InstallTATBSResponse message. */
-const char* ComposeInstallTATBSResponse(
+const char* OTrPComposeInstallTATBSResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
     const json_t* jwkTam)     // TAM public key to encrypt with.
@@ -570,7 +520,7 @@ const char* ComposeInstallTATBSResponse(
     }
 
     const char* failureReason = nullptr; // TODO: null means succeeded
-    JsonAuto jweContent(ComposeInstallTAResponseContent(failureReason, jwkTam));
+    JsonAuto jweContent(OTrPComposeInstallTAResponseContent(failureReason, jwkTam));
     if ((json_t*)jweContent == nullptr) {
         return nullptr;
     }
@@ -588,14 +538,14 @@ const char* ComposeInstallTATBSResponse(
 }
 
 /* Compose a InstallTAResponse message. */
-const char* ComposeInstallTAResponse(
+const char* OTrPComposeInstallTAResponse(
     const json_t* request,    // Request we're responding to.
     const char* statusValue,  // Status string to return.
     const json_t* jwkTam,     // TAM Public key to encrypt with.
     const json_t* jwkAgent)   // Agent private key to sign with.
 {
     /* Get a InstallTATBSResponse. */
-    const char* tbsResponse = ComposeInstallTATBSResponse(request, statusValue, jwkTam);
+    const char* tbsResponse = OTrPComposeInstallTATBSResponse(request, statusValue, jwkTam);
     if (tbsResponse == nullptr) {
         return nullptr;
     }
@@ -737,7 +687,7 @@ int OTrPHandleInstallTARequest(void* sessionHandle, const json_t* request)
     statusValue = "pass";
 
     json_t* jwkAgent = GetAgentSigningKey();
-    const char* message = ComposeInstallTAResponse(tbsRequest, statusValue, jwkTam, jwkAgent);
+    const char* message = OTrPComposeInstallTAResponse(tbsRequest, statusValue, jwkTam, jwkAgent);
 
     printf("Sending InstallTAResponse...\n\n");
 
@@ -750,7 +700,7 @@ int OTrPHandleInstallTARequest(void* sessionHandle, const json_t* request)
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
+int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
 {
     if (strcmp(key, "GetDeviceStateRequest") == 0) {
         return OTrPHandleGetDeviceStateRequest(sessionHandle, messageObject);
@@ -762,60 +712,4 @@ int TeepHandleMessage(void* sessionHandle, const char* key, const json_t* messag
 
     /* Unrecognized message. */
     return 1;
-}
-
-int ecall_RequestTA(
-    const char* taid,
-    const char* tamUri)
-{
-    int err = 0;
-    oe_result_t result = OE_OK;
-    size_t responseLength = 0;
-
-    // TODO: See whether taid is already installed.
-    // For now we skip this step and pretend it's not.
-    bool isInstalled = false;
-
-    if (isInstalled) {
-        // Already installed, nothing to do.
-        // This counts as "pass no data back" in the broker spec.
-        return 0;
-    }
-
-    // See whether taid is already requested.
-    TrustedApplication* ta;
-    for (ta = g_TARequestList; ta != nullptr; ta = ta->Next) {
-        if (strcmp(ta->ID, taid) == 0) {
-            // Already requested, nothing to do.
-            // This counts as "pass no data back" in the broker spec.
-            return 0;
-        }
-    }
-
-    // Add taid to the request list.
-    ta = new TrustedApplication(taid);
-    ta->Next = g_TARequestList;
-    g_TARequestList = ta;
-
-    // TODO: we may want to modify the TAM URI here.
-
-    // TODO: see whether we already have a TAM cert we trust.
-    // For now we skip this step and say we don't.
-    bool haveTrustedTamCert = false;
-
-    if (!haveTrustedTamCert) {
-        // Pass back a TAM URI with no buffer.
-        result = ocall_Connect(&err, tamUri, OTRP_JSON_MEDIA_TYPE);
-        if (result != OE_OK) {
-            return result;
-        }
-        if (err != 0) {
-            return err;
-        }
-    } else {
-        // TODO: implement going on to the next message.
-        assert(false);
-    }
-
-    return err;
 }

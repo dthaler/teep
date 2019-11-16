@@ -147,14 +147,16 @@ MakeHttpCall(
         contentLength = atoi(responseText);
     }
 
-    CHAR mediaType[256] = "";
-    DWORD mediaTypeSize = sizeof(mediaType);
-    index = 0;
-    ok = HttpQueryInfoA(hRequest, HTTP_QUERY_CONTENT_TYPE, &mediaType, &mediaTypeSize, &index);
-    if (ok) {
-        CHAR* mediaTypeBuffer = new char[mediaTypeSize + 1];
-        strcpy_s(mediaTypeBuffer, mediaTypeSize + 1, mediaType);
-        *pMediaType = mediaTypeBuffer;
+    if (pMediaType != nullptr) {
+        CHAR mediaType[256] = "";
+        DWORD mediaTypeSize = sizeof(mediaType);
+        index = 0;
+        ok = HttpQueryInfoA(hRequest, HTTP_QUERY_CONTENT_TYPE, &mediaType, &mediaTypeSize, &index);
+        if (ok) {
+            CHAR* mediaTypeBuffer = new char[mediaTypeSize + 1];
+            strcpy_s(mediaTypeBuffer, mediaTypeSize + 1, mediaType);
+            *pMediaType = mediaTypeBuffer;
+        }
     }
 
     CHAR* temp = new char[contentLength + 1];

@@ -24,6 +24,9 @@
     <ClCompile Include="OTrPTamEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TeepTamEcallHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="optee/user_ta_header_defines.h">

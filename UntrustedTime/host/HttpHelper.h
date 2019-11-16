@@ -1,3 +1,4 @@
+/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #pragma once
 #include <openenclave/host.h>
 #include "JsonAuto.h"

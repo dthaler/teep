@@ -4,6 +4,7 @@
 #define OTRP_JSON_MEDIA_TYPE "application/otrp+json"
 #define TEEP_JSON_MEDIA_TYPE "application/teep+json"
 
+int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject);
 int TeepHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject);
 
 char *DecodeJWS(const json_t *jws, const json_t *jwk);

@@ -305,7 +305,13 @@ int ecall_ProcessTeepMessage(
 
     JsonAuto messageObject = json_object_get(object, key);
 
-    err = TeepHandleMessage(sessionHandle, key, messageObject);
+    if (strcmp(mediaType, OTRP_JSON_MEDIA_TYPE) == 0) {
+        err = OTrPHandleMessage(sessionHandle, key, messageObject);
+    } else if (strcmp(mediaType, TEEP_JSON_MEDIA_TYPE) == 0) {
+        err = TeepHandleMessage(sessionHandle, key, messageObject);
+    } else {
+        return 1; /* Error */
+    }
 
     return err;
 }

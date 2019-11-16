@@ -79,7 +79,7 @@ int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, c
 }
 
 // The caller is responsible for freeing the returned buffer if non-null.
-const char* SendTeepMessage(TeepSession* session)
+const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType)
 {
     char authority[266];
     char hostName[256];
@@ -110,7 +110,8 @@ const char* SendTeepMessage(TeepSession* session)
         session->OutboundMessage,
         session->OutboundMediaType,
         &statusCode,
-        &responseBuffer);
+        &responseBuffer,
+        pResponseMediaType);
 
     if (session->OutboundMessage != nullptr) {
         free((char*)session->OutboundMessage);

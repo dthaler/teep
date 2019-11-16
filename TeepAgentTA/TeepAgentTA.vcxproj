@@ -352,11 +352,14 @@
   <ItemGroup>
     <ClCompile Include="TeepAgent_t.c" />
     <ClCompile Include="OTrPDeviceEcallHandler.cpp" />
+    <ClCompile Include="TeepDeviceEcallHandler.cpp" />
     <ClCompile Include="TrustedApplication.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="OTrPDeviceEcallHandler.h" />
     <ClInclude Include="TeepAgent_t.h" />
     <ClInclude Include="optee/user_ta_header_defines.h" />
+    <ClInclude Include="TeepDeviceEcallHandler.h" />
     <ClInclude Include="TrustedApplication.h" />
   </ItemGroup>
   <ItemGroup>

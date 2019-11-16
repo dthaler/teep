@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include "../TeepAgentBrokerLib/TeepAgentBrokerLib.h"
 
-//#define DEFAULT_TAM_URI "http://127.0.0.1:12345/OTrP"
-#define DEFAULT_TAM_URI "http://localhost:54321/OTrP"
+//#define DEFAULT_TAM_URI "http://127.0.0.1:12345/TEEP"
+#define DEFAULT_TAM_URI "http://localhost:54321/TEEP"
 
 int main(int argc, char** argv)
 {

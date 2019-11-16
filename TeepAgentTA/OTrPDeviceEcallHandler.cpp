@@ -469,7 +469,7 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
 
     printf("Sending GetDeviceStateResponse...\n\n");
 
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, message);
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
     if (result != OE_OK) {
         return result;
     }
@@ -741,7 +741,7 @@ int OTrPHandleInstallTARequest(void* sessionHandle, const json_t* request)
 
     printf("Sending InstallTAResponse...\n\n");
 
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, message);
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -805,7 +805,7 @@ int ecall_RequestTA(
 
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
-        result = ocall_Connect(&err, tamUri);
+        result = ocall_Connect(&err, tamUri, OTRP_JSON_MEDIA_TYPE);
         if (result != OE_OK) {
             return result;
         }

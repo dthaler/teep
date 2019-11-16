@@ -49,6 +49,7 @@ int AgentBrokerRequestTA(
                 g_ta_eid,
                 &err,
                 &g_Session,
+                g_Session.InboundMediaType,
                 g_Session.InboundMessage,
                 strlen(g_Session.InboundMessage));
 

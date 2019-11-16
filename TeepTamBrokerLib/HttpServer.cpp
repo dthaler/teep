@@ -11,34 +11,35 @@
 #include "../TeepTamBrokerLib/TeepTamBrokerLib.h"
 #include "../TeepTamBrokerLib/TeepTam_u.h" // for OCALL prototypes
 
-#define OTRP_JSON_MEDIA_TYPE "application/otrp+json"
-
 #pragma comment(lib, "httpapi.lib")
 
 #define ASSERT(x) if (!(x)) { DebugBreak(); }
 
 typedef struct {
+    char MediaType[80];
     const char* OutboundMessage;
     int MessageLength;
 } TeepSession;
 
 TeepSession g_Session = { NULL, 0 };
 
-int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* message)
+int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message)
 {
     TeepSession* session = (TeepSession*)sessionHandle;
 
-    assert(session->OutboundMessage == NULL);
-    int messageLength = strlen(message);
+    assert(session->OutboundMessage == nullptr);
 
     // Save message for later transmission.
+    int messageLength = strlen(message);
     session->MessageLength = messageLength;
     session->OutboundMessage = (char*)malloc(messageLength);
-    if (session->OutboundMessage == NULL) {
+    if (session->OutboundMessage == nullptr) {
         return 1;
     }
     printf("Sending %d bytes...\n", messageLength);
     memcpy((char*)session->OutboundMessage, message, messageLength);
+
+    strcpy_s(session->MediaType, sizeof(session->MediaType), mediaType);
     return 0;
 }
 
@@ -194,7 +195,7 @@ DWORD HandleOtrpHttpPost(
                 pRequest,
                 200,
                 "OK",
-                OTRP_JSON_MEDIA_TYPE,
+                session->MediaType,
                 session->OutboundMessage,
                 session->MessageLength);
 
@@ -221,7 +222,7 @@ DWORD HandleOtrpHttpPost(
         pRequest,
         200,
         "OK",
-        OTRP_JSON_MEDIA_TYPE,
+        session->MediaType,
         session->OutboundMessage,
         session->MessageLength);
 
@@ -296,7 +297,7 @@ DWORD DoReceiveRequests(
                 wprintf(L"Got a GET request for %ws\n",
                     pRequest->CookedUrl.pFullUrl);
 
-                if (wcscmp(pRequest->CookedUrl.pAbsPath, OTRP_PATH) == 0) {
+                if (wcscmp(pRequest->CookedUrl.pAbsPath, TEEP_PATH) == 0) {
                     if (TeepHandleConnect(session) != 0) {
                         break;
                     }
@@ -306,7 +307,7 @@ DWORD DoReceiveRequests(
                         pRequest,
                         200,
                         "OK",
-                        OTRP_JSON_MEDIA_TYPE,
+                        session->MediaType,
                         session->OutboundMessage,
                         session->MessageLength);
 
@@ -320,7 +321,7 @@ DWORD DoReceiveRequests(
                         pRequest,
                         200,
                         "OK",
-                        OTRP_JSON_MEDIA_TYPE,
+                        session->MediaType,
                         pResponseString,
                         strlen(pResponseString));
                 }
@@ -330,7 +331,7 @@ DWORD DoReceiveRequests(
                 wprintf(L"Got a POST request for %ws\n",
                     pRequest->CookedUrl.pFullUrl);
 
-                if (wcscmp(pRequest->CookedUrl.pAbsPath, OTRP_PATH) == 0) {
+                if (wcscmp(pRequest->CookedUrl.pAbsPath, TEEP_PATH) == 0) {
                     result = HandleOtrpHttpPost(hReqQueue, pRequest);
                 } else {
                     result = SendHttpResponse(

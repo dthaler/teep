@@ -7,7 +7,7 @@ extern "C" {
 
     int TeepHandleConnect(void);
 
-    int TeepHandleMessage(void* sessionHandle, const char *message, int messageLength);
+    int TeepHandleMessage(void* sessionHandle, const char* mediaType, const char* message, int messageLength);
 
     int StartAgentBroker(void);
     void StopAgentBroker(void);

@@ -55,7 +55,8 @@ MakeHttpCall(
     _In_opt_ PCSTR data,
     _In_ PCSTR acceptType,
     _Out_ int* pStatusCode,
-    _Outptr_opt_result_nullonfailure_ char** pBuffer = nullptr);
+    _Outptr_opt_result_nullonfailure_ char** pBuffer = nullptr,
+    _Outptr_opt_result_nullonfailure_ char** pMediaType = nullptr);
 
 _Success_(return == 0)
 int

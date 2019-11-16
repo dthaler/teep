@@ -265,6 +265,7 @@ char *DecodeJWS(const json_t *jws, const json_t *jwk)
 
 int ecall_ProcessTeepMessage(
     void* sessionHandle,
+    const char* mediaType,
     const char* message,
     int messageLength)
 {
@@ -275,7 +276,7 @@ int ecall_ProcessTeepMessage(
         return 1; /* error */
     }
 
-    /* Verify string is null-terminated. */
+    /* Verify message is null-terminated. */
     const char* str = message;
     if (message[messageLength - 1] == 0) {
         str = message;

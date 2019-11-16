@@ -262,7 +262,7 @@ int ecall_ProcessTeepConnect(void* sessionHandle)
     printf("Sending GetDeviceStateRequest...\n");
 
     int err = 0;
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, message);
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -559,7 +559,7 @@ int OTrPHandleGetDeviceTEEStateResponse(void* sessionHandle, const json_t* messa
                 return 1;
             }
             int err = 0;
-            oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, message);
+            oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
             free((void*)message);
             return result;
         }

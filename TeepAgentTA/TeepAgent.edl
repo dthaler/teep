@@ -20,6 +20,6 @@ enclave {
     untrusted {
         /* define OCALLs here. */
 
-        int ocall_Connect([in, string] const char* tamUri);
+        int ocall_Connect([in, string] const char* tamUri, [in, string] const char* mediaType);
     };
 };

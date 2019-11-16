@@ -13,11 +13,12 @@ oe_enclave_t* g_ta_eid = NULL;
 // Forward an incoming TEEP message, which might be from any session.
 int TeepHandleMessage(
     void* sessionHandle,
-    const char *message,
+    const char* mediaType,
+    const char* message,
     int messageLength)
 {
     int err = 0;
-    oe_result_t result = ecall_ProcessTeepMessage(g_ta_eid, &err, sessionHandle, message, messageLength);
+    oe_result_t result = ecall_ProcessTeepMessage(g_ta_eid, &err, sessionHandle, mediaType, message, messageLength);
     if (result != OE_OK) {
         return result;
     }
@@ -59,7 +60,7 @@ int TamBrokerProcess(void)
 
     StopTcpServer();
 #else
-    wchar_t* myargv[2] = { NULL, OTRP_URI };
+    wchar_t* myargv[2] = { NULL, TEEP_URI };
     err = RunHttpServer(2, myargv);
 #endif
 

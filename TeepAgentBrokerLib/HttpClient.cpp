@@ -11,18 +11,17 @@ extern "C" {
 #include "../TeepAgentBrokerLib/TeepAgentBrokerLib.h"
 };
 
-#define OTRP_JSON_MEDIA_TYPE "application/otrp+json"
-
 TeepSession g_Session = { 0 };
 
 // Send an empty POST to the indicated URI.
-int ocall_Connect(const char* tamUri)
+int ocall_Connect(const char* tamUri, const char* mediaType)
 {
     char authority[266];
     char hostName[256];
     char path[256];
     int statusCode;
     char* responseBuffer;
+    char* responseMediaTypeBuffer;
     URL_COMPONENTS components = { sizeof(components) };
 
     // Get authority and path from URI.
@@ -45,9 +44,10 @@ int ocall_Connect(const char* tamUri)
         path,
         nullptr,
         nullptr,
-        OTRP_JSON_MEDIA_TYPE,
+        mediaType,
         &statusCode,
-        &responseBuffer);
+        &responseBuffer,
+        &responseMediaTypeBuffer);
     if (err != 0) {
         return err;
     }
@@ -57,16 +57,21 @@ int ocall_Connect(const char* tamUri)
 
     assert(session->InboundMessage == nullptr);
     session->InboundMessage = responseBuffer;
+    if (responseMediaTypeBuffer != nullptr) {
+        strcpy_s(session->InboundMediaType, sizeof(session->InboundMediaType), responseMediaTypeBuffer);
+    }
 
     return 0;
 }
 
-int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* message)
+int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message)
 {
     TeepSession* session = (TeepSession*)sessionHandle;
 
     size_t messageLength = strlen(message);
     assert(session->OutboundMessage == nullptr);
+
+    strcpy_s(session->OutboundMediaType, sizeof(session->OutboundMediaType), mediaType);
 
     // Save message for later transmission after the ECALL returns.
     session->OutboundMessage = _strdup(message);
@@ -82,7 +87,7 @@ const char* SendTeepMessage(TeepSession* session)
     int statusCode;
     char* responseBuffer;
     URL_COMPONENTS components = { sizeof(components) };
-    const char* extraHeaders = "Content-type: " OTRP_JSON_MEDIA_TYPE "\r\n";
+    char extraHeaders[256];
 
     // Get authority and path from URI.
     components.dwHostNameLength = 255;
@@ -93,6 +98,9 @@ const char* SendTeepMessage(TeepSession* session)
         return nullptr;
     }
     sprintf_s(authority, sizeof(authority), "%s:%d", components.lpszHostName, components.nPort);
+    sprintf_s(extraHeaders, sizeof(extraHeaders),
+        "Content-type: %s\r\n",
+        session->OutboundMediaType);
 
     int err = MakeHttpCall(
         "POST",
@@ -100,7 +108,7 @@ const char* SendTeepMessage(TeepSession* session)
         path,
         extraHeaders,
         session->OutboundMessage,
-        OTRP_JSON_MEDIA_TYPE,
+        session->OutboundMediaType,
         &statusCode,
         &responseBuffer);
 

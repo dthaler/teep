@@ -1,8 +1,9 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #pragma once
 
-#define OTRP_URI L"http://localhost:54321/OTrP"
-#define OTRP_PATH L"/OTrP"
+//#define TEEP_URI L"http://localhost:54321/TEEP"
+#define TEEP_URI L"http://192.168.1.37:54321/TEEP"
+#define TEEP_PATH L"/TEEP"
 
 #ifdef __cplusplus
 extern "C" {

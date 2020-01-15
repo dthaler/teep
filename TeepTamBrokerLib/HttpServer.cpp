@@ -514,7 +514,7 @@ int RunHttpServer(int argc, wchar_t** argv)
 
         if (retCode != NO_ERROR)
         {
-            wprintf(L"HttpAddUrl failed with %lu \n", retCode);
+            wprintf(L"HttpAddUrl failed with %lu\n", retCode);
             goto CleanUp;
         }
         else

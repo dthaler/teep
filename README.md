@@ -38,3 +38,28 @@ Sample:
 * DeviceHost: Sample host app to run an TEEP Agent Broker.
 
 * TamHost: Sample host app to run an TEEP TAM Broker.
+
+## Prerequisites
+
+You must have the following installed to compile and debug:
+
+* [Visual Studio 2017](https://visualstudio.microsoft.com/vs/older-downloads/) (VS 2019 can compile but not debug, due to the current dependency on the Intel SGX SDK)
+** Any edition, including the (free) Community edition is fine
+* [Intel SGX SDK](https://software.intel.com/en-us/sgx/sdk) (currently required if creating code to run in SGX)
+
+The TAM is currently written to run on Windows.
+
+## Running the code
+
+Compiling on Windows will result in generating DeviceHost.exe and TamHost.exe.
+
+TamHost.exe represents the TAM and can be run without any command-line arguments, but must be run as Administrator.
+Currently the TEEP URI to listen on is hard coded in TeepTamBrokerLib/HttpServer.h.
+TODO: This needs to change to allow the IP address and port number to be specified on the command line,
+and default to an IP address of the local machine, and some fixed port number (like 54321).
+
+DeviceHost.exe is run as follows:
+
+> DeviceHost <TAM URI> \[<TA ID>\]
+
+where <TAM URI> is the default TAM URI to use, and <TA ID> is the TA to request

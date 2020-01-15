@@ -2,16 +2,24 @@
 #include <stdio.h>
 #include "../TeepTamBrokerLib/TeepTamBrokerLib.h"
 
-int main(int argc, char** argv)
+int wmain(int argc, wchar_t** argv)
 {
-    int err;
+    if (argc < 2) {
+        printf("Usage: DeviceHost <TAM URI>\n");
+        printf("       where <TAM URI> is the TAM URI to use, e.g., http://192.168.1.37:54321/TEEP\n");
+        printf("\nCurrently the <TAM URI> must end in /TEEP\n");
+        return 0;
+    }
 
-    err = StartTamBroker();
+    const wchar_t* tamUri = argv[1];
+    printf("Using TAM URI: %ls\n", tamUri);
+
+    int err = StartTamBroker();
     if (err != 0) {
         return err;
     }
 
-    err = TamBrokerProcess();
+    err = TamBrokerProcess(tamUri);
 
     StopTamBroker();
 

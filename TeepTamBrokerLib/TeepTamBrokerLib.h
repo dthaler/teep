@@ -16,7 +16,7 @@ extern "C" {
     int StartTamBroker(void);
     void StopTamBroker(void);
 
-    int TamBrokerProcess(void);
+    int TamBrokerProcess(_In_z_ const wchar_t* tamUri);
 
 #ifdef __cplusplus
 };

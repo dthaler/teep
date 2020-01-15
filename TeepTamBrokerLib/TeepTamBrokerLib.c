@@ -25,7 +25,7 @@ int TeepHandleMessage(
     return err;
 }
 
-int TeepHandleConnect(void* sessionHandle, const char* acceptMediaType)
+int TeepHandleConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType)
 {
     int err = 0;
     oe_result_t result = ecall_ProcessTeepConnect(g_ta_eid, &err, sessionHandle, acceptMediaType);
@@ -35,7 +35,7 @@ int TeepHandleConnect(void* sessionHandle, const char* acceptMediaType)
     return err;
 }
 
-int TamBrokerProcess(void)
+int TamBrokerProcess(_In_z_ const wchar_t* tamUri)
 {
     int err;
 
@@ -60,7 +60,7 @@ int TamBrokerProcess(void)
 
     StopTcpServer();
 #else
-    wchar_t* myargv[2] = { NULL, TEEP_URI };
+    const wchar_t* myargv[2] = { NULL, tamUri };
     err = RunHttpServer(2, myargv);
 #endif
 

@@ -459,7 +459,7 @@ DWORD DoReceiveRequests(
     return result;
 }
 
-int RunHttpServer(int argc, wchar_t** argv)
+int RunHttpServer(int argc, const wchar_t** argv)
 {
     ULONG           retCode;
     HANDLE          hReqQueue = NULL;
@@ -504,7 +504,7 @@ int RunHttpServer(int argc, wchar_t** argv)
     //
     for (int i = 1; i < argc; i++)
     {
-        wprintf(L"listening for requests on the following url: %s\n", argv[i]);
+        wprintf(L"listening for requests on the following url: %ls\n", argv[i]);
 
         retCode = HttpAddUrl(
             hReqQueue,    // Req Queue
@@ -512,9 +512,14 @@ int RunHttpServer(int argc, wchar_t** argv)
             NULL          // Reserved
         );
 
+        if (retCode == ERROR_ACCESS_DENIED)
+        {
+            wprintf(L"The application does not have permission to register this URL, try running as Administrator.\n");
+            goto CleanUp;
+        }
         if (retCode != NO_ERROR)
         {
-            wprintf(L"HttpAddUrl failed with %lu\n", retCode);
+            wprintf(L"HttpAddUrl failed with error %lu\n", retCode);
             goto CleanUp;
         }
         else

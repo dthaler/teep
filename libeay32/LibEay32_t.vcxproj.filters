@@ -1779,6 +1779,9 @@
     <ClCompile Include="ui_openssl.c">
       <Filter>Source Files\ui</Filter>
     </ClCompile>
+    <ClCompile Include="optee\rand_optee.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(OpensslDir)crypto\aes\aes.h">

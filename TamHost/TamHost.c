@@ -5,7 +5,7 @@
 int wmain(int argc, wchar_t** argv)
 {
     if (argc < 2) {
-        printf("Usage: DeviceHost <TAM URI>\n");
+        printf("Usage: TamHost <TAM URI>\n");
         printf("       where <TAM URI> is the TAM URI to use, e.g., http://192.168.1.37:54321/TEEP\n");
         printf("\nCurrently the <TAM URI> must end in /TEEP\n");
         return 0;

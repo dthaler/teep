@@ -481,11 +481,13 @@
     <ClCompile Include="$(OpensslDir)crypto\rand\rand_lib.c" />
     <ClCompile Include="$(OpensslDir)crypto\rand\rand_win.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\rc2\rc2cfb64.c" />
     <ClCompile Include="$(OpensslDir)crypto\rc2\rc2ofb64.c" />
@@ -599,8 +601,16 @@
     <ClCompile Include="$(OpensslDir)crypto\x509\x509_vfy.c" />
     <ClCompile Include="$(OpensslDir)crypto\x509\x509_vpm.c" />
     <ClCompile Include="$(OpensslDir)crypto\x509\x_all.c" />
+    <ClCompile Include="optee\rand_optee.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sgx\rand_winsgx.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|ARM'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="thread.c" />
     <ClCompile Include="time.c" />
@@ -945,12 +955,12 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets" Condition="Exists('..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets')" />
+    <Import Project="..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets" Condition="Exists('..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\openenclave.0.2.0-CI-20190129-011410\build\native\openenclave.targets'))" />
+    <Error Condition="!Exists('..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets'))" />
   </Target>
 </Project>

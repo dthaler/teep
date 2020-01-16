@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="DebugMockOptee|ARM">
-      <Configuration>DebugMockOptee</Configuration>
+    <ProjectConfiguration Include="OPTEE-Simulation-Debug|ARM">
+      <Configuration>OPTEE-Simulation-Debug</Configuration>
       <Platform>ARM</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="DebugMockOptee|Win32">
-      <Configuration>DebugMockOptee</Configuration>
+    <ProjectConfiguration Include="OPTEE-Simulation-Debug|Win32">
+      <Configuration>OPTEE-Simulation-Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="DebugMockOptee|x64">
-      <Configuration>DebugMockOptee</Configuration>
+    <ProjectConfiguration Include="OPTEE-Simulation-Debug|x64">
+      <Configuration>OPTEE-Simulation-Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|ARM">
@@ -260,7 +260,7 @@
     <ClCompile Include="$(OpensslDir)crypto\dso\dso_win32.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ecdhtest.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ech_err.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ech_kdf.c" />
@@ -269,7 +269,7 @@
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ech_ossl.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecdsatest.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_asn1.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_err.c" />
@@ -289,17 +289,21 @@
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_nistputil.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_nistz256.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_nistz256_table.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_oct.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_smpl.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ectest.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ec\ec_ameth.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ec_asn1.c" />
@@ -437,7 +441,7 @@
     <ClCompile Include="$(OpensslDir)crypto\ocsp\ocsp_vfy.c" />
     <ClCompile Include="$(OpensslDir)crypto\o_dir.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\o_init.c" />
     <ClCompile Include="$(OpensslDir)crypto\o_time.c" />
@@ -481,10 +485,10 @@
     <ClCompile Include="$(OpensslDir)crypto\rand\rand_lib.c" />
     <ClCompile Include="$(OpensslDir)crypto\rand\rand_win.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</ExcludedFromBuild>
@@ -606,9 +610,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="sgx\rand_winsgx.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|ARM'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</ExcludedFromBuild>
     </ClCompile>
@@ -724,25 +728,29 @@
     <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <ProjectName>LibEay32</ProjectName>
     <OpensslDir>..\external\openssl\</OpensslDir>
+    <OEType>Enclave</OEType>
+    <OETADevKitPath>/mnt/c/git/tcps/OTrP/packages/openenclave.0.2.0-CI-20190617-205644/lib/native/gcc6/optee/v3.3.0/vexpress-qemu_armv8a/devkit</OETADevKitPath>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
+    <VcpkgConfiguration>Debug</VcpkgConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
     <WindowsSDKDesktopARMSupport>true</WindowsSDKDesktopARMSupport>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|ARM'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
     <WindowsSDKDesktopARMSupport>true</WindowsSDKDesktopARMSupport>
+    <VcpkgConfiguration>Debug</VcpkgConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -757,9 +765,10 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
+    <VcpkgConfiguration>Debug</VcpkgConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -776,7 +785,7 @@
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
     <TargetName>LibEay32_t</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
     <TargetName>LibEay32_t</TargetName>
@@ -788,7 +797,7 @@
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
     <TargetName>LibEay32_t</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|ARM'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">
     <IncludePath>$(NoInherit)</IncludePath>
     <LibraryPath>$(NoInherit)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
@@ -816,7 +825,7 @@
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
     <TargetName>LibEay32_t</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">
     <IncludePath>$(NoInherit)</IncludePath>
     <LibraryPath>$(NoInherit)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
@@ -843,12 +852,12 @@
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;AES_decrypt=openssl_AES_decrypt;AES_encrypt=openssl_AES_encrypt;OPENSSL_NO_POSIX_IO;NO_SYSLOG;NO_SYS_PARAM_H;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;SIMULATE_TEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
@@ -862,7 +871,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
     </ClCompile>
@@ -870,7 +879,7 @@
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|ARM'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">
     <ClCompile>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -904,7 +913,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;UNTRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;USE_OPTEE;OPENSSL_NO_SOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
@@ -926,7 +935,7 @@
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugMockOptee|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">
     <ClCompile>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>

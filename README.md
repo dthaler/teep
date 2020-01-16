@@ -63,3 +63,9 @@ DeviceHost.exe is run as follows:
 > DeviceHost <TAM URI> \[<TA ID>\]
 
 where <TAM URI> is the default TAM URI to use, and <TA ID> is the TA to request
+
+## Configurations
+
+The following configurations should work:
+
+* Debug | x86 - use this to test/run on an SGX-capable development machine

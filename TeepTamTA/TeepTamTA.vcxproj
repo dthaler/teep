@@ -63,7 +63,7 @@
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <OEType>Enclave</OEType>
-    <OETADevKitPath>/mnt/c/git/tcps/OTrP/packages/openenclave.0.2.0-CI-20190617-205644/lib/native/gcc6/optee/v3.3.0/ls-ls1012grapeboard/devkit</OETADevKitPath>
+    <OETADevKitPath>/mnt/c/git/tcps/OTrP/packages/openenclave.0.2.0-CI-20190617-205644/lib/native/gcc6/optee/v3.3.0/vexpress-qemu_armv8a/devkit</OETADevKitPath>
     <ProjectName>TeepTamTA</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

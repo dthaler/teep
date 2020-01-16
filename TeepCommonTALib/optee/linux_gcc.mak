@@ -5,7 +5,7 @@
 BINARY=213acb9d-9134-4bc8-aa44-b01e13df0c88
 
 # Path to the TA Dev Kit.
-TA_DEV_KIT_DIR=/mnt/c/git/openenclave/3rdparty/optee_os/out/arm-plat-vexpress/export-ta_arm64
+TA_DEV_KIT_DIR=/mnt/c/git/tcps/OTrP/packages/openenclave.0.2.0-CI-20190617-205644/lib/native/gcc6/optee/v3.3.0/vexpress-qemu_armv8a/devkit
 
 # Where to place the compiled binaries.
 O := ../../bin/ARM/optee

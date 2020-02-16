@@ -1,9 +1,6 @@
 enclave {
-    /* Include the following line to use stdio APIs from inside an enclave. */
-    from "openenclave/stdio.edl" import *;
-
-    from "UntrustedTime.edl" import *;
-    from "TeepCommonTALib.edl" import *;
+    from "..\UntrustedTime\UntrustedTime.edl" import *;
+    from "..\TeepCommonTALib\TeepCommonTALib.edl" import *;
 
     trusted {
         /* define ECALLs here. */

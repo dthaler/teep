@@ -17,3 +17,4 @@ typedef __time64_t time_t;
 #endif
 
 struct tm* _localtime64(const __time64_t *timer);
+struct tm* _gmtime64(const __time64_t *timer64);

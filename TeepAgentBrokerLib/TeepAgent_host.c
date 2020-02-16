@@ -17,7 +17,7 @@ oe_result_t create_TeepAgent_enclave(const char* enclave_name, oe_enclave_t** ou
 #endif
     result = oe_create_TeepAgent_enclave(
         enclave_name,
-        OE_ENCLAVE_TYPE_UNDEFINED,
+        OE_ENCLAVE_TYPE_AUTO,
         enclave_flags,
         NULL,
         0,
@@ -38,7 +38,7 @@ int StartAgentBroker(void)
 #ifdef OE_USE_OPTEE
         "548e7daa-9a94-4826-b054-daa20dcc9c9c",
 #else
-        "TeepAgentTA",
+        "TeepAgentTA.elf.signed",
 #endif
         &enclave);
     g_ta_eid = enclave;

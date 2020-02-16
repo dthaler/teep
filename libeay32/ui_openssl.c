@@ -33,7 +33,7 @@ static UI_METHOD otrp_ui_method = {
     NULL
 };
 
-UI_METHOD *UI_OpenSSL(OpcUa_Void)
+UI_METHOD *UI_OpenSSL(void)
 {
     return &otrp_ui_method;
 }

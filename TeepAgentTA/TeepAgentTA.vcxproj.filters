@@ -70,13 +70,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="TeepAgent.edl">
-      <Filter>Source Files</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <Xml Include="TeepAgentTA.config.xml">
       <Filter>Resource Files</Filter>
     </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <EdlItem Include="TeepAgent.edl">
+      <Filter>Source Files</Filter>
+    </EdlItem>
   </ItemGroup>
 </Project>

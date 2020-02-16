@@ -17,7 +17,7 @@ oe_result_t create_TeepTam_enclave(const char* enclave_name, oe_enclave_t** out_
 #endif
     result = oe_create_TeepTam_enclave(
         enclave_name,
-        OE_ENCLAVE_TYPE_UNDEFINED,
+        OE_ENCLAVE_TYPE_AUTO,
         enclave_flags,
         NULL,
         0,
@@ -38,7 +38,7 @@ int StartTamBroker(void)
 #ifdef OE_USE_OPTEE
         "94d75f35-541b-4ef0-a3f0-e8e87f29243c",
 #else
-        "TeepTamTA",
+        "TeepTamTA.elf.signed",
 #endif
         &enclave);
     g_ta_eid = enclave;

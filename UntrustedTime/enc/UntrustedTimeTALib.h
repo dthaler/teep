@@ -29,5 +29,7 @@ ConvertStringToIPv4Integers(
     int        *addressByte2,
     int        *addressByte3);
 
+#if 0
 #define sscanf(addressString, addressSscanfFormat, addressByte0, addressByte1, addressByte2, addressByte3)  \
 ConvertStringToIPv4Integers(addressString, addressSscanfFormat, addressByte0, addressByte1, addressByte2, addressByte3)
+#endif

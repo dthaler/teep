@@ -24,11 +24,10 @@ char* strdup(const char* str);
 #include "TeepDeviceEcallHandler.h"
 #include "OTrPDeviceEcallHandler.h"
 
-#ifdef OE_USE_SGX
-# define TEE_NAME "Intel SGX"
-#endif
-#ifdef OE_USE_OPTEE
+#if defined(_ARM_) || defined(_M_ARM) || defined(__arm__) || defined(__thumb__) || defined(__aarch64__)  
 # define TEE_NAME "OP-TEE"
+#else
+# define TEE_NAME "Intel SGX"
 #endif
 
 /* Compose a DeviceStateInformation message. */

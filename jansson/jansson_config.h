@@ -79,7 +79,6 @@
 
 #ifndef _OE_HOST_H
 #include <openenclave/enclave.h>
-#include <openenclave/bits/stdio.h>
 #endif
 
 #endif

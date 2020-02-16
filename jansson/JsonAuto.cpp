@@ -5,7 +5,7 @@ JsonAuto::JsonAuto() {
     ptr = NULL;
 }
 
-JsonAuto::JsonAuto(JsonAuto& value) {
+JsonAuto::JsonAuto(const JsonAuto& value) {
     ptr = json_incref(value);
 }
 

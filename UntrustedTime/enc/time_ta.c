@@ -7,10 +7,10 @@
 
 time_t time(time_t *timer)
 {
-    __time64_t localTime64;
-    sgx_status_t status = ocall_UntrustedTime_time64(&localTime64);
+    uint64_t localTime64;
+    oe_result_t result = ocall_UntrustedTime_time64(&localTime64);
 
-    if (status != SGX_SUCCESS) {
+    if (result != OE_OK) {
         assert(0);
         return 0;
     }
@@ -26,8 +26,8 @@ struct tm* _gmtime64(const __time64_t *timer)
 {
     static GetTm_Result result;
 
-    sgx_status_t status = ocall_UntrustedTime_gmtime64(&result, *timer);
-    if ((status != SGX_SUCCESS) || (result.err != 0)) {
+    oe_result_t status = ocall_UntrustedTime_gmtime64(&result, *timer);
+    if ((status != OE_OK) || (result.err != 0)) {
         return NULL;
     }
     return (struct tm*)&result.tm;
@@ -37,8 +37,8 @@ struct tm* _localtime64(const __time64_t *timer)
 {
     static GetTm_Result result;
 
-    sgx_status_t status = ocall_UntrustedTime_localtime64(&result, *timer);
-    if ((status != SGX_SUCCESS) || (result.err != 0)) {
+    oe_result_t status = ocall_UntrustedTime_localtime64(&result, *timer);
+    if ((status != OE_OK) || (result.err != 0)) {
         return NULL;
     }
 

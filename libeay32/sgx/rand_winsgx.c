@@ -1,6 +1,4 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#include <sgx_trts.h>
-
 #include <openssl/rand.h>
 
 int RAND_poll(void)
@@ -21,10 +19,10 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 static int RAND_otrp_bytes(unsigned char *buf, int num)
 {
-	sgx_status_t status = sgx_read_rand(buf, num);
-	if (status != SGX_SUCCESS) {
-		return 0;
-	}
+    oe_result_t result = oe_random(buf, num);
+    if (result != OE_OK) {
+        return 0;
+    }
 
     // Positive numbers indicate success.
     return num;

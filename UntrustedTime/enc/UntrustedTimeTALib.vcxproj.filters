@@ -43,11 +43,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\UntrustedTime.edl">
-      <Filter>Source Files</Filter>
-    </CustomBuild>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <EdlItem Include="..\UntrustedTime.edl">
+      <Filter>Source Files</Filter>
+    </EdlItem>
   </ItemGroup>
 </Project>

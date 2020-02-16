@@ -63,7 +63,7 @@
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <OEType>Enclave</OEType>
-    <OETADevKitPath>/mnt/c/git/tcps/OTrP/packages/openenclave.0.2.0-CI-20190617-205644/lib/native/gcc6/optee/v3.3.0/vexpress-qemu_armv8a/devkit</OETADevKitPath>
+    <OETADevKitPath>/mnt/c/git/tcps/OTrP/packages/open-enclave.0.8.0-rc1/lib/native/gcc6/optee/v3.3.0/vexpress-qemu_armv8a/devkit</OETADevKitPath>
     <ProjectName>TeepTamTA</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -111,7 +111,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>Open Enclave (v142)</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -358,7 +358,7 @@
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>oestdio_enc.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>jansson;jose;jose_openssl;LibEay32_t;TeepCommonTALib;TrustedString;UntrustedTimeTALib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">
@@ -428,51 +428,7 @@
     <ClInclude Include="optee/user_ta_header_defines.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="TeepTam.edl">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">Creating proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|Win32'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">"$(OEEdger8rPath)" --trusted "%(FullPath)" --search-path "..\UntrustedTime;..\TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">Creating proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Prerelease|x64'">TeepTamTA2.config.xml;%(AdditionalInputs)</AdditionalInputs>
-    </CustomBuild>
+    <EdlItem Include="TeepTam.edl" />
     <None Include="TeepTamTA_private.pem" />
     <None Include="optee/sub.mk" />
     <None Include="optee/linux_gcc.mak" />
@@ -485,34 +441,41 @@
   <ItemGroup>
     <ProjectReference Include="..\jansson\jansson.vcxproj">
       <Project>{0ba01906-2dae-48e9-8044-4a631267b4ba}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\jose\jose.vcxproj">
       <Project>{da064898-e24b-44b9-8297-b5be1089779f}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\jose_openssl\jose_openssl.vcxproj">
       <Project>{2a4e62ee-c5bb-4b0d-9798-3d76f2e4481b}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\libeay32\LibEay32_t.vcxproj">
       <Project>{275fac8b-b49c-4c91-b708-5abfb9e24215}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\TeepCommonTALib\TeepCommonTALib.vcxproj">
       <Project>{213acb9d-9134-4bc8-aa44-b01e13df0c88}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\TrustedString\TrustedString.vcxproj">
       <Project>{5529af61-8860-4c24-91f0-9a509bc92ccb}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\UntrustedTime\enc\UntrustedTimeTALib.vcxproj">
       <Project>{a4fdd39f-06ac-4f96-8ad7-65364532692f}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets" Condition="Exists('..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets')" />
+    <Import Project="..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets" Condition="Exists('..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets'))" />
+    <Error Condition="!Exists('..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets'))" />
   </Target>
 </Project>

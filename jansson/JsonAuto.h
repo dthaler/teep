@@ -6,10 +6,10 @@ extern "C" {
 class JsonAuto {
 public:
     JsonAuto();
-    JsonAuto(JsonAuto& value);
+    JsonAuto(const JsonAuto& value);
     JsonAuto(json_t* value, bool donateReference = false);
     ~JsonAuto();
-    operator json_t*() {
+    operator json_t*() const {
         return ptr;
     }
     JsonAuto& operator =(json_t* value) {

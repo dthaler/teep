@@ -54,20 +54,20 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{0D5AC8AE-35D9-4F5C-B74C-F0FF75F03497}</ProjectGuid>
     <RootNamespace>TeepAgentBrokerLib</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>TeepAgentBrokerLib</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <WindowsSDKDesktopARMSupport>true</WindowsSDKDesktopARMSupport>
     <WindowsSDKDesktopARM64Support>true</WindowsSDKDesktopARM64Support>
@@ -75,14 +75,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <VcpkgConfiguration>Debug</VcpkgConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|ARM'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <WindowsSDKDesktopARMSupport>true</WindowsSDKDesktopARMSupport>
     <WindowsSDKDesktopARM64Support>true</WindowsSDKDesktopARM64Support>
@@ -91,14 +91,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <VcpkgConfiguration>Debug</VcpkgConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <WindowsSDKDesktopARMSupport>true</WindowsSDKDesktopARMSupport>
     <WindowsSDKDesktopARM64Support>true</WindowsSDKDesktopARM64Support>
@@ -107,14 +107,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <WindowsSDKDesktopARMSupport>true</WindowsSDKDesktopARMSupport>
@@ -123,27 +123,27 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <VcpkgConfiguration>Debug</VcpkgConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <VcpkgConfiguration>Debug</VcpkgConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -433,56 +433,19 @@
     <ClCompile Include="print.c" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\TeepAgentTA\TeepAgent.edl">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|ARM'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|ARM'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">Creating untrusted proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|ARM'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|ARM'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">Creating untrusted proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='SGX-Simulation-Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Creating untrusted proxy/bridge routines</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Creating untrusted proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(SolutionDir)UntrustedTime;$(SolutionDir)TeepCommonTALib;$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Creating untrusted proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)_t.h;%(Filename)_t.c;%(Outputs)</Outputs>
-    </CustomBuild>
+    <EdlItem Include="..\TeepAgentTA\TeepAgent.edl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets" Condition="Exists('..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets')" />
+    <Import Project="..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets" Condition="Exists('..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\openenclave.0.2.0-CI-20190617-205644\build\native\openenclave.targets'))" />
+    <Error Condition="!Exists('..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave.0.8.0-rc1\build\native\open-enclave.targets'))" />
   </Target>
 </Project>

@@ -2,6 +2,7 @@
 #include "joseinit.h"
 
 void RAND_screen(void);
+#ifdef _MSC_VER
 void jose_init_aescbch(void);
 void jose_init_aeskw(void);
 void jose_init_ec(void);
@@ -13,9 +14,11 @@ void jose_init_hash(void);
 void jose_init_jwk(void);
 void jose_init_rsassa(void);
 void jose_init_rsaes(void);
+#endif
 
 void jose_init(void)
 {
+#ifdef _MSC_VER
     jose_init_aescbch();
     jose_init_aeskw();
     jose_init_ec();
@@ -27,5 +30,6 @@ void jose_init(void)
     jose_init_ecdhes();
     jose_init_hash();
     jose_init_jwk();
+#endif
     RAND_screen();
 }

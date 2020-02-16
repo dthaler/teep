@@ -267,7 +267,7 @@ int ecall_ProcessTeepMessage(
     void* sessionHandle,
     const char* mediaType,
     const char* message,
-    int messageLength)
+    unsigned int messageLength)
 {
     int err = 1;
     char *newstr = nullptr;

@@ -23,16 +23,6 @@ unsigned long _lrotl(unsigned long val, int shift);
 unsigned long _lrotr(unsigned long value, int shift);
 #endif
 
-#if 0
-#include "tcps_stdlib_t.h"
-#include "tcps_stdio_t.h"
-#include "tcps_time_t.h"
-#include "tcps_string_t.h"
-#else
-typedef __int64 __time64_t;
-struct tm* _gmtime64(const __time64_t *timer);
-#endif
-
 void RAND_screen(void);
 
 /* Hack: Rename openssl's ECDSA_verify, to avoid conflicting with RIoT's ECDSA_verify */

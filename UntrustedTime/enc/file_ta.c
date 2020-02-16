@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <openenclave/enclave.h>
-#include <openenclave/bits/stdio.h>
 #include "UntrustedTimeTALib.h"
 
 #if 0

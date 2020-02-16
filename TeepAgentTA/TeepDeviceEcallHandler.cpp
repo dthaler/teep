@@ -133,7 +133,7 @@ int ecall_RequestTA(
         }
     } else {
         // TODO: implement going on to the next message.
-        assert(false);
+        oe_assert(false);
     }
 
     return err;

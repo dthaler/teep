@@ -244,8 +244,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UntrustedTimeTALib.c" />
-    <ClCompile Include="file_ta.c" />
-    <ClCompile Include="string_ta.c" />
     <ClCompile Include="time_ta.c" />
   </ItemGroup>
   <ItemGroup>

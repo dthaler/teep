@@ -1,5 +1,4 @@
 /* Copyright Microsoft Corporation */
-#include "UntrustedTimeTALib.h"
 #include "../UntrustedTime/enc/time.h"
 #include <TrustedOpenssl.h>
 

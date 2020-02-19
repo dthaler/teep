@@ -58,8 +58,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="TeepCommonTALib.edl">
+    <EdlItem Include="TeepCommonTALib.edl">
       <Filter>Source Files</Filter>
-    </CustomBuild>
+    </EdlItem>
   </ItemGroup>
 </Project>

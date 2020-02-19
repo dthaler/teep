@@ -2,6 +2,7 @@
 #include <openenclave/enclave.h>
 #include "TeepAgent_t.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -14,7 +15,6 @@ extern "C" {
 #include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/openssl.h"
-char* strdup(const char* str);
 #include "../TeepCommonTALib/common.h"
 };
 #include "../jansson/JsonAuto.h"
@@ -27,30 +27,10 @@ char* strdup(const char* str);
 // List of TA's requested.
 TrustedApplication* g_TARequestList = nullptr;
 
-JsonAuto g_AgentSigningKey;
-
-json_t* GetAgentSigningKey()
-{
-    if ((json_t*)g_AgentSigningKey == nullptr) {
-        g_AgentSigningKey = CreateNewJwkRS256();
-    }
-    return (json_t*)g_AgentSigningKey;
-}
-
-JsonAuto g_AgentEncryptionKey;
-
-json_t* GetAgentEncryptionKey()
-{
-    if ((json_t*)g_AgentEncryptionKey == nullptr) {
-        g_AgentEncryptionKey = CopyToJweKey(GetAgentSigningKey(), "RSA1_5");
-    }
-    return g_AgentEncryptionKey;
-}
-
 const unsigned char* g_AgentDerCertificate = nullptr;
 size_t g_AgentDerCertificateSize = 0;
 
-const unsigned char* GetAgentDerCertificate(size_t *pCertLen)
+const unsigned char* GetAgentDerCertificate(size_t* pCertLen)
 {
     if (g_AgentDerCertificate == nullptr) {
         // Construct a self-signed DER certificate based on the JWK.
@@ -87,6 +67,7 @@ int ecall_RequestTA(
     const char* taid,
     const char* tamUri)
 {
+    printf("ecall_RequestTA\n");
     int err = 0;
     oe_result_t result = OE_OK;
     size_t responseLength = 0;
@@ -137,4 +118,24 @@ int ecall_RequestTA(
     }
 
     return err;
+}
+
+JsonAuto g_AgentSigningKey;
+
+json_t* GetAgentSigningKey()
+{
+    if ((json_t*)g_AgentSigningKey == nullptr) {
+        g_AgentSigningKey = CreateNewJwkRS256();
+    }
+    return (json_t*)g_AgentSigningKey;
+}
+
+JsonAuto g_AgentEncryptionKey;
+
+json_t* GetAgentEncryptionKey()
+{
+    if ((json_t*)g_AgentEncryptionKey == nullptr) {
+        g_AgentEncryptionKey = CopyToJweKey(GetAgentSigningKey(), "RSA1_5");
+    }
+    return g_AgentEncryptionKey;
 }

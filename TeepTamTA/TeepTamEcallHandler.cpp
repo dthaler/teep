@@ -13,7 +13,6 @@ extern "C" {
 #include "jose/b64.h"
 #include "jose/openssl.h"
 #include "../TeepCommonTALib/common.h"
-    char* strdup(const char* str);
 };
 #include "../jansson/JsonAuto.h"
 #include "openssl/x509.h"

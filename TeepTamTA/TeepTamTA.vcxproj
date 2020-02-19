@@ -358,7 +358,7 @@
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>jansson;jose;jose_openssl;LibEay32_t;TeepCommonTALib;TrustedString;UntrustedTimeTALib</AdditionalDependencies>
+      <AdditionalDependencies>jansson;jose;jose_openssl;LibEay32_t;TeepCommonTALib;UntrustedTimeTALib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">
@@ -457,10 +457,6 @@
     </ProjectReference>
     <ProjectReference Include="..\TeepCommonTALib\TeepCommonTALib.vcxproj">
       <Project>{213acb9d-9134-4bc8-aa44-b01e13df0c88}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
-    <ProjectReference Include="..\TrustedString\TrustedString.vcxproj">
-      <Project>{5529af61-8860-4c24-91f0-9a509bc92ccb}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <ProjectReference Include="..\UntrustedTime\enc\UntrustedTimeTALib.vcxproj">

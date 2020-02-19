@@ -6,7 +6,6 @@
 #undef _WIN32
 #endif
 
-#include "UntrustedTimeTALib.h"
 #include <stdio.h>
 #define OE_NO_SAL 1
 #include <openenclave/enclave.h>

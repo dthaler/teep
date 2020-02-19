@@ -1,14 +1,11 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#include <openenclave/enclave.h>
+#include <stdio.h>
 #include <string.h>
-#include "../UntrustedTime/enc/UntrustedTimeTALib.h"
-#include "TeepCommonTALib_t.h"
 #include "JsonAuto.h"
 extern "C" {
+#include "TeepCommonTALib_t.h"
 #include "../jose/joseinit.h"
-#include "../external/jansson/include/jansson.h"
 #include "common.h"
-#include "jose/jwe.h"
 #include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/b64.h"
@@ -20,10 +17,6 @@ extern "C" {
 
 #if 0
 #define ASSERT(x) if (!(x)) { printf("wrong\n"); }
-extern "C" {
-#include "jose/openssl.h"
-#include "openssl/x509.h"
-}
 void TestJwLibs(void)
 {
     const char* message;

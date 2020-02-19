@@ -14,7 +14,6 @@ extern "C" {
 #include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/openssl.h"
-char* strdup(const char* str);
 #include "../TeepCommonTALib/common.h"
 };
 #include "../jansson/JsonAuto.h"

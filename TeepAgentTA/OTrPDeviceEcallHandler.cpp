@@ -418,6 +418,8 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
     printf("Sending GetDeviceStateResponse...\n\n");
 
     result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
+
+    free((void*)message);
     if (result != OE_OK) {
         return result;
     }
@@ -698,8 +700,41 @@ int OTrPHandleInstallTARequest(void* sessionHandle, const json_t* request)
 }
 
 // Returns 0 on success, non-zero on error.
-int OTrPHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
+int OTrPHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
+    char* newstr = nullptr;
+
+    /* Verify message is null-terminated. */
+    const char* str = message;
+    if (message[messageLength - 1] == 0) {
+        str = message;
+    } else {
+        newstr = (char*)malloc(messageLength + 1);
+        if (newstr == nullptr) {
+            return 1; /* error */
+        }
+        memcpy(newstr, message, messageLength);
+        newstr[messageLength] = 0;
+        str = newstr;
+    }
+
+    printf("Received message='%s'\n", str);
+
+    json_error_t error;
+    JsonAuto object(json_loads(str, 0, &error), true);
+
+    free(newstr);
+    newstr = nullptr;
+
+    if ((object == nullptr) || !json_is_object((json_t*)object)) {
+        return 1; /* Error */
+    }
+    const char* key = json_object_iter_key(json_object_iter(object));
+
+    printf("Received key='%s'\n", key);
+
+    JsonAuto messageObject = json_object_get(object, key);
+
     if (strcmp(key, "GetDeviceStateRequest") == 0) {
         return OTrPHandleGetDeviceStateRequest(sessionHandle, messageObject);
     }

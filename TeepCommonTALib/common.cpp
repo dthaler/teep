@@ -263,47 +263,19 @@ int ecall_ProcessTeepMessage(
     unsigned int messageLength)
 {
     int err = 1;
-    char *newstr = nullptr;
+
+    printf("Received contentType='%s' messageLength=%d\n", mediaType, messageLength);
 
     if (messageLength < 1) {
         return 1; /* error */
     }
 
-    /* Verify message is null-terminated. */
-    const char* str = message;
-    if (message[messageLength - 1] == 0) {
-        str = message;
+    if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
+        err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
+    } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
+        err = TeepHandleJsonMessage(sessionHandle, message, messageLength);
     } else {
-        newstr = (char*)malloc(messageLength + 1);
-        if (newstr == nullptr) {
-            return 1; /* error */
-        }
-        memcpy(newstr, message, messageLength);
-        newstr[messageLength] = 0;
-        str = newstr;
-    }
-
-    json_error_t error;
-    JsonAuto object(json_loads(str, 0, &error), true);
-
-    free(newstr);
-    newstr = nullptr;
-
-    if ((object == nullptr) || !json_is_object((json_t*)object)) {
-        return 1; /* Error */
-    }
-    const char* key = json_object_iter_key(json_object_iter(object));
-
-    printf("Received %s\n", key);
-
-    JsonAuto messageObject = json_object_get(object, key);
-
-    if (strcmp(mediaType, OTRP_JSON_MEDIA_TYPE) == 0) {
-        err = OTrPHandleMessage(sessionHandle, key, messageObject);
-    } else if (strcmp(mediaType, TEEP_JSON_MEDIA_TYPE) == 0) {
-        err = TeepHandleMessage(sessionHandle, key, messageObject);
-    } else {
-        return 1; /* Error */
+        err = 1; /* Error */
     }
 
     return err;

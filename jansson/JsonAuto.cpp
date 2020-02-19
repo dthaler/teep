@@ -35,6 +35,17 @@ json_t* JsonAuto::AddStringToObject(const char* name, const char* value) {
     return str;
 }
 
+json_t* JsonAuto::AddIntegerToObject(const char* name, int value) {
+    JsonAuto i = json_integer(value);
+    if (i == NULL) {
+        return NULL;
+    }
+    if (json_object_set(ptr, name, i)) {
+        return NULL;
+    }
+    return i;
+}
+
 json_t* JsonAuto::AddObjectToObject(const char* name, json_t* obj) {
     if (obj == nullptr) {
         JsonAuto object = json_object();
@@ -73,6 +84,28 @@ json_t* JsonAuto::AddObjectToArray() {
         return NULL;
     }
     return object;
+}
+
+json_t* JsonAuto::AddIntegerToArray(int value) {
+    JsonAuto i = json_integer(value);
+    if (i == NULL) {
+        return NULL;
+    }
+    if (json_array_append(ptr, i)) {
+        return NULL;
+    }
+    return i;
+}
+
+json_t* JsonAuto::AddStringToArray(const char* value) {
+    JsonAuto str = json_string(value);
+    if (str == NULL) {
+        return NULL;
+    }
+    if (json_array_append(ptr, str)) {
+        return NULL;
+    }
+    return str;
 }
 
 json_t* JsonAuto::Detach(void)

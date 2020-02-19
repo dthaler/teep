@@ -22,7 +22,6 @@ extern "C" {
 #include "openssl/evp.h"
 #include "openssl/x509.h"
 #include "TeepDeviceEcallHandler.h"
-#include "OTrPDeviceEcallHandler.h"
 
 // List of TA's requested.
 TrustedApplication* g_TARequestList = nullptr;
@@ -46,6 +45,7 @@ const unsigned char* GetAgentDerCertificate(size_t* pCertLen)
 
 int ecall_ProcessError(void* sessionHandle)
 {
+    (void)sessionHandle;
     // TODO: process transport error
     return 0;
 }
@@ -56,11 +56,236 @@ int ecall_RequestPolicyCheck(void)
     return 0;
 }
 
-// Returns 0 on success, non-zero on error.
-int TeepHandleMessage(void* sessionHandle, const char* key, const json_t* messageObject)
+/* Compose a TEEP QueryResponse message. */
+const char* TeepComposeQueryResponse(
+    const json_t* request)    // Request we're responding to.
 {
-    // TODO: handle TEEP message.
+    JsonAuto response(json_object(), true);
+    if (response == nullptr) {
+        return nullptr;
+    }
+    if (response.AddIntegerToObject("TYPE", TEEP_QUERY_RESPONSE) == nullptr) {
+        return nullptr;
+    }
+
+    /* Copy TOKEN from request. */
+    json_t* token = json_object_get(request, "TOKEN");
+    if (!json_is_string(token) || (json_string_value(token) == nullptr)) {
+        return nullptr;
+    }
+    if (response.AddStringToObject("TOKEN", json_string_value(token)) == nullptr) {
+        return nullptr;
+    }
+
+    JsonAuto requestedtalist = response.AddArrayToObject("REQUESTED_TA_LIST");
+    if (requestedtalist == nullptr) {
+        return nullptr;
+    }
+    for (TrustedApplication* ta = g_TARequestList; ta != nullptr; ta = ta->Next) {
+        if (requestedtalist.AddStringToArray(ta->ID) == nullptr) {
+            return nullptr;
+        }
+    }
+
+    /* Convert to message buffer. */
+    const char* message = json_dumps(response, 0);
+    return message;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepHandleQueryRequest(void* sessionHandle, json_t* object)
+{
+    int err = 1;
+    oe_result_t result;
+
+    printf("TeepHandleQueryRequest\n");
+    if (!json_is_object(object)) {
+        return 1; /* Error */
+    }
+
+    /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
+    /* ... */
+
+    /* 2.  Validate that the request TAM certificate is chained to a trusted
+     *     CA that the TEE embeds as its trust anchor.
+     *
+     *     *  Cache the CA OCSP stapling data and certificate revocation
+     *        check status for other subsequent requests.
+     *
+     *     *  A TEE can use its own clock time for the OCSP stapling data
+     *        validation.
+     */
+    /* ...*/
+
+    /* 3. Compose a response. */
+    const char* message = TeepComposeQueryResponse(object);
+
+    printf("Sending QueryResponse: %s\n\n", message);
+
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_JSON_MEDIA_TYPE, message);
+    free((void*)message);
+    if (result != OE_OK) {
+        return result;
+    }
+    return 0;
+}
+
+/* Compose a TEEP Success message. */
+const char* TeepComposeSuccess(
+    const json_t* request)    // Request we're responding to.
+{
+    JsonAuto response(json_object(), true);
+    if (response == nullptr) {
+        return nullptr;
+    }
+    if (response.AddIntegerToObject("TYPE", TEEP_SUCCESS) == nullptr) {
+        return nullptr;
+    }
+
+    /* Copy TOKEN from request. */
+    json_t* token = json_object_get(request, "TOKEN");
+    if (!json_is_string(token) || (json_string_value(token) == nullptr)) {
+        return nullptr;
+    }
+    if (response.AddStringToObject("TOKEN", json_string_value(token)) == nullptr) {
+        return nullptr;
+    }
+
+    /* Convert to message buffer. */
+    const char* message = json_dumps(response, 0);
+    return message;
+}
+
+/* Compose a TEEP Error message. */
+const char* TeepComposeError(
+    const json_t* request,    // Request we're responding to.
+    int errorCode)
+{
+    JsonAuto response(json_object(), true);
+    if (response == nullptr) {
+        return nullptr;
+    }
+    if (response.AddIntegerToObject("TYPE", TEEP_ERROR) == nullptr) {
+        return nullptr;
+    }
+
+    /* Copy TOKEN from request. */
+    json_t* token = json_object_get(request, "TOKEN");
+    if (!json_is_string(token) || (json_string_value(token) == nullptr)) {
+        return nullptr;
+    }
+    if (response.AddStringToObject("TOKEN", json_string_value(token)) == nullptr) {
+        return nullptr;
+    }
+
+    if (response.AddIntegerToObject("ERR_CODE", errorCode) == nullptr) {
+        return nullptr;
+    }
+
+    /* Convert to message buffer. */
+    const char* message = json_dumps(response, 0);
+    return message;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepHandleTrustedAppInstall(void* sessionHandle, json_t* request)
+{
+    printf("TeepHandleTrustedAppInstall\n");
+
+    if (!json_is_object(request)) {
+        return 1; /* Error */
+    }
+
+    int err = 1;
+    oe_result_t result;
+
+    /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
+    /* ... */
+
+    /* 2.  Validate that the request TAM certificate is chained to a trusted
+     *     CA that the TEE embeds as its trust anchor.
+     *
+     *     *  Cache the CA OCSP stapling data and certificate revocation
+     *        check status for other subsequent requests.
+     *
+     *     *  A TEE can use its own clock time for the OCSP stapling data
+     *        validation.
+     */
+    /* ... */
+
+#if 0
+    const char* message = TeepComposeSuccess(request);
+    printf("Sending Success: %s\n\n", message);
+#else
+    const char* message = TeepComposeError(request, ERR_INTERNAL_ERROR);
+    printf("Sending Error: %s\n\n", message);
+#endif
+
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
+    free((void*)message);
+    if (result != OE_OK) {
+        return result;
+    }
+    return 0;
+}
+
+int TeepHandleTrustedAppDelete(void* sessionHandle, json_t* object)
+{
+    printf("TeepHandleTrustedAppDelete\n");
     return 1;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
+{
+    char* newstr = nullptr;
+
+    /* Verify message is null-terminated. */
+    const char* str = message;
+    if (message[messageLength - 1] == 0) {
+        str = message;
+    } else {
+        newstr = (char*)malloc(messageLength + 1);
+        if (newstr == nullptr) {
+            return 1; /* error */
+        }
+        memcpy(newstr, message, messageLength);
+        newstr[messageLength] = 0;
+        str = newstr;
+    }
+
+    printf("Received message='%s'\n", str);
+
+    json_error_t error;
+    JsonAuto object(json_loads(str, 0, &error), true);
+
+    free(newstr);
+    newstr = nullptr;
+
+    if ((object == nullptr) || !json_is_object((json_t*)object)) {
+        return 1; /* Error */
+    }
+
+    // Get message TYPE value.
+    JsonAuto typeValue = json_object_get(object, "TYPE");
+    if (!json_is_integer((json_t*)typeValue)) {
+        return 1;
+    }
+    teep_message_type_t messageType = (teep_message_type_t)json_integer_value(typeValue);
+
+    printf("TYPE=%d\n", messageType);
+
+    switch (messageType) {
+        case TEEP_QUERY_REQUEST:
+            return TeepHandleQueryRequest(sessionHandle, object);
+        case TEEP_TRUSTED_APP_INSTALL:
+            return TeepHandleTrustedAppInstall(sessionHandle, object);
+        case TEEP_TRUSTED_APP_DELETE:
+            return TeepHandleTrustedAppDelete(sessionHandle, object);
+        default:
+            // Not a legal message from the TAM.
+            return 1;
+    }
 }
 
 int ecall_RequestTA(
@@ -70,7 +295,6 @@ int ecall_RequestTA(
     printf("ecall_RequestTA\n");
     int err = 0;
     oe_result_t result = OE_OK;
-    size_t responseLength = 0;
 
     // TODO: See whether taid is already installed.
     // For now we skip this step and pretend it's not.
@@ -105,7 +329,7 @@ int ecall_RequestTA(
 
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
-        result = ocall_Connect(&err, tamUri, OTRP_JSON_MEDIA_TYPE);
+        result = ocall_Connect(&err, tamUri, TEEP_JSON_MEDIA_TYPE); // TODO: configure media type
         if (result != OE_OK) {
             return result;
         }

@@ -231,8 +231,35 @@ int TeepHandleTrustedAppInstall(void* sessionHandle, json_t* request)
 
 int TeepHandleTrustedAppDelete(void* sessionHandle, json_t* object)
 {
+    (void)sessionHandle; // Unused.
+    (void)object; // Unused.
+
     printf("TeepHandleTrustedAppDelete\n");
     return 1;
+}
+
+int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
+{
+    // Get message TYPE value.
+    JsonAuto typeValue = json_object_get(object, "TYPE");
+    if (!json_is_integer((json_t*)typeValue)) {
+        return 1;
+    }
+    teep_message_type_t messageType = (teep_message_type_t)json_integer_value(typeValue);
+
+    printf("TYPE=%d\n", messageType);
+
+    switch (messageType) {
+    case TEEP_QUERY_REQUEST:
+        return TeepHandleQueryRequest(sessionHandle, object);
+    case TEEP_TRUSTED_APP_INSTALL:
+        return TeepHandleTrustedAppInstall(sessionHandle, object);
+    case TEEP_TRUSTED_APP_DELETE:
+        return TeepHandleTrustedAppDelete(sessionHandle, object);
+    default:
+        // Not a legal message from the TAM.
+        return 1;
+    }
 }
 
 // Returns 0 on success, non-zero on error.
@@ -266,25 +293,20 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
         return 1; /* Error */
     }
 
-    // Get message TYPE value.
-    JsonAuto typeValue = json_object_get(object, "TYPE");
-    if (!json_is_integer((json_t*)typeValue)) {
-        return 1;
-    }
-    teep_message_type_t messageType = (teep_message_type_t)json_integer_value(typeValue);
-
-    printf("TYPE=%d\n", messageType);
-
-    switch (messageType) {
-        case TEEP_QUERY_REQUEST:
-            return TeepHandleQueryRequest(sessionHandle, object);
-        case TEEP_TRUSTED_APP_INSTALL:
-            return TeepHandleTrustedAppInstall(sessionHandle, object);
-        case TEEP_TRUSTED_APP_DELETE:
-            return TeepHandleTrustedAppDelete(sessionHandle, object);
-        default:
-            // Not a legal message from the TAM.
+    /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
+    char* payload = DecodeJWS(object, nullptr);
+    if (!payload) {
+        // For now, we continue and just use plain JSON.
+        // Later, we should return an error.
+        // return 1; /* Error */
+        return TeepHandleRawJsonMessage(sessionHandle, (json_t*)object);
+    } else {
+        json_error_t error;
+        JsonAuto request(json_loads(payload, 0, &error), true);
+        if ((json_t*)request == nullptr) {
             return 1;
+        }
+        return TeepHandleRawJsonMessage(sessionHandle, (json_t*)request);
     }
 }
 

@@ -54,7 +54,7 @@ int AgentBrokerRequestTA(
                 &g_Session,
                 g_Session.InboundMediaType,
                 g_Session.InboundMessage,
-                strlen(g_Session.InboundMessage));
+                (int)strlen(g_Session.InboundMessage));
 
             free((void*)g_Session.InboundMessage);
             g_Session.InboundMessage = NULL;

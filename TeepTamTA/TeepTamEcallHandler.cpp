@@ -159,6 +159,10 @@ json_t* GetSha256Hash(void* buffer, int len)
 /* Returns 0 on success, or non-zero if error. */
 int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
+    (void)sessionHandle; // Unused.
+    (void)message; // Unused.
+    (void)messageLength; // Unused.
+
     /* Unrecognized message. */
     return 1;
 }

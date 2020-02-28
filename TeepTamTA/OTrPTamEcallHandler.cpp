@@ -543,6 +543,8 @@ int OTrPHandleGetDeviceStateResponse(void* sessionHandle, const json_t* messageO
 /* Handle an InstallTAResponse from an OTrP Agent. */
 int OTrPHandleInstallTAResponse(void* sessionHandle, const json_t* messageObject)
 {
+    (void)sessionHandle; // Unused.
+
     if (!json_is_object(messageObject)) {
         return 1; /* Error */
     }

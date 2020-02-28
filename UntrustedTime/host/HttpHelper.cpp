@@ -106,7 +106,7 @@ MakeHttpCall(
         }
     }
 
-    int dataLength = (data != nullptr) ? strlen(data) : 0;
+    int dataLength = (data != nullptr) ? (int)strlen(data) : 0;
     BOOL ok = HttpSendRequestA(
         hRequest,
         nullptr, // No additional headers.

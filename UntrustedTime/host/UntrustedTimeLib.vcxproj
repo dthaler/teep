@@ -11,12 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HttpHelper.cpp" />
     <ClCompile Include="time.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UntrustedTime_u.h" />
-    <ClInclude Include="HttpHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <EdlItem Include="..\UntrustedTime.edl" />

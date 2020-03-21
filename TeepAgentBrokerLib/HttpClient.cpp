@@ -7,8 +7,8 @@ extern "C" {
 #include "TeepSession.h"
 #include "HttpHelper.h"
 #include "HttpClient.h"
-#include "../TeepAgentBrokerLib/TeepAgent_u.h"
-#include "../TeepAgentBrokerLib/TeepAgentBrokerLib.h"
+#include "TeepAgent_u.h"
+#include "TeepAgentBrokerLib.h"
 };
 
 TeepSession g_Session = { 0 };

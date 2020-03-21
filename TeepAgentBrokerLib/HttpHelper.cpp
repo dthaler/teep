@@ -1,4 +1,4 @@
-// SetHueDeviceDlg.cpp : implementation file
+// HttpHelper.cpp : implementation file
 //
 #include <windows.h>
 #include <stdio.h>

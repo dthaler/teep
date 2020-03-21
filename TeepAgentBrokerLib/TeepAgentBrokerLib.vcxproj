@@ -76,12 +76,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="HttpHelper.h" />
     <ClInclude Include="HttpClient.h" />
     <ClInclude Include="TeepAgentBrokerLib.h" />
     <ClInclude Include="TeepAgent_u.h" />
     <ClInclude Include="TeepSession.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="HttpHelper.cpp" />
     <ClCompile Include="HttpClient.cpp" />
     <ClCompile Include="TeepAgentBrokerLib.c" />
     <ClCompile Include="TeepAgent_host.c">

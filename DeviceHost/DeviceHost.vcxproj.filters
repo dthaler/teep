@@ -25,17 +25,4 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="MyEnclave2_u.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MyEnclave2_args.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="..\MyEnclave2\MyEnclave2.edl">
-      <Filter>Source Files</Filter>
-    </CustomBuild>
-  </ItemGroup>
 </Project>

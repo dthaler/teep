@@ -107,20 +107,6 @@
       <Project>{4d10caf1-ddeb-4d8d-8e7a-3947b1f836f5}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="MyEnclave2_args.h" />
-    <ClInclude Include="MyEnclave2_u.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="..\MyEnclave2\MyEnclave2.edl">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating untrusted proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_u.h;%(Filename)_u.c;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(OEEdger8rPath)" --untrusted "%(FullPath)" --search-path "$(OEIncludePath)"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Creating untrusted proxy/bridge routines</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)_u.h;%(Filename)_u.c;%(Outputs)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\open-enclave-cross.0.8.1-c3b6262c-2\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.8.1-c3b6262c-2\build\native\open-enclave-cross.targets')" />

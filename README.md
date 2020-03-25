@@ -41,13 +41,21 @@ Sample:
 
 ## Prerequisites
 
+You must git clone this repository recursively:
+
+```
+git clone --recurse-submodules https://github.com/dthaler/OTrP.git
+```
+
 You must have the following installed to compile and debug:
-
-* [Visual Studio 2017](https://visualstudio.microsoft.com/vs/older-downloads/) (VS 2019 can compile but not debug, due to the current dependency on the Intel SGX SDK)
+* [Visual Studio 2019](https://visualstudio.microsoft.com/)
 ** Any edition, including the (free) Community edition is fine
-* [Intel SGX SDK](https://software.intel.com/en-us/sgx/sdk) (currently required if creating code to run in SGX)
+* [Open Enclave Visual Studio Extension v0.7 or later](https://1drv.ms/u/s!Aqj-Bj9PNivcnvAKGa6fr8AlGk_a0g?e=am23nd) and its [prerequisites](https://github.com/dthaler/openenclave/blob/feature.vsextension/docs/GettingStartedDocs/VisualStudioWindows.md)
 
-The TAM is currently written to run on Windows.
+The TAM is currently written to run on Windows, due to the HTTP layer.
+However, the TeepAgentBrokerLib/HttpHelper.h API should already be
+platform-agnostic and one could replace the Windows HttpHelper.cpp with 
+a different implementation for other platforms.
 
 ## Running the code
 

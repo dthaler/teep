@@ -48,8 +48,7 @@ git clone --recurse-submodules https://github.com/dthaler/OTrP.git
 ```
 
 You must have the following installed to compile and debug:
-* [Visual Studio 2019](https://visualstudio.microsoft.com/)
-** Any edition, including the (free) Community edition is fine
+* [Visual Studio 2019](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
 * [Open Enclave Visual Studio Extension v0.7 or later](https://1drv.ms/u/s!Aqj-Bj9PNivcnvAKGa6fr8AlGk_a0g?e=am23nd) and its [prerequisites](https://github.com/dthaler/openenclave/blob/feature.vsextension/docs/GettingStartedDocs/VisualStudioWindows.md)
 
 The TAM is currently written to run on Windows, due to the HTTP layer.
@@ -68,12 +67,22 @@ and default to an IP address of the local machine, and some fixed port number (l
 
 DeviceHost.exe is run as follows:
 
-> DeviceHost <TAM URI> \[<TA ID>\]
+```
+Usage: DeviceHost <TAM URI> [<TA ID>]
+        where <TAM URI> is the default TAM URI to use
+        <TA ID> is the TA to request ("X" if none specified)
+```
 
-where <TAM URI> is the default TAM URI to use, and <TA ID> is the TA to request
+TamHost.exe is run as follows:
+
+```
+Usage: TamHost <TAM URI>
+        where <TAM URI> is the TAM URI to use, e.g., http://192.168.1.37:54321/TEEP
+        Currently the <TAM URI> must end in /TEEP
+```
 
 ## Configurations
 
 The following configurations should work:
 
-* Debug | x86 - use this to test/run on an SGX-capable development machine
+* Debug | x64 - use this to test/run on an SGX-capable development machine

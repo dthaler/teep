@@ -717,7 +717,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\include;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libcxx;$(OEIncludePath)\openenclave\3rdparty\libc;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libcxx;$(OEIncludePath)\openenclave\3rdparty\libc;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OE_USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
@@ -730,7 +730,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SGXSDKInstallPath)include;$(SGXSDKInstallPath)include\tlibc;$(SGXSDKInstallPath)include\libc++;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libcxx;$(OEIncludePath)\openenclave\3rdparty\libc;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OPENSSL_NO_SOCK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>

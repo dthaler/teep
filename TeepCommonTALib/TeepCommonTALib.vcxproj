@@ -51,7 +51,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)external\jansson\include;$(SolutionDir)external\jose;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)external\jansson\src;$(SolutionDir)external\jose;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -64,7 +64,7 @@
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)external\jansson\include;$(SolutionDir)external\jose;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)external\jansson\src;$(SolutionDir)external\jose;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

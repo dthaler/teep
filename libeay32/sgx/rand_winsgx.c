@@ -1,5 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <openssl/rand.h>
+#include <openenclave/enclave.h>
 
 int RAND_poll(void)
 {

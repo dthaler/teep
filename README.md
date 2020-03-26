@@ -49,7 +49,7 @@ git clone --recurse-submodules https://github.com/dthaler/OTrP.git
 
 You must have the following installed to compile and debug:
 * [Visual Studio 2019](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
-* [Open Enclave Visual Studio Extension v0.7 or later](https://1drv.ms/u/s!Aqj-Bj9PNivcnvAKGa6fr8AlGk_a0g?e=am23nd) and its [prerequisites](https://github.com/dthaler/openenclave/blob/feature.vsextension/docs/GettingStartedDocs/VisualStudioWindows.md)
+* [Open Enclave Visual Studio Extension v0.7.29 or later](https://1drv.ms/u/s!Aqj-Bj9PNivcnvAKGa6fr8AlGk_a0g?e=am23nd) and its [prerequisites](https://github.com/dthaler/openenclave/blob/feature.vsextension/docs/GettingStartedDocs/VisualStudioWindows.md)
 
 The TAM is currently written to run on Windows, due to the HTTP layer.
 However, the TeepAgentBrokerLib/HttpHelper.h API should already be
@@ -61,9 +61,6 @@ a different implementation for other platforms.
 Compiling on Windows will result in generating DeviceHost.exe and TamHost.exe.
 
 TamHost.exe represents the TAM and can be run without any command-line arguments, but must be run as Administrator.
-Currently the TEEP URI to listen on is hard coded in TeepTamBrokerLib/HttpServer.h.
-TODO: This needs to change to allow the IP address and port number to be specified on the command line,
-and default to an IP address of the local machine, and some fixed port number (like 54321).
 
 DeviceHost.exe is run as follows:
 

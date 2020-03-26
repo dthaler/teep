@@ -2060,6 +2060,9 @@
     <ClInclude Include="$(OpensslDir)crypto\x509\x509_vfy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="openssl\opensslconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(OpensslDir)crypto\ec\Makefile" />

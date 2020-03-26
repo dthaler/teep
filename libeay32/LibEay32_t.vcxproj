@@ -666,6 +666,7 @@
     <ClInclude Include="$(OpensslDir)crypto\x509\vpm_int.h" />
     <ClInclude Include="$(OpensslDir)crypto\x509\x509.h" />
     <ClInclude Include="$(OpensslDir)crypto\x509\x509_vfy.h" />
+    <ClInclude Include="openssl\opensslconf.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="$(OpensslDir)crypto\evp\evptests.txt" />

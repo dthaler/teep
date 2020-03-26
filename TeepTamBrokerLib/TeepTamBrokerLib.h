@@ -9,7 +9,7 @@ extern "C" {
         _In_ void* sessionHandle,
         _In_z_ const char* mediaType,
         _In_reads_(messageLength) const char *message,
-        _In_ int messageLength);
+        int messageLength);
 
     int TeepHandleConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType);
 

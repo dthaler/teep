@@ -18,7 +18,7 @@
 typedef struct {
     char MediaType[80];
     const char* OutboundMessage;
-    int MessageLength;
+    size_t MessageLength;
 } TeepSession;
 
 TeepSession g_Session = { NULL, 0 };
@@ -30,13 +30,13 @@ int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, c
     assert(session->OutboundMessage == nullptr);
 
     // Save message for later transmission.
-    int messageLength = strlen(message);
+    size_t messageLength = strlen(message);
     session->MessageLength = messageLength;
     session->OutboundMessage = (char*)malloc(messageLength);
     if (session->OutboundMessage == nullptr) {
         return 1;
     }
-    printf("Sending %d bytes...\n", messageLength);
+    printf("Sending %zd bytes...\n", messageLength);
     memcpy((char*)session->OutboundMessage, message, messageLength);
 
     strcpy_s(session->MediaType, sizeof(session->MediaType), mediaType);
@@ -72,18 +72,22 @@ int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, c
 // The following functions are based on code from https://docs.microsoft.com/en-us/windows/desktop/Http/http-server-sample-application
 
 DWORD SendHttpResponse(
-    IN HANDLE        hReqQueue,
-    IN PHTTP_REQUEST pRequest,
-    IN USHORT        StatusCode,
-    IN PCSTR         pReason,
-    IN PCSTR         pContentType,
-    IN PCSTR         pEntityString,
-    IN ULONG         EntityStringLength)
+    _In_ HANDLE hReqQueue,
+    _In_ HTTP_REQUEST* pRequest,
+    USHORT StatusCode,
+    _In_z_ PCSTR pReason,
+    _In_opt_z_ PCSTR pContentType,
+    _In_reads_opt_(EntityStringLength) PCSTR pEntityString,
+     size_t EntityStringLength)
 {
     HTTP_RESPONSE   response;
     HTTP_DATA_CHUNK dataChunk;
     DWORD           result;
     DWORD           bytesSent;
+
+    if (EntityStringLength > ULONG_MAX) {
+        return ERROR_INVALID_PARAMETER;
+    }
 
     //
     // Initialize the HTTP response structure.
@@ -105,7 +109,7 @@ DWORD SendHttpResponse(
         //
         dataChunk.DataChunkType = HttpDataChunkFromMemory;
         dataChunk.FromMemory.pBuffer = (void*)pEntityString;
-        dataChunk.FromMemory.BufferLength = EntityStringLength;
+        dataChunk.FromMemory.BufferLength = (ULONG)EntityStringLength;
 
         response.EntityChunkCount = 1;
         response.pEntityChunks = &dataChunk;
@@ -138,9 +142,9 @@ DWORD SendHttpResponse(
 }
 
 // Handle an incoming POST request, which might be for any session.
-DWORD HandleOtrpHttpPost(
-    IN HANDLE        hReqQueue,
-    IN PHTTP_REQUEST pRequest)
+DWORD HandleHttpPost(
+    _In_ HANDLE        hReqQueue,
+    _In_ HTTP_REQUEST* pRequest)
 {
     TeepSession* session = &g_Session;
     int result = 0;
@@ -197,8 +201,8 @@ DWORD HandleOtrpHttpPost(
                 pRequest,
                 400,
                 "Bad Request",
-                NULL,
-                NULL,
+                nullptr,
+                nullptr,
                 0);
         }
 
@@ -229,26 +233,26 @@ DWORD HandleOtrpHttpPost(
     }
 
     if (TeepHandleMessage(session, mediaType, inputBuffer, totalBytesRead) != 0) {
-        (void)SendHttpResponse(
+        result = SendHttpResponse(
             hReqQueue,
             pRequest,
             400,
             "Bad Request",
-            NULL,
-            NULL,
+            nullptr,
+            nullptr,
             0);
+    } else {
+        result = SendHttpResponse(
+            hReqQueue,
+            pRequest,
+            200,
+            "OK",
+            session->MediaType,
+            session->OutboundMessage,
+            session->MessageLength);
     }
 
     delete mediaType;
-
-    result = SendHttpResponse(
-        hReqQueue,
-        pRequest,
-        200,
-        "OK",
-        session->MediaType,
-        session->OutboundMessage,
-        session->MessageLength);
 
     if (session->OutboundMessage != nullptr) {
         free((char*)session->OutboundMessage);
@@ -262,7 +266,7 @@ DWORD HandleOtrpHttpPost(
 
 // Handle a series of incoming requests, which might be for different sessions.
 DWORD DoReceiveRequests(
-    IN HANDLE hReqQueue)
+    _In_ HANDLE hReqQueue)
 {
     ULONG              result;
     HTTP_REQUEST_ID    requestId;
@@ -348,7 +352,7 @@ DWORD DoReceiveRequests(
                         session->MessageLength);
 
                     free((char*)session->OutboundMessage);
-                    session->OutboundMessage = NULL;
+                    session->OutboundMessage = nullptr;
                 } else {
                     pResponseString = "[{\"error\":1234}}]\r\n";
 
@@ -368,15 +372,15 @@ DWORD DoReceiveRequests(
                     pRequest->CookedUrl.pFullUrl);
 
                 if (wcscmp(pRequest->CookedUrl.pAbsPath, TEEP_PATH) == 0) {
-                    result = HandleOtrpHttpPost(hReqQueue, pRequest);
+                    result = HandleHttpPost(hReqQueue, pRequest);
                 } else {
                     result = SendHttpResponse(
                         hReqQueue,
                         pRequest,
                         404,
                         "Not Found",
-                        NULL,
-                        NULL,
+                        nullptr,
+                        nullptr,
                         0);
                 }
                 break;
@@ -389,8 +393,8 @@ DWORD DoReceiveRequests(
                     pRequest,
                     503,
                     "Not Implemented",
-                    NULL,
-                    NULL,
+                    nullptr,
+                    nullptr,
                     0);
                 break;
             }
@@ -426,7 +430,7 @@ DWORD DoReceiveRequests(
             FREE_MEM(pRequestBuffer);
             pRequestBuffer = (PCHAR)ALLOC_MEM(RequestBufferLength);
 
-            if (pRequestBuffer == NULL)
+            if (pRequestBuffer == nullptr)
             {
                 result = ERROR_NOT_ENOUGH_MEMORY;
                 break;
@@ -462,7 +466,7 @@ DWORD DoReceiveRequests(
 int RunHttpServer(int argc, const wchar_t** argv)
 {
     ULONG           retCode;
-    HANDLE          hReqQueue = NULL;
+    HANDLE          hReqQueue = nullptr;
     int             UrlAdded = 0;
     HTTPAPI_VERSION HttpApiVersion = HTTPAPI_VERSION_1;
 
@@ -472,7 +476,7 @@ int RunHttpServer(int argc, const wchar_t** argv)
     retCode = HttpInitialize(
         HttpApiVersion,
         HTTP_INITIALIZE_SERVER,    // Flags
-        NULL                       // Reserved
+        nullptr                    // Reserved
     );
 
     if (retCode != NO_ERROR)
@@ -509,7 +513,7 @@ int RunHttpServer(int argc, const wchar_t** argv)
         retCode = HttpAddUrl(
             hReqQueue,    // Req Queue
             argv[i],      // Fully qualified URL
-            NULL          // Reserved
+            nullptr       // Reserved
         );
 
         if (retCode == ERROR_ACCESS_DENIED)
@@ -557,7 +561,7 @@ CleanUp:
     //
     // Call HttpTerminate.
     //
-    HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
+    HttpTerminate(HTTP_INITIALIZE_SERVER, nullptr);
 
     return retCode;
 }

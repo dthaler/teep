@@ -7,15 +7,15 @@ extern "C" {
 
     int TeepHandleConnect(void);
 
-    int TeepHandleMessage(void* sessionHandle, const char* mediaType, const char* message, int messageLength);
-    int OTrPHandleMessage(void* sessionHandle, const char* mediaType, const char* message, int messageLength);
+    int TeepHandleMessage(_In_ void* sessionHandle, _In_z_ const char* mediaType, _In_reads_(messageLength) const char* message, int messageLength);
+    int OTrPHandleMessage(_In_ void* sessionHandle, _In_z_ const char* mediaType, _In_reads_(messageLength) const char* message, int messageLength);
 
     int StartAgentBroker(void);
     void StopAgentBroker(void);
 
     int AgentBrokerRequestTA(
-        const char* taid,
-        const char* tamUri);
+        _In_z_ const char* taid,
+        _In_z_ const char* tamUri);
 
 #ifdef __cplusplus
 };

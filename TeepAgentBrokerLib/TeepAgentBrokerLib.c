@@ -1,4 +1,5 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+#include <windows.h> // for Sleep()
 #include "TeepAgentBrokerLib.h"
 #include "TeepAgent_u.h"
 #include "TeepSession.h"
@@ -7,15 +8,14 @@
 #else
 #include "HttpClient.h"
 #endif
-#include <windows.h> // for Sleep()
 
 #define ASSERT(x) if (!(x)) { DebugBreak(); }
 
 oe_enclave_t* g_ta_eid = NULL;
 
 int AgentBrokerRequestTA(
-    const char *taid,
-    const char *tamUri)
+    _In_z_ const char *taid,
+    _In_z_ const char *tamUri)
 {
     int err;
 

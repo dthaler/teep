@@ -12,9 +12,9 @@ oe_enclave_t* g_ta_eid = NULL;
 
 // Forward an incoming TEEP message, which might be from any session.
 int TeepHandleMessage(
-    void* sessionHandle,
-    const char* mediaType,
-    const char* message,
+    _In_ void* sessionHandle,
+    _In_z_ const char* mediaType,
+    _In_reads_(messageLength) const char* message,
     int messageLength)
 {
     int err = 0;

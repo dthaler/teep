@@ -14,7 +14,7 @@
 #endif
 #endif
 
-PCSTR ConvertToUtf8(_Out_writes_(cchBuffer) PSTR buffer, _In_ int cchBuffer, _In_ PCWSTR input)
+PCSTR ConvertToUtf8(_Out_writes_(cchBuffer) PSTR buffer, int cchBuffer, _In_ PCWSTR input)
 {
     // TODO(P2): use UTF8 not ANSI.
     sprintf_s(buffer, cchBuffer, "%ls", input);

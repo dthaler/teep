@@ -83,3 +83,9 @@ Usage: TamHost <TAM URI>
 The following configurations should work:
 
 * Debug | x64 - use this to test/run on an SGX-capable development machine
+
+To run and debug inside Visual Studio, change the debugger Working Directory
+to $(OutDir).  To do this, right click on the project,
+and change Properties -> Debugging -> Working Directory and change the
+value to $(OutDir) instead of $(ProjectDir).  This is because the apps
+will attempt to load the enclaves from the current directory.

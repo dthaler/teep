@@ -14,7 +14,7 @@ extern "C" {
 TeepSession g_Session = { 0 };
 
 // Send an empty POST to the indicated URI.
-int ocall_Connect(const char* tamUri, const char* mediaType)
+int ocall_Connect(const char* tamUri, const char* acceptMediaType)
 {
     char authority[266];
     char hostName[256];
@@ -44,7 +44,7 @@ int ocall_Connect(const char* tamUri, const char* mediaType)
         path,
         nullptr,
         nullptr,
-        mediaType,
+        acceptMediaType,
         &statusCode,
         &responseBuffer,
         &responseMediaTypeBuffer);
@@ -64,11 +64,10 @@ int ocall_Connect(const char* tamUri, const char* mediaType)
     return 0;
 }
 
-int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message)
+int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, unsigned int messageLength)
 {
     TeepSession* session = (TeepSession*)sessionHandle;
 
-    size_t messageLength = strlen(message);
     assert(session->OutboundMessage == nullptr);
 
     strcpy_s(session->OutboundMediaType, sizeof(session->OutboundMediaType), mediaType);

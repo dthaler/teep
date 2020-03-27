@@ -20,8 +20,6 @@ extern "C" {
 #include "OTrPTamEcallHandler.h"
 #include "TeepTamEcallHandler.h"
 
-#define UNIQUE_ID_LEN 16
-
 /* Try to constrict a globally unique value. */
 json_t* GetNewGloballyUniqueID(void)
 {
@@ -226,7 +224,7 @@ int OTrPProcessConnect(void* sessionHandle)
     printf("Sending GetDeviceStateRequest...\n");
 
     int err = 0;
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message, strlen(message));
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -511,7 +509,7 @@ int OTrPHandleGetDeviceTEEStateResponse(void* sessionHandle, const json_t* messa
                 return 1;
             }
             int err = 0;
-            oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
+            oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message, strlen(message));
             free((void*)message);
             return result;
         }

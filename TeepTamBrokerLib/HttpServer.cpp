@@ -23,20 +23,19 @@ typedef struct {
 
 TeepSession g_Session = { NULL, 0 };
 
-int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message)
+int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, unsigned int messageLength)
 {
     TeepSession* session = (TeepSession*)sessionHandle;
 
     assert(session->OutboundMessage == nullptr);
 
     // Save message for later transmission.
-    size_t messageLength = strlen(message);
     session->MessageLength = messageLength;
     session->OutboundMessage = (char*)malloc(messageLength);
     if (session->OutboundMessage == nullptr) {
         return 1;
     }
-    printf("Sending %zd bytes...\n", messageLength);
+    printf("Sending %d bytes...\n", messageLength);
     memcpy((char*)session->OutboundMessage, message, messageLength);
 
     strcpy_s(session->MediaType, sizeof(session->MediaType), mediaType);

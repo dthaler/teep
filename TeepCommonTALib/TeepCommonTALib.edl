@@ -16,7 +16,8 @@ enclave {
         int ocall_QueueOutboundTeepMessage(
             [user_check] void* sessionHandle,
             [in, string] const char* mediaType,
-            [in, string] const char* message);
+            [in, size=messageLength] const char* message,
+            unsigned int messageLength);
     };
 };
 

@@ -52,13 +52,13 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/jose;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>jansson;jose;jose_openssl;LibEay32_t;TeepCommonTALib;UntrustedTimeTALib</AdditionalDependencies>
+      <AdditionalDependencies>jansson;jose;jose_openssl;LibEay32_t;qcbor;TeepCommonTALib;UntrustedTimeTALib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

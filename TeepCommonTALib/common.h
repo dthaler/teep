@@ -3,9 +3,12 @@
 
 #define OTRP_JSON_MEDIA_TYPE "application/otrp+json"
 #define TEEP_JSON_MEDIA_TYPE "application/teep+json"
+#define TEEP_CBOR_MEDIA_TYPE "application/teep+cbor"
 
 int OTrPHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength);
 int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength);
+int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength);
+void HexPrintBuffer(const void* buffer, int length);
 
 char *DecodeJWS(const json_t *jws, const json_t *jwk);
 
@@ -52,3 +55,5 @@ typedef enum {
     TEEP_EXTENSIONS     = 3,
     TEEP_SUIT_COMMANDS  = 4
 } teep_data_items_t;
+
+#define UNIQUE_ID_LEN 16

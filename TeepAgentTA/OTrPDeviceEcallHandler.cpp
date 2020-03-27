@@ -417,7 +417,7 @@ int OTrPHandleGetDeviceStateRequest(void* sessionHandle, const json_t* request)
 
     printf("Sending GetDeviceStateResponse...\n\n");
 
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message, strlen(message));
 
     free((void*)message);
     if (result != OE_OK) {
@@ -691,7 +691,7 @@ int OTrPHandleInstallTARequest(void* sessionHandle, const json_t* request)
 
     printf("Sending InstallTAResponse...\n\n");
 
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message, strlen(message));
     free((void*)message);
     if (result != OE_OK) {
         return result;

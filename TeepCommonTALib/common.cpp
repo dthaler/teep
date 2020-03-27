@@ -272,6 +272,8 @@ int ecall_ProcessTeepMessage(
 
     if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
         err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
+    } else if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
+        err = TeepHandleCborMessage(sessionHandle, message, messageLength);
     } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
         err = TeepHandleJsonMessage(sessionHandle, message, messageLength);
     } else {
@@ -279,4 +281,14 @@ int ecall_ProcessTeepMessage(
     }
 
     return err;
+}
+
+void HexPrintBuffer(const void* buffer, int length)
+{
+    const unsigned char* charbuffer = (const unsigned char*)buffer;
+
+    for (int i = 0; i < length; i++) {
+        printf("%02x ", charbuffer[i]);
+    }
+    printf("\n");
 }

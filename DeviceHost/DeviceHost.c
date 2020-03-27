@@ -1,5 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdio.h>
+#include <string.h>
 #include "../TeepAgentBrokerLib/TeepAgentBrokerLib.h"
 
 //#define DEFAULT_TAM_URI "http://127.0.0.1:12345/TEEP"
@@ -12,10 +13,18 @@
 int main(int argc, char** argv)
 {
     if (argc < 2) {
-        printf("Usage: DeviceHost <TAM URI> [<TA ID>]\n");
-        printf("       where <TAM URI> is the default TAM URI to use\n");
+        printf("Usage: DeviceHost [-c] <TAM URI> [<TA ID>]\n");
+        printf("       where -c optionally means to try CBOR\n");
+        printf("             <TAM URI> is the default TAM URI to use\n");
         printf("             <TA ID> is the TA to request (%s if none specified)\n", DEFAULT_TA_ID);
         return 0;
+    }
+
+    int useCbor = 0;
+    if ((argc > 2) && (strcmp(argv[1], "-c") == 0)) {
+        useCbor = 1;
+        argc--;
+        argv++;
     }
 
     const char* defaultTamUri = argv[1];
@@ -32,7 +41,7 @@ int main(int argc, char** argv)
         return err;
     }
 
-    err = AgentBrokerRequestTA(taNeeded, defaultTamUri);
+    err = AgentBrokerRequestTA(useCbor, taNeeded, defaultTamUri);
     if (err != 0) {
         goto exit;
     }

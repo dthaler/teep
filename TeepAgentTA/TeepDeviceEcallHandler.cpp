@@ -21,6 +21,7 @@ extern "C" {
 #include "openssl/bio.h"
 #include "openssl/evp.h"
 #include "openssl/x509.h"
+#include "qcbor/qcbor_decode.h"
 #include "TeepDeviceEcallHandler.h"
 
 // List of TA's requested.
@@ -93,12 +94,22 @@ const char* TeepComposeQueryResponse(
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepHandleQueryRequest(void* sessionHandle, json_t* object)
+int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
+{
+    (void)sessionHandle;
+    (void)context;
+
+    printf("TeepHandleCborQueryRequest\n");
+    return 1; // Not implemented yet
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepHandleJsonQueryRequest(void* sessionHandle, json_t* object)
 {
     int err = 1;
     oe_result_t result;
 
-    printf("TeepHandleQueryRequest\n");
+    printf("TeepHandleJsonQueryRequest\n");
     if (!json_is_object(object)) {
         return 1; /* Error */
     }
@@ -122,7 +133,7 @@ int TeepHandleQueryRequest(void* sessionHandle, json_t* object)
 
     printf("Sending QueryResponse: %s\n\n", message);
 
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_JSON_MEDIA_TYPE, message);
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_JSON_MEDIA_TYPE, message, strlen(message));
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -221,7 +232,7 @@ int TeepHandleTrustedAppInstall(void* sessionHandle, json_t* request)
     printf("Sending Error: %s\n\n", message);
 #endif
 
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message);
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message, strlen(message));
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -251,7 +262,7 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
 
     switch (messageType) {
     case TEEP_QUERY_REQUEST:
-        return TeepHandleQueryRequest(sessionHandle, object);
+        return TeepHandleJsonQueryRequest(sessionHandle, object);
     case TEEP_TRUSTED_APP_INSTALL:
         return TeepHandleTrustedAppInstall(sessionHandle, object);
     case TEEP_TRUSTED_APP_DELETE:
@@ -262,7 +273,48 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
     }
 }
 
-// Returns 0 on success, non-zero on error.
+/* Handle an incoming message from a TEEP Agent. */
+/* Returns 0 on success, or non-zero if error. */
+int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
+{
+    (void)sessionHandle; // Unused.
+
+    QCBORDecodeContext context;
+    QCBORItem item;
+    UsefulBufC encoded;
+    encoded.ptr = message;
+    encoded.len = messageLength;
+
+    printf("Received CBOR message: ");
+    HexPrintBuffer(encoded.ptr, encoded.len);
+
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
+
+    QCBORDecode_GetNext(&context, &item);
+    if (item.uDataType != QCBOR_TYPE_INT64) {
+        printf("Invalid TYPE type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+
+    teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
+    printf("Received CBOR TEEP message type=%d\n", messageType);
+    switch (messageType) {
+    case TEEP_QUERY_REQUEST:
+        if (TeepHandleCborQueryRequest(sessionHandle, &context) != 0) {
+            return 1;;
+        }
+        break;
+    default:
+        return 1; /* unknown message type */
+        break;
+    }
+
+    QCBORError err = QCBORDecode_Finish(&context);
+    return err;
+}
+
+/* Handle an incoming message from a TEEP Agent. */
+/* Returns 0 on success, or non-zero if error. */
 int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
     char* newstr = nullptr;
@@ -311,10 +363,10 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
 }
 
 int ecall_RequestTA(
+    int useCbor,
     const char* taid,
     const char* tamUri)
 {
-    printf("ecall_RequestTA\n");
     int err = 0;
     oe_result_t result = OE_OK;
 
@@ -351,7 +403,9 @@ int ecall_RequestTA(
 
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
-        result = ocall_Connect(&err, tamUri, TEEP_JSON_MEDIA_TYPE); // TODO: configure media type
+        printf("Sending an empty message...\n");
+        const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
+        result = ocall_Connect(&err, tamUri, acceptMediaType);
         if (result != OE_OK) {
             return result;
         }

@@ -14,6 +14,7 @@ extern "C" {
     void StopAgentBroker(void);
 
     int AgentBrokerRequestTA(
+        int useCbor,
         _In_z_ const char* taid,
         _In_z_ const char* tamUri);
 

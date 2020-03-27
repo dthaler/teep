@@ -6,6 +6,7 @@ enclave {
         /* define ECALLs here. */
 
         public int ecall_RequestTA(
+            int useCbor,
             [in, string] const char* taid,
             [in, string] const char* tamUri);
 
@@ -17,6 +18,8 @@ enclave {
     untrusted {
         /* define OCALLs here. */
 
-        int ocall_Connect([in, string] const char* tamUri, [in, string] const char* mediaType);
+        int ocall_Connect(
+            [in, string] const char* tamUri,
+            [in, string] const char* acceptMediaType);
     };
 };

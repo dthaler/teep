@@ -15,6 +15,7 @@ extern "C" {
 #include "../TeepCommonTALib/common.h"
 };
 #include "../jansson/JsonAuto.h"
+#include "qcbor/qcbor_encode.h"
 #include "openssl/x509.h"
 #include "openssl/evp.h"
 #include "OTrPTamEcallHandler.h"
@@ -68,8 +69,8 @@ json_t* GetNewToken(void)
     return GetNewGloballyUniqueID();
 }
 
-/* Compose a Query Request message to be signed. */
-const char* TeepComposeQueryRequestTBS(void)
+/* Compose a JSON Query Request message to be signed. */
+const char* TeepComposeJsonQueryRequestTBS(void)
 {
     JsonAuto request(json_object(), true);
     if (request == nullptr) {
@@ -96,35 +97,89 @@ const char* TeepComposeQueryRequestTBS(void)
     return message;
 }
 
-const char* TeepComposeQueryRequest(void)
+void TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
+{
+    QCBOREncodeContext context;
+    UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
+    QCBOREncode_Init(&context, buffer);
+
+    // Add TYPE.
+    QCBOREncode_AddInt64(&context, TEEP_QUERY_REQUEST);
+
+    /* Create a random 16-byte value. */
+    unsigned char token[UNIQUE_ID_LEN];
+    oe_result_t result = oe_random(token, sizeof(token));
+    if (result != OE_OK) {
+        return;
+    }
+    QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+
+    QCBOREncode_OpenArray(&context);
+    {
+        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APPS);
+    }
+    QCBOREncode_CloseArray(&context);
+
+    QCBORError err = QCBOREncode_Finish(&context, encoded);
+    (void)err;
+}
+
+const char* TeepComposeJsonQueryRequest()
 {
     /* Compose a raw QueryRequest message to be signed. */
-    const char* tbsRequest = TeepComposeQueryRequestTBS();
+    const char* tbsRequest = TeepComposeJsonQueryRequestTBS();
     if (tbsRequest == nullptr) {
         return nullptr;
     }
 #ifdef _DEBUG
     printf("Sending TBS: %s\n", tbsRequest);
 #endif
-
     return tbsRequest;
 }
 
+void TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
+{
+    /* Compose a raw QueryRequest message to be signed. */
+    TeepComposeCborQueryRequestTBS(bufferToSend);
+}
+
 /* Handle a new incoming connection from a device. */
-int TeepProcessConnect(void* sessionHandle)
+int TeepProcessConnect(void* sessionHandle, const char* mediaType)
 {
     printf("Received client connection\n");
 
-    const char* message = TeepComposeQueryRequest();
-    if (message == nullptr) {
-        return 1; /* Error */
-    }
+    UsefulBufC encoded;
+    if (strcmp(mediaType, TEEP_JSON_MEDIA_TYPE) == 0) {
+        const char* message = TeepComposeJsonQueryRequest();
+        if (message == nullptr) {
+            return 1; /* Error */
+        }
+        encoded.ptr = message;
+        encoded.len = strlen(message);
+    } else {
+        int maxBufferLength = 4096;
+        char* buffer = (char*)malloc(maxBufferLength);
+        if (buffer == nullptr) {
+            return 1; /* Error */
+        }
+        encoded.ptr = buffer;
+        encoded.len = maxBufferLength;
 
+        TeepComposeCborQueryRequest(&encoded);
+
+        if (encoded.len == 0) {
+            return 1; /* Error */
+        }
+
+        printf("Sending CBOR message: ");
+        HexPrintBuffer(encoded.ptr, encoded.len);
+    }
+    
     printf("Sending QueryRequest...\n");
 
     int err = 0;
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_JSON_MEDIA_TYPE, message);
-    free((void*)message);
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, mediaType, (const char*)encoded.ptr, encoded.len);
+    free((void*)encoded.ptr);
     if (result != OE_OK) {
         return result;
     }
@@ -136,8 +191,9 @@ int ecall_ProcessTeepConnect(void* sessionHandle, const char* acceptMediaType)
 {
     if (strncmp(acceptMediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
         return OTrPProcessConnect(sessionHandle);
-    } else if (strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
-        return TeepProcessConnect(sessionHandle);
+    } else if (strncmp(acceptMediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0 ||
+               strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
+        return TeepProcessConnect(sessionHandle, acceptMediaType);
     } else {
         return 1;
     }
@@ -158,6 +214,18 @@ json_t* GetSha256Hash(void* buffer, int len)
 /* Handle an incoming message from a TEEP Agent. */
 /* Returns 0 on success, or non-zero if error. */
 int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
+{
+    (void)sessionHandle; // Unused.
+    (void)message; // Unused.
+    (void)messageLength; // Unused.
+
+    /* Unrecognized message. */
+    return 1;
+}
+
+/* Handle an incoming message from a TEEP Agent. */
+/* Returns 0 on success, or non-zero if error. */
+int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
     (void)sessionHandle; // Unused.
     (void)message; // Unused.

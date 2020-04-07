@@ -103,20 +103,30 @@ void TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
     UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
     QCBOREncode_Init(&context, buffer);
 
-    // Add TYPE.
-    QCBOREncode_AddInt64(&context, TEEP_QUERY_REQUEST);
-
-    /* Create a random 16-byte value. */
-    unsigned char token[UNIQUE_ID_LEN];
-    oe_result_t result = oe_random(token, sizeof(token));
-    if (result != OE_OK) {
-        return;
-    }
-    QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
-
     QCBOREncode_OpenArray(&context);
     {
-        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APPS);
+        // Add TYPE.
+        QCBOREncode_AddInt64(&context, TEEP_QUERY_REQUEST);
+
+        /* Create a random 16-byte value. */
+        unsigned char token[UNIQUE_ID_LEN];
+        oe_result_t result = oe_random(token, sizeof(token));
+        if (result != OE_OK) {
+            return;
+        }
+        QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+
+        QCBOREncode_OpenArray(&context);
+        {
+            QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APPS);
+        }
+        QCBOREncode_CloseArray(&context);
+
+        QCBOREncode_OpenMap(&context);
+        {
+            // Insert optional items here once labels are defined.
+        }
+        QCBOREncode_CloseMap(&context);
     }
     QCBOREncode_CloseArray(&context);
 

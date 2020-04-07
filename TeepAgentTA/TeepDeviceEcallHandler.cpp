@@ -291,6 +291,12 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORDecode_GetNext(&context, &item);
+    if (item.uDataType != QCBOR_TYPE_ARRAY) {
+        printf("Invalid TYPE type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+
+    QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
         printf("Invalid TYPE type %d\n", item.uDataType);
         return 1; /* invalid message */

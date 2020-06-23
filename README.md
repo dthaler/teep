@@ -1,25 +1,29 @@
 # TEEP
 
-C Implementation of draft-ietf-teep-opentrustprotocol and 
-https://tools.ietf.org/html/draft-thaler-teep-otrp-over-http
+C Implementation of [draft-ietf-teep-protocol](https://tools.ietf.org/html/draft-ietf-teep-protocol/),
+[draft-ietf-teep-otrp-over-http](https://tools.ietf.org/html/draft-ietf-teep-otrp-over-http), and the (now obsolete) draft-ietf-teep-opentrustprotocol.
 
 The directories are organized as follows.
 
 External:
 
+* qcbor: Static lib implementation of CBOR, ported to run in a TA.
+
+* t\_cose: Static lib implementation of COSE, ported to run in a TA.
+
 * jansson: Static lib implementation of JSON, ported to run in a TA.
 
 * jose: Static lib implementation of JOSE, ported to run in a TA.
 
-* jose_openssl: Static lib implementation of JOSE's use of OpenSSL crypto library, ported to run in a TA.
+* jose\_openssl: Static lib implementation of JOSE's use of OpenSSL crypto library, ported to run in a TA.
 
 * LibEay32: Static lib implementation of OpenSSL crypto library, ported to run in a TA.
 
 Time:
 
-* UntrustedTimeLib: Static lib untrusted app-side support for calling untrusted absolute time APIs from a TA.
+* UntrustedTime/host: Static lib untrusted app-side support for calling untrusted absolute time APIs from a TA.
 
-* UntrustedTimeTALib: Static lib TA-side support for calling untrusted absolute time APIs from a TA.
+* UntrustedTime/enc: Static lib TA-side support for calling untrusted absolute time APIs from a TA.
 
 TEEP:
 

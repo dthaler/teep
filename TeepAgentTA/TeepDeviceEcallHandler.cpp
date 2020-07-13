@@ -94,7 +94,8 @@ const char* TeepComposeJsonQueryResponse(
     return message;
 }
 
-void TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -102,7 +103,7 @@ void TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBu
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
-        return; /* Error */
+        return 1; /* Error */
     }
     encoded->ptr = rawBuffer;
     encoded->len = maxBufferLength;
@@ -121,7 +122,7 @@ void TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBu
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
             printf("Invalid token type %d\n", item.uDataType);
-            return; /* invalid message */
+            return 1; /* invalid message */
         }
         QCBOREncode_AddBytes(&context, item.val.string);
 
@@ -129,14 +130,14 @@ void TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBu
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_MAP) {
             printf("Invalid options type %d\n", item.uDataType);
-            return; /* invalid message */
+            return 1; /* invalid message */
         }
 
         // Parse the data-item-requested.
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_INT64) {
             printf("Invalid data-item-requested type %d\n", item.uDataType);
-            return; /* invalid message */
+            return 1; /* invalid message */
         }
 
         QCBOREncode_OpenMap(&context);
@@ -150,21 +151,19 @@ void TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBu
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    (void)err;
+    return err;
 }
 
-void TeepComposeCborQueryResponse(QCBORDecodeContext* context, UsefulBufC* queryResponse)
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborQueryResponse(QCBORDecodeContext* context, UsefulBufC* queryResponse)
 {
     /* Compose a raw QueryResponse message to be signed. */
-    TeepComposeCborQueryResponseTBS(context, queryResponse);
+    return TeepComposeCborQueryResponseTBS(context, queryResponse);
 }
 
 // Returns 0 on success, non-zero on error.
 int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
-    (void)sessionHandle;
-    (void)context;
-
     printf("TeepHandleCborQueryRequest\n");
 
     /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
@@ -183,7 +182,10 @@ int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 
     /* 3. Compose a response. */
     UsefulBufC queryResponse;
-    TeepComposeCborQueryResponse(context, &queryResponse);
+    int err = TeepComposeCborQueryResponse(context, &queryResponse);
+    if (err != 0) {
+        return err;
+    }
     if (queryResponse.len == 0) {
         return 1; /* Error */
     }
@@ -193,7 +195,6 @@ int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 
     printf("Sending QueryResponse...\n");
 
-    int err = 0;
     oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
     free((void*)queryResponse.ptr);
     if (result != OE_OK) {
@@ -299,9 +300,9 @@ const char* TeepComposeJsonError(
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepHandleTrustedAppInstall(void* sessionHandle, json_t* request)
+int TeepHandleJsonTrustedAppInstall(void* sessionHandle, json_t* request)
 {
-    printf("TeepHandleTrustedAppInstall\n");
+    printf("TeepHandleJsonTrustedAppInstall\n");
 
     if (!json_is_object(request)) {
         return 1; /* Error */
@@ -340,6 +341,158 @@ int TeepHandleTrustedAppInstall(void* sessionHandle, json_t* request)
     return 0;
 }
 
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborSuccessTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
+{
+    encoded->ptr = nullptr;
+    encoded->len = 0;
+
+    int maxBufferLength = 4096;
+    char* rawBuffer = (char*)malloc(maxBufferLength);
+    if (rawBuffer == nullptr) {
+        return 1; /* Error */
+    }
+    encoded->ptr = rawBuffer;
+    encoded->len = maxBufferLength;
+
+    QCBOREncodeContext context;
+    UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
+    QCBOREncode_Init(&context, buffer);
+
+    QCBOREncode_OpenArray(&context);
+    {
+        // Add TYPE.
+        QCBOREncode_AddInt64(&context, TEEP_SUCCESS);
+
+        // Copy token from request.
+        QCBORItem item;
+        QCBORDecode_GetNext(decodeContext, &item);
+        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+            printf("Invalid token type %d\n", item.uDataType);
+            return 1; /* invalid message */
+        }
+        QCBOREncode_AddBytes(&context, item.val.string);
+
+        // Add option map.
+        QCBOREncode_OpenMap(&context);
+        {
+        }
+        QCBOREncode_CloseMap(&context);
+    }
+    QCBOREncode_CloseArray(&context);
+
+    QCBORError err = QCBOREncode_Finish(&context, encoded);
+    return err;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborErrorTBS(QCBORDecodeContext* decodeContext, teep_error_code_t errorCode, UsefulBufC* encoded)
+{
+    encoded->ptr = nullptr;
+    encoded->len = 0;
+
+    int maxBufferLength = 4096;
+    char* rawBuffer = (char*)malloc(maxBufferLength);
+    if (rawBuffer == nullptr) {
+        return 1; /* Error */
+    }
+    encoded->ptr = rawBuffer;
+    encoded->len = maxBufferLength;
+
+    QCBOREncodeContext context;
+    UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
+    QCBOREncode_Init(&context, buffer);
+
+    QCBOREncode_OpenArray(&context);
+    {
+        // Add TYPE.
+        QCBOREncode_AddInt64(&context, TEEP_ERROR);
+
+        // Copy token from request.
+        QCBORItem item;
+        QCBORDecode_GetNext(decodeContext, &item);
+        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+            printf("Invalid token type %d\n", item.uDataType);
+            return 1; /* invalid message */
+        }
+        QCBOREncode_AddBytes(&context, item.val.string);
+
+        // Add err-code uint.
+        QCBOREncode_AddInt64(&context, errorCode);
+        
+        QCBOREncode_OpenMap(&context);
+        {
+            // TODO: Add ta-list.
+            // UsefulBufC ta_id;
+            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TA_LIST, ta_id);
+        }
+        QCBOREncode_CloseMap(&context);
+    }
+    QCBOREncode_CloseArray(&context);
+
+    QCBORError err = QCBOREncode_Finish(&context, encoded);
+    return err;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborSuccess(QCBORDecodeContext* context, UsefulBufC* reply)
+{
+    /* Compose a raw QueryResponse message to be signed. */
+    return TeepComposeCborSuccessTBS(context, reply);
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborError(QCBORDecodeContext* context, teep_error_code_t errorCode, UsefulBufC* reply)
+{
+    /* Compose a raw QueryResponse message to be signed. */
+    return TeepComposeCborErrorTBS(context, errorCode, reply);
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepHandleCborTrustedAppInstall(void* sessionHandle, QCBORDecodeContext* context)
+{
+    printf("TeepHandleCborTrustedAppInstall\n");
+
+    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
+    /* ... TODO ... */
+
+    /* 2.  Validate that the request TAM certificate is chained to a trusted
+     *     CA that the TEE embeds as its trust anchor.
+     *
+     *     *  Cache the CA OCSP stapling data and certificate revocation
+     *        check status for other subsequent requests.
+     *
+     *     *  A TEE can use its own clock time for the OCSP stapling data
+     *        validation.
+     */
+     /* ... TODO ... */
+
+    /* Parse the message and attempt the install. */
+    teep_error_code_t errorCode = ERR_INTERNAL_ERROR;
+
+    /* 3. Compose a success or error reply. */
+    UsefulBufC reply;
+    int err = TeepComposeCborError(context, errorCode, &reply);
+    //int err = TeepComposeCborSuccess(context, &reply);
+    if (err != 0) {
+        return err;
+    }
+    if (reply.len == 0) {
+        return 1; /* Error */
+    }
+
+    printf("Sending CBOR message: ");
+    HexPrintBuffer(reply.ptr, reply.len);
+
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    free((void*)reply.ptr);
+    if (result != OE_OK) {
+        return result;
+    }
+
+    return err;
+}
+
 int TeepHandleTrustedAppDelete(void* sessionHandle, json_t* object)
 {
     (void)sessionHandle; // Unused.
@@ -364,7 +517,7 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
     case TEEP_QUERY_REQUEST:
         return TeepHandleJsonQueryRequest(sessionHandle, object);
     case TEEP_TRUSTED_APP_INSTALL:
-        return TeepHandleTrustedAppInstall(sessionHandle, object);
+        return TeepHandleJsonTrustedAppInstall(sessionHandle, object);
     case TEEP_TRUSTED_APP_DELETE:
         return TeepHandleTrustedAppDelete(sessionHandle, object);
     default:
@@ -377,8 +530,6 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
 /* Returns 0 on success, or non-zero if error. */
 int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
-    (void)sessionHandle; // Unused.
-
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
@@ -407,6 +558,11 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     switch (messageType) {
     case TEEP_QUERY_REQUEST:
         if (TeepHandleCborQueryRequest(sessionHandle, &context) != 0) {
+            return 1;
+        }
+        break;
+    case TEEP_TRUSTED_APP_INSTALL:
+        if (TeepHandleCborTrustedAppInstall(sessionHandle, &context) != 0) {
             return 1;
         }
         break;

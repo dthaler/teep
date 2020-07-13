@@ -2,6 +2,7 @@
 #include <openenclave/enclave.h>
 #include "TeepTam_t.h"
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 extern "C" {
@@ -98,7 +99,7 @@ const char* TeepComposeJsonQueryRequestTBS(void)
     return message;
 }
 
-void TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
+int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
 {
     QCBOREncodeContext context;
     UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
@@ -109,11 +110,11 @@ void TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_QUERY_REQUEST);
 
-        /* Create a random 16-byte value. */
+        /* Create a random 16-byte token. */
         unsigned char token[UNIQUE_ID_LEN];
         oe_result_t result = oe_random(token, sizeof(token));
         if (result != OE_OK) {
-            return;
+            return result;
         }
         QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
 
@@ -128,7 +129,7 @@ void TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    (void)err;
+    return err;
 }
 
 const char* TeepComposeJsonQueryRequest()
@@ -144,10 +145,10 @@ const char* TeepComposeJsonQueryRequest()
     return tbsRequest;
 }
 
-void TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
+int TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
 {
     /* Compose a raw QueryRequest message to be signed. */
-    TeepComposeCborQueryRequestTBS(bufferToSend);
+    return TeepComposeCborQueryRequestTBS(bufferToSend);
 }
 
 /* Handle a new incoming connection from a device. */
@@ -155,6 +156,7 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
 {
     printf("Received client connection\n");
 
+    int err = 0;
     UsefulBufC encoded;
     if (strcmp(mediaType, TEEP_JSON_MEDIA_TYPE) == 0) {
         const char* message = TeepComposeJsonQueryRequest();
@@ -172,7 +174,10 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
         encoded.ptr = buffer;
         encoded.len = maxBufferLength;
 
-        TeepComposeCborQueryRequest(&encoded);
+        err = TeepComposeCborQueryRequest(&encoded);
+        if (err != 0) {
+            return err;
+        }
 
         if (encoded.len == 0) {
             return 1; /* Error */
@@ -184,7 +189,6 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
     
     printf("Sending QueryRequest...\n");
 
-    int err = 0;
     oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, mediaType, (const char*)encoded.ptr, encoded.len);
     free((void*)encoded.ptr);
     if (result != OE_OK) {
@@ -230,14 +234,168 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
     return 1;
 }
 
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
+{
+    encoded->ptr = nullptr;
+    encoded->len = 0;
+
+    int maxBufferLength = 4096;
+    char* rawBuffer = (char*)malloc(maxBufferLength);
+    if (rawBuffer == nullptr) {
+        return 1; /* Error */
+    }
+    encoded->ptr = rawBuffer;
+    encoded->len = maxBufferLength;
+
+    QCBOREncodeContext context;
+    UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
+    QCBOREncode_Init(&context, buffer);
+
+    QCBOREncode_OpenArray(&context);
+    {
+        // Add TYPE.
+        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APP_INSTALL);
+
+        /* Create a random 16-byte token. */
+        unsigned char token[UNIQUE_ID_LEN];
+        oe_result_t result = oe_random(token, sizeof(token));
+        if (result != OE_OK) {
+            return result;
+        }
+        QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+
+        QCBOREncode_OpenMap(&context);
+        {
+            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_MANIFEST_LIST);
+            {
+                // Add SUIT manifest for any requested TA(s) that we decide to install.
+                // TODO: make a decision whether to install it or not.  For now, we go ahead.
+
+                // TODO: get the actual manifest.  Currently this is just random bytes.
+                unsigned char manifest[16];
+                oe_result_t result = oe_random(manifest, sizeof(manifest));
+                if (result != OE_OK) {
+                    return result;
+                }
+
+                UsefulBufC buffer;
+                buffer.len = sizeof(manifest);
+                buffer.ptr = manifest;
+                QCBOREncode_AddBytes(&context, buffer);
+            }
+            QCBOREncode_CloseArray(&context);
+        }
+        QCBOREncode_CloseMap(&context);
+    }
+    QCBOREncode_CloseArray(&context);
+
+    QCBORError err = QCBOREncode_Finish(&context, encoded);
+    return err;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborTrustedAppInstall(UsefulBufC* install)
+{
+    /* Compose a raw TrustedAppInstall message to be signed. */
+    return TeepComposeCborTrustedAppInstallTBS(install);
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context)
+{
+    (void)sessionHandle;
+    (void)context;
+
+    printf("TeepHandleCborQueryResponse\n");
+
+    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
+    /* ... TODO ... */
+
+    /* 2.  Validate that certificate is chained to a trusted
+     *     CA that the TAM embeds as its trust anchor.
+     */
+     /* ... TODO ... */
+
+    QCBORItem item;
+    QCBORDecode_GetNext(context, &item);
+    if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+        printf("Invalid token type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+    /* TODO: Validate the token. */
+
+    // Parse the options map.
+    QCBORDecode_GetNext(context, &item);
+    if (item.uDataType != QCBOR_TYPE_MAP) {
+        printf("Invalid options type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+
+    /* 3. Compose a TrustedAppInstall. */
+    UsefulBufC install;
+    int err = TeepComposeCborTrustedAppInstall(&install);
+    if (err != 0) {
+        return err;
+    }
+    if (install.len == 0) {
+        return 1; /* Error */
+    }
+
+    printf("Sending CBOR message: ");
+    HexPrintBuffer(install.ptr, install.len);
+
+    printf("Sending TrustedAppInstall...\n");
+
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)install.ptr, install.len);
+    free((void*)install.ptr);
+    if (result != OE_OK) {
+        return result;
+    }
+
+    return err;
+}
+
 /* Handle an incoming message from a TEEP Agent. */
 /* Returns 0 on success, or non-zero if error. */
 int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
-    (void)sessionHandle; // Unused.
-    (void)message; // Unused.
-    (void)messageLength; // Unused.
+    QCBORDecodeContext context;
+    QCBORItem item;
+    UsefulBufC encoded;
+    encoded.ptr = message;
+    encoded.len = messageLength;
 
-    /* Unrecognized message. */
-    return 1;
+    printf("Received CBOR message: ");
+    HexPrintBuffer(encoded.ptr, encoded.len);
+
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
+
+    QCBORDecode_GetNext(&context, &item);
+    if (item.uDataType != QCBOR_TYPE_ARRAY) {
+        printf("Invalid TYPE type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+
+    QCBORDecode_GetNext(&context, &item);
+    if (item.uDataType != QCBOR_TYPE_INT64) {
+        printf("Invalid TYPE type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+
+    teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
+    printf("Received CBOR TEEP message type=%d\n", messageType);
+    switch (messageType) {
+    case TEEP_QUERY_RESPONSE:
+        if (TeepHandleCborQueryResponse(sessionHandle, &context) != 0) {
+            return 1;
+        }
+        break;
+    default:
+        return 1; /* unknown message type */
+        break;
+    }
+
+    QCBORError err = QCBORDecode_Finish(&context);
+    return err;
 }

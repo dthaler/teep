@@ -30,6 +30,7 @@ MakeHttpCall(
     _In_ PCSTR path,
     _In_opt_ PCSTR extraHeaders,
     _In_opt_ PCSTR data,
+    int dataLength,
     _In_ PCSTR acceptType,
     _Out_ int* pStatusCode,
     _Outptr_opt_result_nullonfailure_ char** pBuffer,
@@ -106,7 +107,6 @@ MakeHttpCall(
         }
     }
 
-    int dataLength = (data != nullptr) ? (int)strlen(data) : 0;
     BOOL ok = HttpSendRequestA(
         hRequest,
         nullptr, // No additional headers.

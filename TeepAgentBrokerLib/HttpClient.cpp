@@ -44,6 +44,7 @@ int ocall_Connect(const char* tamUri, const char* acceptMediaType)
         path,
         nullptr,
         nullptr,
+        0,
         acceptMediaType,
         &statusCode,
         &responseBuffer,
@@ -73,8 +74,14 @@ int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, c
     strcpy_s(session->OutboundMediaType, sizeof(session->OutboundMediaType), mediaType);
 
     // Save message for later transmission after the ECALL returns.
-    session->OutboundMessage = _strdup(message);
-    return (session->OutboundMessage == nullptr);
+    char* data = (char*)malloc(messageLength);
+    if (data == nullptr) {
+        return 1;
+    }
+    memcpy(data, message, messageLength);
+    session->OutboundMessage = data;
+    session->OutboundMessageLength = messageLength;
+    return 0;
 }
 
 // The caller is responsible for freeing the returned buffer if non-null.
@@ -107,6 +114,7 @@ const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType)
         path,
         extraHeaders,
         session->OutboundMessage,
+        session->OutboundMessageLength,
         session->OutboundMediaType,
         &statusCode,
         &responseBuffer,

@@ -24,8 +24,8 @@ typedef enum {
     TEEP_QUERY_RESPONSE      = 2,
     TEEP_TRUSTED_APP_INSTALL = 3,
     TEEP_TRUSTED_APP_DELETE  = 4,
-    TEEP_ERROR               = 5,
-    TEEP_SUCCESS             = 6,
+    TEEP_SUCCESS             = 5,
+    TEEP_ERROR               = 6,
 } teep_message_type_t;
 
 typedef enum {

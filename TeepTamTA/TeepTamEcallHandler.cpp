@@ -15,6 +15,7 @@ extern "C" {
 #include "../TeepCommonTALib/common.h"
 };
 #include "../jansson/JsonAuto.h"
+#include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_encode.h"
 #include "openssl/x509.h"
 #include "openssl/evp.h"
@@ -116,17 +117,13 @@ void TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
         }
         QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
 
-        QCBOREncode_OpenArray(&context);
-        {
-            QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APPS);
-        }
-        QCBOREncode_CloseArray(&context);
-
         QCBOREncode_OpenMap(&context);
         {
             // Insert optional items here once labels are defined.
         }
         QCBOREncode_CloseMap(&context);
+
+        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APPS);
     }
     QCBOREncode_CloseArray(&context);
 

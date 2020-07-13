@@ -24,8 +24,8 @@ typedef enum {
     TEEP_QUERY_RESPONSE      = 2,
     TEEP_TRUSTED_APP_INSTALL = 3,
     TEEP_TRUSTED_APP_DELETE  = 4,
-    TEEP_SUCCESS             = 5,
-    TEEP_ERROR               = 6
+    TEEP_ERROR               = 5,
+    TEEP_SUCCESS             = 6,
 } teep_message_type_t;
 
 typedef enum {
@@ -52,8 +52,23 @@ typedef enum {
 typedef enum {
     TEEP_ATTESTATION    = 1,
     TEEP_TRUSTED_APPS   = 2,
-    TEEP_EXTENSIONS     = 3,
-    TEEP_SUIT_COMMANDS  = 4
+    TEEP_EXTENSIONS     = 4,
+    TEEP_SUIT_COMMANDS  = 8
 } teep_data_items_t;
+
+typedef enum {
+    TEEP_LABEL_CIPHER_SUITES         = 1,
+    TEEP_LABEL_NONCE                 = 2,
+    TEEP_LABEL_VERSION               = 3,
+    TEEP_LABEL_OCSP_DATA             = 4,
+    TEEP_LABEL_SELECTED_CIPHER_SUITE = 5,
+    TEEP_LABEL_SELECTED_VERSION      = 6,
+    TEEP_LABEL_EAT                   = 7,
+    TEEP_LABEL_TA_LIST               = 8,
+    TEEP_LABEL_EXT_LIST              = 9,
+    TEEP_LABEL_MANIFEST_LIST         = 10,
+    TEEP_LABEL_MSG                   = 11,
+    TEEP_LABEL_ERR_MSG               = 12
+} teep_label_t;
 
 #define UNIQUE_ID_LEN 16

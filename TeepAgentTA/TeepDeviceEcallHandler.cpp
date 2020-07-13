@@ -22,6 +22,7 @@ extern "C" {
 #include "openssl/evp.h"
 #include "openssl/x509.h"
 #include "qcbor/qcbor_decode.h"
+#include "qcbor/qcbor_encode.h"
 #include "TeepDeviceEcallHandler.h"
 
 // List of TA's requested.
@@ -58,7 +59,7 @@ int ecall_RequestPolicyCheck(void)
 }
 
 /* Compose a TEEP QueryResponse message. */
-const char* TeepComposeQueryResponse(
+const char* TeepComposeJsonQueryResponse(
     const json_t* request)    // Request we're responding to.
 {
     JsonAuto response(json_object(), true);
@@ -93,6 +94,71 @@ const char* TeepComposeQueryResponse(
     return message;
 }
 
+void TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
+{
+    encoded->ptr = nullptr;
+    encoded->len = 0;
+
+    int maxBufferLength = 4096;
+    char* rawBuffer = (char*)malloc(maxBufferLength);
+    if (rawBuffer == nullptr) {
+        return; /* Error */
+    }
+    encoded->ptr = rawBuffer;
+    encoded->len = maxBufferLength;
+
+    QCBOREncodeContext context;
+    UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
+    QCBOREncode_Init(&context, buffer);
+
+    QCBOREncode_OpenArray(&context);
+    {
+        // Add TYPE.
+        QCBOREncode_AddInt64(&context, TEEP_QUERY_RESPONSE);
+
+        // Copy token from request.
+        QCBORItem item;
+        QCBORDecode_GetNext(decodeContext, &item);
+        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+            printf("Invalid token type %d\n", item.uDataType);
+            return; /* invalid message */
+        }
+        QCBOREncode_AddBytes(&context, item.val.string);
+
+        // Parse the options map.
+        QCBORDecode_GetNext(decodeContext, &item);
+        if (item.uDataType != QCBOR_TYPE_MAP) {
+            printf("Invalid options type %d\n", item.uDataType);
+            return; /* invalid message */
+        }
+
+        // Parse the data-item-requested.
+        QCBORDecode_GetNext(decodeContext, &item);
+        if (item.uDataType != QCBOR_TYPE_INT64) {
+            printf("Invalid data-item-requested type %d\n", item.uDataType);
+            return; /* invalid message */
+        }
+
+        QCBOREncode_OpenMap(&context);
+        {
+            // TODO: Add ta-list.
+            // UsefulBufC ta_id;
+            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TA_LIST, ta_id);
+        }
+        QCBOREncode_CloseMap(&context);
+    }
+    QCBOREncode_CloseArray(&context);
+
+    QCBORError err = QCBOREncode_Finish(&context, encoded);
+    (void)err;
+}
+
+void TeepComposeCborQueryResponse(QCBORDecodeContext* context, UsefulBufC* queryResponse)
+{
+    /* Compose a raw QueryResponse message to be signed. */
+    TeepComposeCborQueryResponseTBS(context, queryResponse);
+}
+
 // Returns 0 on success, non-zero on error.
 int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
@@ -100,7 +166,41 @@ int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
     (void)context;
 
     printf("TeepHandleCborQueryRequest\n");
-    return 1; // Not implemented yet
+
+    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
+    /* ... TODO ... */
+
+    /* 2.  Validate that the request TAM certificate is chained to a trusted
+     *     CA that the TEE embeds as its trust anchor.
+     *
+     *     *  Cache the CA OCSP stapling data and certificate revocation
+     *        check status for other subsequent requests.
+     *
+     *     *  A TEE can use its own clock time for the OCSP stapling data
+     *        validation.
+     */
+     /* ... TODO ... */
+
+    /* 3. Compose a response. */
+    UsefulBufC queryResponse;
+    TeepComposeCborQueryResponse(context, &queryResponse);
+    if (queryResponse.len == 0) {
+        return 1; /* Error */
+    }
+
+    printf("Sending CBOR message: ");
+    HexPrintBuffer(queryResponse.ptr, queryResponse.len);
+
+    printf("Sending QueryResponse...\n");
+
+    int err = 0;
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
+    free((void*)queryResponse.ptr);
+    if (result != OE_OK) {
+        return result;
+    }
+
+    return err;
 }
 
 // Returns 0 on success, non-zero on error.
@@ -129,7 +229,7 @@ int TeepHandleJsonQueryRequest(void* sessionHandle, json_t* object)
     /* ...*/
 
     /* 3. Compose a response. */
-    const char* message = TeepComposeQueryResponse(object);
+    const char* message = TeepComposeJsonQueryResponse(object);
 
     printf("Sending QueryResponse: %s\n\n", message);
 
@@ -142,7 +242,7 @@ int TeepHandleJsonQueryRequest(void* sessionHandle, json_t* object)
 }
 
 /* Compose a TEEP Success message. */
-const char* TeepComposeSuccess(
+const char* TeepComposeJsonSuccess(
     const json_t* request)    // Request we're responding to.
 {
     JsonAuto response(json_object(), true);
@@ -168,7 +268,7 @@ const char* TeepComposeSuccess(
 }
 
 /* Compose a TEEP Error message. */
-const char* TeepComposeError(
+const char* TeepComposeJsonError(
     const json_t* request,    // Request we're responding to.
     int errorCode)
 {
@@ -225,10 +325,10 @@ int TeepHandleTrustedAppInstall(void* sessionHandle, json_t* request)
     /* ... */
 
 #if 0
-    const char* message = TeepComposeSuccess(request);
+    const char* message = TeepComposeJsonSuccess(request);
     printf("Sending Success: %s\n\n", message);
 #else
-    const char* message = TeepComposeError(request, ERR_INTERNAL_ERROR);
+    const char* message = TeepComposeJsonError(request, ERR_INTERNAL_ERROR);
     printf("Sending Error: %s\n\n", message);
 #endif
 
@@ -307,7 +407,7 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     switch (messageType) {
     case TEEP_QUERY_REQUEST:
         if (TeepHandleCborQueryRequest(sessionHandle, &context) != 0) {
-            return 1;;
+            return 1;
         }
         break;
     default:

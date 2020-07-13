@@ -24,6 +24,7 @@ extern "C" {
 #include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_encode.h"
 #include "TeepDeviceEcallHandler.h"
+#include "Suit.h"
 
 // List of TA's requested.
 TrustedApplication* g_TARequestList = nullptr;
@@ -467,8 +468,52 @@ int TeepHandleCborTrustedAppInstall(void* sessionHandle, QCBORDecodeContext* con
      */
      /* ... TODO ... */
 
-    /* Parse the message and attempt the install. */
-    teep_error_code_t errorCode = ERR_INTERNAL_ERROR;
+    // Get token from request.
+    QCBORItem item;
+    QCBORDecode_GetNext(context, &item);
+    if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+        printf("Invalid token type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+
+    // Parse the options map.
+    QCBORDecode_GetNext(context, &item);
+    if (item.uDataType != QCBOR_TYPE_MAP) {
+        printf("Invalid options type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+    teep_error_code_t errorCode = ERR_SUCCESS;
+    uint16_t mapEntryCount = item.val.uCount;
+    for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
+        QCBORDecode_GetNext(context, &item);
+        teep_label_t label = (teep_label_t)item.label.int64;
+        switch (label) {
+        case TEEP_LABEL_MANIFEST_LIST:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                printf("Invalid option type %d\n", item.uDataType);
+                return 1; /* invalid message */
+            }
+            uint16_t arrayEntryCount = item.val.uCount;
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                if (item.uDataType != QCBOR_TYPE_MAP) {
+                    printf("Invalid suit envelope type %d\n", item.uDataType);
+                    return 1; /* invalid message */
+                }
+                if (errorCode == ERR_SUCCESS) {
+                    // Try until we hit the first error.
+                    errorCode = TryProcessSuitEnvelope(context, item.val.uCount);
+                }
+            }
+            break;
+        }
+        default:
+            printf("Unrecognized option label %d\n", label);
+            return 1; /* invalid message */
+            break;
+        }
+    }
 
     /* 3. Compose a success or error reply. */
     UsefulBufC reply;

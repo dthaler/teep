@@ -81,6 +81,7 @@ int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, c
     memcpy(data, message, messageLength);
     session->OutboundMessage = data;
     session->OutboundMessageLength = messageLength;
+    printf("Sending %d bytes...\n", messageLength);
     return 0;
 }
 

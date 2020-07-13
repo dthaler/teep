@@ -282,7 +282,7 @@ int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
                 UsefulBufC buffer;
                 buffer.len = sizeof(manifest);
                 buffer.ptr = manifest;
-                QCBOREncode_AddBytes(&context, buffer);
+                QCBOREncode_AddEncoded(&context, buffer);
             }
             QCBOREncode_CloseArray(&context);
         }

@@ -18,7 +18,7 @@
 typedef struct {
     char MediaType[80];
     const char* OutboundMessage;
-    size_t MessageLength;
+    size_t OutboundMessageLength;
 } TeepSession;
 
 TeepSession g_Session = { NULL, 0 };
@@ -30,13 +30,14 @@ int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, c
     assert(session->OutboundMessage == nullptr);
 
     // Save message for later transmission.
-    session->MessageLength = messageLength;
-    session->OutboundMessage = (char*)malloc(messageLength);
-    if (session->OutboundMessage == nullptr) {
+    char* data = (char*)malloc(messageLength);
+    if (data == nullptr) {
         return 1;
     }
+    memcpy(data, message, messageLength);
+    session->OutboundMessage = data;
+    session->OutboundMessageLength = messageLength;
     printf("Sending %d bytes...\n", messageLength);
-    memcpy((char*)session->OutboundMessage, message, messageLength);
 
     strcpy_s(session->MediaType, sizeof(session->MediaType), mediaType);
     return 0;
@@ -212,11 +213,11 @@ DWORD HandleHttpPost(
                 "OK",
                 session->MediaType,
                 session->OutboundMessage,
-                session->MessageLength);
+                session->OutboundMessageLength);
 
         free((char*)session->OutboundMessage);
         session->OutboundMessage = nullptr;
-        session->MessageLength = 0;
+        session->OutboundMessageLength = 0;
 
         return result;
     }
@@ -248,7 +249,7 @@ DWORD HandleHttpPost(
             "OK",
             session->MediaType,
             session->OutboundMessage,
-            session->MessageLength);
+            session->OutboundMessageLength);
     }
 
     delete mediaType;
@@ -256,7 +257,7 @@ DWORD HandleHttpPost(
     if (session->OutboundMessage != nullptr) {
         free((char*)session->OutboundMessage);
         session->OutboundMessage = nullptr;
-        session->MessageLength = 0;
+        session->OutboundMessageLength = 0;
     }
 
     FREE_MEM(inputBuffer);
@@ -348,7 +349,7 @@ DWORD DoReceiveRequests(
                         "OK",
                         session->MediaType,
                         session->OutboundMessage,
-                        session->MessageLength);
+                        session->OutboundMessageLength);
 
                     free((char*)session->OutboundMessage);
                     session->OutboundMessage = nullptr;

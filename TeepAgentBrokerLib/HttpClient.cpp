@@ -38,6 +38,7 @@ int ocall_Connect(const char* tamUri, const char* acceptMediaType)
     TeepSession* session = &g_Session;
     strcpy_s(session->TamUri, tamUri);
 
+    int responseLength;
     int err = MakeHttpCall(
         "POST",
         authority,
@@ -47,6 +48,7 @@ int ocall_Connect(const char* tamUri, const char* acceptMediaType)
         0,
         acceptMediaType,
         &statusCode,
+        &responseLength,
         &responseBuffer,
         &responseMediaTypeBuffer);
     if (err != 0) {
@@ -58,6 +60,7 @@ int ocall_Connect(const char* tamUri, const char* acceptMediaType)
 
     assert(session->InboundMessage == nullptr);
     session->InboundMessage = responseBuffer;
+    session->InboundMessageLength = responseLength;
     if (responseMediaTypeBuffer != nullptr) {
         strcpy_s(session->InboundMediaType, sizeof(session->InboundMediaType), responseMediaTypeBuffer);
     }
@@ -86,7 +89,7 @@ int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, c
 }
 
 // The caller is responsible for freeing the returned buffer if non-null.
-const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType)
+const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType, int* pResponseLength)
 {
     char authority[266];
     char hostName[256];
@@ -118,6 +121,7 @@ const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType)
         session->OutboundMessageLength,
         session->OutboundMediaType,
         &statusCode,
+        pResponseLength,
         &responseBuffer,
         pResponseMediaType);
 

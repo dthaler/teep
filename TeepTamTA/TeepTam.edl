@@ -5,6 +5,12 @@ enclave {
     trusted {
         /* define ECALLs here. */
         public int ecall_ProcessTeepConnect([user_check] void* sessionHandle, [in, string] const char* acceptMediaType);
+
+        /* TODO: this call is currently insecure, it needs to be secured. */
+        public void ecall_ConfigureManifest(
+        [in, string] const char* taid,
+        [in, count=manifest_len] const char* manifest,
+        size_t manifest_len);
     };
 
     untrusted {

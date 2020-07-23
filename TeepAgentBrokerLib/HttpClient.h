@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-    const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType);
+    const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType, int* pResponseLength);
 
 #ifdef __cplusplus
 };

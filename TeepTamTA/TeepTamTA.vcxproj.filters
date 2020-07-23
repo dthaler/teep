@@ -27,6 +27,9 @@
     <ClCompile Include="TeepTamEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Manifest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="optee/user_ta_header_defines.h">
@@ -34,6 +37,9 @@
     </ClInclude>
     <ClInclude Include="TeepTam_t.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Manifest.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

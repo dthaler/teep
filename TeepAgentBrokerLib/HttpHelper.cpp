@@ -33,6 +33,7 @@ MakeHttpCall(
     int dataLength,
     _In_ PCSTR acceptType,
     _Out_ int* pStatusCode,
+    _Out_ int* pContentLength,
     _Outptr_opt_result_nullonfailure_ char** pBuffer,
     _Outptr_opt_result_nullonfailure_ char** pMediaType)
 {
@@ -45,6 +46,7 @@ MakeHttpCall(
     if (pMediaType != nullptr) {
         *pMediaType = nullptr;
     }
+    *pContentLength = 0;
 
     HINTERNET hInternet = InternetOpenA(userAgent, INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
     if (hInternet == nullptr) {
@@ -140,11 +142,10 @@ MakeHttpCall(
     responseTextSize = sizeof(responseText);
     index = 0;
     ok = HttpQueryInfoA(hRequest, HTTP_QUERY_CONTENT_LENGTH, &responseText, &responseTextSize, &index);
-    int contentLength;
     if (!ok) {
-        contentLength = 65536; // Default maximum size of response.
+        *pContentLength = 65536; // Default maximum size of response.
     } else {
-        contentLength = atoi(responseText);
+        *pContentLength = atoi(responseText);
     }
 
     if (pMediaType != nullptr) {
@@ -159,9 +160,9 @@ MakeHttpCall(
         }
     }
 
-    CHAR* temp = new char[contentLength + 1];
+    CHAR* temp = new char[*pContentLength + 1];
     ULONG bytesRead;
-    ULONG bytesLeft = contentLength;
+    ULONG bytesLeft = *pContentLength;
     if (pBuffer != nullptr) {
         *pBuffer = temp;
     }

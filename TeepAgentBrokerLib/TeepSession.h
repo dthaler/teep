@@ -8,6 +8,7 @@ typedef struct {
     int OutboundMessageLength;
     char InboundMediaType[80];
     const char* InboundMessage;
+    int InboundMessageLength;
 } TeepSession;
 
 extern TeepSession g_Session;

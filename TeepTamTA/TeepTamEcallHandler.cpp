@@ -1,6 +1,7 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <openenclave/enclave.h>
 #include "TeepTam_t.h"
+#include "Manifest.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -272,17 +273,11 @@ int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
                 // Add SUIT manifest for any requested TA(s) that we decide to install.
                 // TODO: make a decision whether to install it or not.  For now, we go ahead.
 
-                // TODO: get the actual manifest.  Currently this is just random bytes.
-                unsigned char manifest[16];
-                oe_result_t result = oe_random(manifest, sizeof(manifest));
-                if (result != OE_OK) {
-                    return result;
-                }
+                const char* taid = "ta1"; // TODO get the actual TA ID
 
-                UsefulBufC buffer;
-                buffer.len = sizeof(manifest);
-                buffer.ptr = manifest;
-                QCBOREncode_AddEncoded(&context, buffer);
+                UsefulBufC manifest;
+                manifest.ptr = Manifest::GetManifest(taid, &manifest.len);
+                QCBOREncode_AddEncoded(&context, manifest);
             }
             QCBOREncode_CloseArray(&context);
         }

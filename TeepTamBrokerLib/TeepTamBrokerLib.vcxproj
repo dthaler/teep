@@ -78,6 +78,7 @@
     <ClInclude Include="TeepTamBrokerLib.h" />
     <ClInclude Include="TeepTam_args.h" />
     <ClInclude Include="TeepTam_u.h" />
+    <ClInclude Include="win32\dirent.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HttpServer.cpp" />
@@ -97,6 +98,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="print.c" />
+    <ClCompile Include="win32\dirent.c" />
   </ItemGroup>
   <ItemGroup>
     <EdlItem Include="..\TeepTamTA\TeepTam.edl" />

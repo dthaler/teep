@@ -13,7 +13,7 @@ extern "C" {
 
     int TeepHandleConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType);
 
-    int StartTamBroker(void);
+    int StartTamBroker(_In_z_ const char* manifestDirectory);
     void StopTamBroker(void);
 
     int TamBrokerProcess(_In_z_ const wchar_t* tamUri);

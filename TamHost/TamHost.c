@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "../TeepTamBrokerLib/TeepTamBrokerLib.h"
 
+#define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"
+
 int wmain(int argc, wchar_t** argv)
 {
     if (argc < 2) {
@@ -14,7 +16,7 @@ int wmain(int argc, wchar_t** argv)
     const wchar_t* tamUri = argv[1];
     printf("Using TAM URI: %ls\n", tamUri);
 
-    int err = StartTamBroker();
+    int err = StartTamBroker(DEFAULT_MANIFEST_DIRECTORY);
     if (err != 0) {
         return err;
     }

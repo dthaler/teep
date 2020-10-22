@@ -1,5 +1,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <openenclave/host.h>
+#ifdef _WIN32
+#include "win32/dirent.h"
+#else
+#include <dirent.h>
+#endif
 #include "TeepTam_u.h"
 
 extern oe_enclave_t* g_ta_eid;
@@ -32,16 +37,21 @@ oe_result_t create_TeepTam_enclave(const char* enclave_name, oe_enclave_t** out_
     return OE_OK;
 }
 
-/* This is just a placeholder for a real implementation. */
-oe_result_t ConfigureManifests(oe_enclave_t* enclave)
+oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name, const char* filename)
 {
     FILE* fp = NULL;
     char* manifest = NULL;
-    oe_result_t result = OE_FAILURE;
+    size_t length = strlen(directory_name) + strlen(filename) + 2;
+    char* fullpathname = malloc(length);
+    if (fullpathname == NULL) {
+        return OE_OUT_OF_MEMORY;
+    }
+    sprintf_s(fullpathname, length, "%s/%s", directory_name, filename);
 
+    oe_result_t result = OE_FAILURE;
     do {
-        /* Load content from manifests/ta1.cbor sample file. */
-        fp = fopen("../../../manifests/ta1.cbor", "rb");
+        /* Load content from file. */
+        fp = fopen(fullpathname, "rb");
         if (fp == NULL) {
             break;
         }
@@ -66,10 +76,44 @@ oe_result_t ConfigureManifests(oe_enclave_t* enclave)
 
     free(manifest);
     fclose(fp);
+    free(fullpathname);
     return result;
 }
 
-int StartTamBroker(void)
+/* TODO: This is just a placeholder for a real implementation.
+ * Currently we provide untrusted manifests into the TAM.
+ * In a real implementation, the TAM would instead either load
+ * manifests from a trusted location, or use sealed storage
+ * (decrypting the contents inside the enclave).
+ */
+oe_result_t ConfigureManifests(oe_enclave_t* enclave, const char* directory_name)
+{
+    oe_result_t result = OE_OK;
+    DIR* dir = opendir(directory_name);
+    if (dir == NULL) {
+        return OE_FAILURE;
+    }
+    for (;;) {
+        struct dirent* dirent = readdir(dir);
+        if (dirent == NULL) {
+            break;
+        }
+        char* filename = dirent->d_name;
+        size_t filename_length = strlen(filename);
+        if (filename_length < 6 ||
+            strcmp(filename + filename_length - 5, ".cbor") != 0) {
+            continue;
+        }
+        result = ConfigureManifest(enclave, directory_name, filename);
+        if (result != OE_OK) {
+            break;
+        }
+    }
+    closedir(dir);
+    return result;
+}
+
+int StartTamBroker(_In_z_ const char* manifestDirectory)
 {
     oe_enclave_t* enclave = NULL;
     oe_result_t result = create_TeepTam_enclave(
@@ -95,7 +139,7 @@ int StartTamBroker(void)
         return result;
     }
 
-    result = ConfigureManifests(enclave);
+    result = ConfigureManifests(enclave, manifestDirectory);
     return result;
 }
 

@@ -30,6 +30,9 @@
     <ClInclude Include="HttpServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="win32\dirent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TeepTam_u.c">
@@ -47,13 +50,14 @@
     <ClCompile Include="HttpServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="win32\dirent.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\TeepTamTA\TeepTam.edl">
-      <Filter>Source Files</Filter>
-    </CustomBuild>
+    <EdlItem Include="..\TeepTamTA\TeepTam.edl" />
   </ItemGroup>
 </Project>

@@ -330,7 +330,7 @@ int TeepHandleJsonTrustedAppInstall(void* sessionHandle, json_t* request)
     const char* message = TeepComposeJsonSuccess(request);
     printf("Sending Success: %s\n\n", message);
 #else
-    const char* message = TeepComposeJsonError(request, ERR_INTERNAL_ERROR);
+    const char* message = TeepComposeJsonError(request, TEEP_ERR_INTERNAL_ERROR);
     printf("Sending Error: %s\n\n", message);
 #endif
 
@@ -482,7 +482,7 @@ int TeepHandleCborTrustedAppInstall(void* sessionHandle, QCBORDecodeContext* con
         printf("Invalid options type %d\n", item.uDataType);
         return 1; /* invalid message */
     }
-    teep_error_code_t errorCode = ERR_SUCCESS;
+    teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
     uint16_t mapEntryCount = item.val.uCount;
     for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
         QCBORDecode_GetNext(context, &item);
@@ -501,7 +501,7 @@ int TeepHandleCborTrustedAppInstall(void* sessionHandle, QCBORDecodeContext* con
                     printf("Invalid suit envelope type %d\n", item.uDataType);
                     return 1; /* invalid message */
                 }
-                if (errorCode == ERR_SUCCESS) {
+                if (errorCode == TEEP_ERR_SUCCESS) {
                     // Try until we hit the first error.
                     errorCode = TryProcessSuitEnvelope(context, item.val.uCount);
                 }

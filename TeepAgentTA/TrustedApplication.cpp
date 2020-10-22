@@ -5,7 +5,7 @@
 
 TrustedApplication::TrustedApplication(const char* id)
 {
-    int len = strlen(id);
+    size_t len = strlen(id);
     oe_assert(len < sizeof(this->ID));
     strncpy(this->ID, id, len);
     this->ID[len] = 0;

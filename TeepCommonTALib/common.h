@@ -29,25 +29,25 @@ typedef enum {
 } teep_message_type_t;
 
 typedef enum {
-    ERR_SUCCESS                    = 0,
-    ERR_ILLEGAL_PARAMETER          = 1,
-    ERR_UNSUPPORTED_EXTENSION      = 2,
-    ERR_REQUEST_SIGNATURE_FAILED   = 3,
-    ERR_UNSUPPORTED_MSG_VERSION    = 4,
-    ERR_UNSUPPORTED_CRYPTO_ALG     = 5,
-    ERR_BAD_CERTIFICATE            = 6,
-    ERR_UNSUPPORTED_CERTIFICATE    = 7,
-    ERR_CERTIFICATE_REVOKED        = 8,
-    ERR_CERTIFICATE_EXPIRED        = 9,
-    ERR_INTERNAL_ERROR             = 10,
-    ERR_RESOURCE_FULL              = 11,
-    ERR_TA_NOT_FOUND               = 12,
-    ERR_TA_ALREADY_INSTALLED       = 13,
-    ERR_TA_UNKNOWN_FORMAT          = 14,
-    ERR_TA_DECRYPTION_FAILED       = 15,
-    ERR_TA_DECOMPRESSION_FAILED    = 16,
-    ERR_MANIFEST_PROCESSING_FAILED = 17,
-    ERR_PD_PROCESSING_FAILED       = 18
+    TEEP_ERR_SUCCESS                    = 0,
+    TEEP_ERR_ILLEGAL_PARAMETER          = 1,
+    TEEP_ERR_UNSUPPORTED_EXTENSION      = 2,
+    TEEP_ERR_REQUEST_SIGNATURE_FAILED   = 3,
+    TEEP_ERR_UNSUPPORTED_MSG_VERSION    = 4,
+    TEEP_ERR_UNSUPPORTED_CRYPTO_ALG     = 5,
+    TEEP_ERR_BAD_CERTIFICATE            = 6,
+    TEEP_ERR_UNSUPPORTED_CERTIFICATE    = 7,
+    TEEP_ERR_CERTIFICATE_REVOKED        = 8,
+    TEEP_ERR_CERTIFICATE_EXPIRED        = 9,
+    TEEP_ERR_INTERNAL_ERROR             = 10,
+    TEEP_ERR_RESOURCE_FULL              = 11,
+    TEEP_ERR_TA_NOT_FOUND               = 12,
+    TEEP_ERR_TA_ALREADY_INSTALLED       = 13,
+    TEEP_ERR_TA_UNKNOWN_FORMAT          = 14,
+    TEEP_ERR_TA_DECRYPTION_FAILED       = 15,
+    TEEP_ERR_TA_DECOMPRESSION_FAILED    = 16,
+    TEEP_ERR_MANIFEST_PROCESSING_FAILED = 17,
+    TEEP_ERR_PD_PROCESSING_FAILED       = 18
 } teep_error_code_t;
 
 typedef enum {
@@ -58,18 +58,19 @@ typedef enum {
 } teep_data_items_t;
 
 typedef enum {
-    TEEP_LABEL_CIPHER_SUITES         = 1,
-    TEEP_LABEL_NONCE                 = 2,
-    TEEP_LABEL_VERSION               = 3,
-    TEEP_LABEL_OCSP_DATA             = 4,
-    TEEP_LABEL_SELECTED_CIPHER_SUITE = 5,
-    TEEP_LABEL_SELECTED_VERSION      = 6,
-    TEEP_LABEL_EAT                   = 7,
-    TEEP_LABEL_TA_LIST               = 8,
-    TEEP_LABEL_EXT_LIST              = 9,
-    TEEP_LABEL_MANIFEST_LIST         = 10,
-    TEEP_LABEL_MSG                   = 11,
-    TEEP_LABEL_ERR_MSG               = 12
+    TEEP_LABEL_SUPPORTED_CIPHER_SUITES = 1,
+    TEEP_LABEL_CHALLENGE               = 2,
+    TEEP_LABEL_VERSIONS                = 3,
+    TEEP_LABEL_OCSP_DATA               = 4,
+    TEEP_LABEL_SELECTED_CIPHER_SUITE   = 5,
+    TEEP_LABEL_SELECTED_VERSION        = 6,
+    TEEP_LABEL_EVIDENCE                = 7,
+    TEEP_LABEL_TA_LIST                 = 8,
+    TEEP_LABEL_EXT_LIST                = 9,
+    TEEP_LABEL_MANIFEST_LIST           = 10,
+    TEEP_LABEL_MSG                     = 11,
+    TEEP_LABEL_ERR_MSG                 = 12,
+    TEEP_LABEL_EVIDENCE_FORMAT         = 13
 } teep_label_t;
 
 typedef enum {

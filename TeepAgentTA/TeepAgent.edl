@@ -7,7 +7,7 @@ enclave {
 
         public int ecall_RequestTA(
             int useCbor,
-            [in, string] const char* taid,
+            oe_uuid_t requestedTaid,
             [in, string] const char* tamUri);
 
         public int ecall_ProcessError([user_check] void* sessionHandle);

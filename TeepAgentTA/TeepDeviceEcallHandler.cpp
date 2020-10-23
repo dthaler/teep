@@ -29,7 +29,7 @@ extern "C" {
 #include "SuitParser.h"
 
 // List of TA's requested.
-TrustedApplication* g_TARequestList = nullptr;
+TrustedApplication* g_RequestedTAList = nullptr;
 
 const unsigned char* g_AgentDerCertificate = nullptr;
 size_t g_AgentDerCertificateSize = 0;
@@ -86,8 +86,10 @@ const char* TeepComposeJsonQueryResponse(
     if (requestedtalist == nullptr) {
         return nullptr;
     }
-    for (TrustedApplication* ta = g_TARequestList; ta != nullptr; ta = ta->Next) {
-        if (requestedtalist.AddStringToArray(ta->ID) == nullptr) {
+    char IDString[37];
+    for (TrustedApplication* ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
+        TrustedApplication::ConvertUUIDToString(IDString, sizeof(IDString), ta->ID);
+        if (requestedtalist.AddStringToArray(IDString) == nullptr) {
             return nullptr;
         }
     }
@@ -148,6 +150,16 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
             // TODO: Add ta-list.
             // UsefulBufC ta_id;
             // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TA_LIST, ta_id);
+
+            // Add requested-ta-list
+            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_REQUESTED_TA_LIST);
+            {
+                for (TrustedApplication* ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
+                    UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
+                    QCBOREncode_AddBytes(&context, UsefulBuf_Const(ta_id));
+                }
+            }
+            QCBOREncode_CloseArray(&context);
         }
         QCBOREncode_CloseMap(&context);
     }
@@ -540,7 +552,7 @@ int TeepHandleCborTrustedAppInstall(void* sessionHandle, QCBORDecodeContext* con
     return err;
 }
 
-int TeepHandleTrustedAppDelete(void* sessionHandle, json_t* object)
+int TeepHandleJsonTrustedAppDelete(void* sessionHandle, json_t* object)
 {
     (void)sessionHandle; // Unused.
     (void)object; // Unused.
@@ -566,7 +578,7 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
     case TEEP_TRUSTED_APP_INSTALL:
         return TeepHandleJsonTrustedAppInstall(sessionHandle, object);
     case TEEP_TRUSTED_APP_DELETE:
-        return TeepHandleTrustedAppDelete(sessionHandle, object);
+        return TeepHandleJsonTrustedAppDelete(sessionHandle, object);
     default:
         // Not a legal message from the TAM.
         return 1;
@@ -673,7 +685,7 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
 
 int ecall_RequestTA(
     int useCbor,
-    const char* taid,
+    oe_uuid_t requestedTaid,
     const char* tamUri)
 {
     int err = 0;
@@ -689,10 +701,10 @@ int ecall_RequestTA(
         return 0;
     }
 
-    // See whether taid is already requested.
+    // See whether taid has already been requested.
     TrustedApplication* ta;
-    for (ta = g_TARequestList; ta != nullptr; ta = ta->Next) {
-        if (strcmp(ta->ID, taid) == 0) {
+    for (ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
+        if (memcmp(ta->ID.b, requestedTaid.b, OE_UUID_SIZE) == 0) {
             // Already requested, nothing to do.
             // This counts as "pass no data back" in the broker spec.
             return 0;
@@ -700,9 +712,9 @@ int ecall_RequestTA(
     }
 
     // Add taid to the request list.
-    ta = new TrustedApplication(taid);
-    ta->Next = g_TARequestList;
-    g_TARequestList = ta;
+    ta = new TrustedApplication(requestedTaid);
+    ta->Next = g_RequestedTAList;
+    g_RequestedTAList = ta;
 
     // TODO: we may want to modify the TAM URI here.
 

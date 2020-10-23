@@ -1,5 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <windows.h> // for Sleep()
+#include <openenclave/host.h>
 #include "TeepAgentBrokerLib.h"
 #include "TeepAgent_u.h"
 #include "TeepSession.h"
@@ -15,13 +16,13 @@ oe_enclave_t* g_ta_eid = NULL;
 
 int AgentBrokerRequestTA(
     int useCbor,
-    _In_z_ const char *taid,
+    oe_uuid_t requestedTaid,
     _In_z_ const char *tamUri)
 {
     int err;
 
     // Invoke a "RequestTA" API in the agent.
-    oe_result_t result = ecall_RequestTA(g_ta_eid, &err, useCbor, taid, tamUri);
+    oe_result_t result = ecall_RequestTA(g_ta_eid, &err, useCbor, requestedTaid, tamUri);
     if (result != OE_OK) {
         return result;
     }

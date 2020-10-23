@@ -4,4 +4,4 @@
 const unsigned char* GetAgentDerCertificate(size_t *pCertLen);
 json_t* GetAgentSigningKey();
 
-extern TrustedApplication* g_TARequestList;
+extern TrustedApplication* g_RequestedTAList;

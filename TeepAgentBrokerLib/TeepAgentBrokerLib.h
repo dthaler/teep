@@ -15,7 +15,7 @@ extern "C" {
 
     int AgentBrokerRequestTA(
         int useCbor,
-        _In_z_ const char* taid,
+        oe_uuid_t taid,
         _In_z_ const char* tamUri);
 
 #ifdef __cplusplus

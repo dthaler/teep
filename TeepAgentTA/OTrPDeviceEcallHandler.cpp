@@ -128,12 +128,14 @@ const char* OTrPComposeDeviceStateInformation(void)
     if (requestedtalist == nullptr) {
         return nullptr;
     }
-    for (TrustedApplication* ta = g_TARequestList; ta != nullptr; ta = ta->Next) {
+    char IDString[37];
+    for (TrustedApplication* ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
         JsonAuto jta(requestedtalist.AddObjectToArray());
         if (jta == nullptr) {
             return nullptr;
         }
-        if (jta.AddStringToObject("taid", ta->ID) == nullptr) {
+        TrustedApplication::ConvertUUIDToString(IDString, sizeof(IDString), ta->ID);
+        if (jta.AddStringToObject("taid", IDString) == nullptr) {
             return nullptr;
         }
         if (ta->Name[0] != 0) {  // "taname" field is optional

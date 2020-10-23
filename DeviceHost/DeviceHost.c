@@ -13,16 +13,16 @@
 int main(int argc, char** argv)
 {
     if (argc < 2) {
-        printf("Usage: DeviceHost [-c] <TAM URI> [<TA ID>]\n");
-        printf("       where -c optionally means to try CBOR\n");
+        printf("Usage: DeviceHost [-j] <TAM URI> [<TA ID>]\n");
+        printf("       where -j if present means to try JSON instead of CBOR\n");
         printf("             <TAM URI> is the default TAM URI to use\n");
         printf("             <TA ID> is the TA to request (%s if none specified)\n", DEFAULT_TA_ID);
         return 0;
     }
 
-    int useCbor = 0;
-    if ((argc > 2) && (strcmp(argv[1], "-c") == 0)) {
-        useCbor = 1;
+    int useCbor = 1;
+    if ((argc > 2) && (strcmp(argv[1], "-j") == 0)) {
+        useCbor = 0;
         argc--;
         argv++;
     }

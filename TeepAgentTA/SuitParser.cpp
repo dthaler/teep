@@ -4,9 +4,11 @@
 extern "C" {
 #include "jansson.h"
 #include "../TeepCommonTALib/common.h"
+#include "../TeepCommonTALib/teep_protocol.h"
+#include "../TeepCommonTALib/suit_manifest.h"
 };
 #include "qcbor/qcbor_decode.h"
-#include "Suit.h"
+#include "SuitParser.h"
 
 // Parse a SUIT_Common out of a decode context and try to install it.
 teep_error_code_t TryProcessSuitCommon(QCBORDecodeContext* context, uint16_t mapEntryCount)

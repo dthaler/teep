@@ -38,6 +38,15 @@
     <ClInclude Include="TeepCommonTALib_args.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
+    <ClInclude Include="teep_protocol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="suit_manifest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="otrp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

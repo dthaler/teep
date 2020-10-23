@@ -6,6 +6,8 @@ extern "C" {
 #include "TeepCommonTALib_t.h"
 #include "../jose/joseinit.h"
 #include "common.h"
+#include "otrp.h"
+#include "teep_protocol.h"
 #include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/b64.h"

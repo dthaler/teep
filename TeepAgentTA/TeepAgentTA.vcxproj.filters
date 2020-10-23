@@ -30,7 +30,7 @@
     <ClCompile Include="TeepDeviceEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Suit.cpp">
+    <ClCompile Include="SuitParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,7 +50,7 @@
     <ClInclude Include="TeepDeviceEcallHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Suit.h">
+    <ClInclude Include="SuitParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

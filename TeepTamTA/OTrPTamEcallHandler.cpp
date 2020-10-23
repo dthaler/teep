@@ -13,6 +13,7 @@ extern "C" {
 #include "jose/b64.h"
 #include "jose/openssl.h"
 #include "../TeepCommonTALib/common.h"
+#include "../TeepCommonTALib/otrp.h"
 };
 #include "../jansson/JsonAuto.h"
 #include "openssl/x509.h"
@@ -24,8 +25,8 @@ extern "C" {
 json_t* GetNewGloballyUniqueID(void)
 {
     /* Create a random 16-byte value. */
-    unsigned char value[UNIQUE_ID_LEN];
-    oe_result_t result = oe_random(value, UNIQUE_ID_LEN);
+    unsigned char value[UUID_LENGTH];
+    oe_result_t result = oe_random(value, UUID_LENGTH);
     if (result != OE_OK) {
         return nullptr;
     }

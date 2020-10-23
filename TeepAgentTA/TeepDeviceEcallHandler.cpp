@@ -16,6 +16,8 @@ extern "C" {
 #include "jose/jws.h"
 #include "jose/openssl.h"
 #include "../TeepCommonTALib/common.h"
+#include "../TeepCommonTALib/otrp.h"
+#include "../TeepCommonTALib/teep_protocol.h"
 };
 #include "../jansson/JsonAuto.h"
 #include "openssl/bio.h"
@@ -24,7 +26,7 @@ extern "C" {
 #include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_encode.h"
 #include "TeepDeviceEcallHandler.h"
-#include "Suit.h"
+#include "SuitParser.h"
 
 // List of TA's requested.
 TrustedApplication* g_TARequestList = nullptr;

@@ -15,6 +15,7 @@ extern "C" {
 #include "jose/jws.h"
 #include "jose/openssl.h"
 #include "../TeepCommonTALib/common.h"
+#include "../TeepCommonTALib/otrp.h"
 };
 #include "../jansson/JsonAuto.h"
 #include "openssl/bio.h"

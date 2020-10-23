@@ -16,6 +16,8 @@ extern "C" {
 #include "jose/b64.h"
 #include "jose/openssl.h"
 #include "../TeepCommonTALib/common.h"
+#include "../TeepCommonTALib/otrp.h"
+#include "../TeepCommonTALib/teep_protocol.h"
 };
 #include "../jansson/JsonAuto.h"
 #include "qcbor/qcbor_decode.h"
@@ -113,7 +115,7 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
         QCBOREncode_AddInt64(&context, TEEP_QUERY_REQUEST);
 
         /* Create a random 16-byte token. */
-        unsigned char token[UNIQUE_ID_LEN];
+        unsigned char token[UUID_LENGTH];
         oe_result_t result = oe_random(token, sizeof(token));
         if (result != OE_OK) {
             return result;
@@ -260,7 +262,7 @@ int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
         QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APP_INSTALL);
 
         /* Create a random 16-byte token. */
-        unsigned char token[UNIQUE_ID_LEN];
+        unsigned char token[UUID_LENGTH];
         oe_result_t result = oe_random(token, sizeof(token));
         if (result != OE_OK) {
             return result;

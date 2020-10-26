@@ -75,7 +75,7 @@ json_t* GetNewToken(void)
     return GetNewGloballyUniqueID();
 }
 
-/* Compose a JSON Query Request message to be signed. */
+// Compose a JSON Query Request message to be signed.
 const char* TeepComposeJsonQueryRequestTBS(void)
 {
     JsonAuto request(json_object(), true);
@@ -98,7 +98,7 @@ const char* TeepComposeJsonQueryRequestTBS(void)
         return nullptr;
     }
 
-    /* Convert to message buffer. */
+    // Convert to message buffer.
     const char* message = json_dumps(request, 0);
     return message;
 }
@@ -114,13 +114,22 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_QUERY_REQUEST);
 
-        /* Create a random 16-byte token. */
+        // Create a random 16-byte token.
         unsigned char token[UUID_LENGTH];
         oe_result_t result = oe_random(token, sizeof(token));
         if (result != OE_OK) {
             return result;
         }
         QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+
+        // Draft -03 implies we have to store the token for validation
+        // upon receiving a QueryResponse, but that adversely affects
+        // scalability, opens the protocol to DOS attacks similar to SYN attacks,
+        // and forces the extra round trip.  See
+        // https://github.com/ietf-teep/teep-protocol/issues/40 for discussion.
+        // As such, we currently don't implement such a check in the hopes
+        // that the draft will remove the check in the future.  But we have
+        // to include a token anyway for interoperability.
 
         QCBOREncode_OpenMap(&context);
         {
@@ -138,7 +147,7 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
 
 const char* TeepComposeJsonQueryRequest()
 {
-    /* Compose a raw QueryRequest message to be signed. */
+    // Compose a raw QueryRequest message to be signed.
     const char* tbsRequest = TeepComposeJsonQueryRequestTBS();
     if (tbsRequest == nullptr) {
         return nullptr;
@@ -310,34 +319,41 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
     /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
     /* ... TODO ... */
 
-    /* 2.  Validate that certificate is chained to a trusted
+    /* 2.  Validate that the certificate is chained to a trusted
      *     CA that the TAM embeds as its trust anchor.
      */
-     /* ... TODO ... */
+    /* ... TODO ... */
 
     QCBORItem item;
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
         printf("Invalid token type %d\n", item.uDataType);
-        return 1; /* invalid message */
+        return 1; // Invalid message.
     }
-    /* TODO: Validate the token. */
+
+    /* As discussed above in comments in TeepComposeCborQueryRequestTBS(),
+     * draft -03 requires us to validate that the token matches what was
+     * sent in the QueryRequest, but that causes performance problems and
+     * opens us to certain DOS attacks, without any obvious benefit. As such,
+     * we skip this check in the hopes that the spec will be updated to
+     * remove the check.
+     */
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
         printf("Invalid options type %d\n", item.uDataType);
-        return 1; /* invalid message */
+        return 1; // Invalid message.
     }
 
-    /* 3. Compose a TrustedAppInstall. */
+    // 3. Compose a TrustedAppInstall.
     UsefulBufC install;
     int err = TeepComposeCborTrustedAppInstall(&install);
     if (err != 0) {
         return err;
     }
     if (install.len == 0) {
-        return 1; /* Error */
+        return 1; // Error.
     }
 
     printf("Sending CBOR message: ");
@@ -372,13 +388,13 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
         printf("Invalid TYPE type %d\n", item.uDataType);
-        return 1; /* invalid message */
+        return 1; // Invalid message.
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
         printf("Invalid TYPE type %d\n", item.uDataType);
-        return 1; /* invalid message */
+        return 1; // Invalid message.
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
@@ -390,7 +406,7 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
         }
         break;
     default:
-        return 1; /* unknown message type */
+        return 1; // Unknown message type.
         break;
     }
 

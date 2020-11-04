@@ -82,7 +82,7 @@ const char* TeepComposeJsonQueryRequestTBS(void)
     if (request == nullptr) {
         return nullptr;
     }
-    if (request.AddIntegerToObject("TYPE", TEEP_QUERY_REQUEST) == nullptr) {
+    if (request.AddIntegerToObject("TYPE", TEEP_MESSAGE_QUERY_REQUEST) == nullptr) {
         return nullptr;
     }
 
@@ -94,7 +94,7 @@ const char* TeepComposeJsonQueryRequestTBS(void)
     if (dataItems == nullptr) {
         return nullptr;
     }
-    if (dataItems.AddIntegerToArray(TEEP_TRUSTED_APPS) == nullptr) {
+    if (dataItems.AddIntegerToArray(TEEP_TRUSTED_COMPONENTS) == nullptr) {
         return nullptr;
     }
 
@@ -112,7 +112,7 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
     QCBOREncode_OpenArray(&context);
     {
         // Add TYPE.
-        QCBOREncode_AddInt64(&context, TEEP_QUERY_REQUEST);
+        QCBOREncode_AddInt64(&context, TEEP_MESSAGE_QUERY_REQUEST);
 
         // Create a random 16-byte token.
         unsigned char token[UUID_LENGTH];
@@ -137,7 +137,7 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
         }
         QCBOREncode_CloseMap(&context);
 
-        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APPS);
+        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_COMPONENTS);
     }
     QCBOREncode_CloseArray(&context);
 
@@ -248,7 +248,7 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
+int TeepComposeCborInstallTBS(UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -268,7 +268,7 @@ int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
     QCBOREncode_OpenArray(&context);
     {
         // Add TYPE.
-        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_APP_INSTALL);
+        QCBOREncode_AddInt64(&context, TEEP_MESSAGE_INSTALL);
 
         /* Create a random 16-byte token. */
         unsigned char token[UUID_LENGTH];
@@ -282,13 +282,13 @@ int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
         {
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_MANIFEST_LIST);
             {
-                // Add SUIT manifest for any requested TA(s) that we decide to install.
+                // Add SUIT manifest for any requested components that we decide to install.
                 // TODO: make a decision whether to install it or not.  For now, we go ahead.
 
-                const char* taid = "ta1"; // TODO get the actual TA ID
+                const char* componentId = "ta1"; // TODO get the actual component ID
 
                 UsefulBufC manifest;
-                manifest.ptr = Manifest::GetManifest(taid, &manifest.len);
+                manifest.ptr = Manifest::GetManifest(componentId, &manifest.len);
                 QCBOREncode_AddEncoded(&context, manifest);
             }
             QCBOREncode_CloseArray(&context);
@@ -302,10 +302,10 @@ int TeepComposeCborTrustedAppInstallTBS(UsefulBufC* encoded)
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborTrustedAppInstall(UsefulBufC* install)
+int TeepComposeCborInstall(UsefulBufC* install)
 {
-    /* Compose a raw TrustedAppInstall message to be signed. */
-    return TeepComposeCborTrustedAppInstallTBS(install);
+    /* Compose a raw Install message to be signed. */
+    return TeepComposeCborInstallTBS(install);
 }
 
 // Returns 0 on success, non-zero on error.
@@ -346,9 +346,9 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         return 1; // Invalid message.
     }
 
-    // 3. Compose a TrustedAppInstall.
+    // 3. Compose an Install message.
     UsefulBufC install;
-    int err = TeepComposeCborTrustedAppInstall(&install);
+    int err = TeepComposeCborInstall(&install);
     if (err != 0) {
         return err;
     }
@@ -359,7 +359,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
     printf("Sending CBOR message: ");
     HexPrintBuffer(install.ptr, install.len);
 
-    printf("Sending TrustedAppInstall...\n");
+    printf("Sending Install message...\n");
 
     oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)install.ptr, install.len);
     free((void*)install.ptr);
@@ -400,7 +400,7 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
     printf("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
-    case TEEP_QUERY_RESPONSE:
+    case TEEP_MESSAGE_QUERY_RESPONSE:
         if (TeepHandleCborQueryResponse(sessionHandle, &context) != 0) {
             return 1;
         }

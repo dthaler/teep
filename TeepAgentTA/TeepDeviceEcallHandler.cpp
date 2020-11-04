@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "TrustedApplication.h"
+#include "TrustedComponent.h"
 extern "C" {
 #include "jansson.h"
 #include "joseinit.h"
@@ -28,8 +28,8 @@ extern "C" {
 #include "TeepDeviceEcallHandler.h"
 #include "SuitParser.h"
 
-// List of TA's requested.
-TrustedApplication* g_RequestedTAList = nullptr;
+// List of Trusted Components requested.
+TrustedComponent* g_RequestedComponentList = nullptr;
 
 const unsigned char* g_AgentDerCertificate = nullptr;
 size_t g_AgentDerCertificateSize = 0;
@@ -69,7 +69,7 @@ const char* TeepComposeJsonQueryResponse(
     if (response == nullptr) {
         return nullptr;
     }
-    if (response.AddIntegerToObject("TYPE", TEEP_QUERY_RESPONSE) == nullptr) {
+    if (response.AddIntegerToObject("TYPE", TEEP_MESSAGE_QUERY_RESPONSE) == nullptr) {
         return nullptr;
     }
 
@@ -82,13 +82,13 @@ const char* TeepComposeJsonQueryResponse(
         return nullptr;
     }
 
-    JsonAuto requestedtalist = response.AddArrayToObject("REQUESTED_TA_LIST");
+    JsonAuto requestedtalist = response.AddArrayToObject("REQUESTED_TC_LIST");
     if (requestedtalist == nullptr) {
         return nullptr;
     }
     char IDString[37];
-    for (TrustedApplication* ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
-        TrustedApplication::ConvertUUIDToString(IDString, sizeof(IDString), ta->ID);
+    for (TrustedComponent* component = g_RequestedComponentList; component != nullptr; component = component->Next) {
+        TrustedComponent::ConvertUUIDToString(IDString, sizeof(IDString), component->ID);
         if (requestedtalist.AddStringToArray(IDString) == nullptr) {
             return nullptr;
         }
@@ -120,7 +120,7 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
     QCBOREncode_OpenArray(&context);
     {
         // Add TYPE.
-        QCBOREncode_AddInt64(&context, TEEP_QUERY_RESPONSE);
+        QCBOREncode_AddInt64(&context, TEEP_MESSAGE_QUERY_RESPONSE);
 
         // Copy token from request.
         QCBORItem item;
@@ -147,14 +147,14 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
 
         QCBOREncode_OpenMap(&context);
         {
-            // TODO: Add ta-list.
+            // TODO: Add tc-list.
             // UsefulBufC ta_id;
-            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TA_LIST, ta_id);
+            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TC_LIST, ta_id);
 
-            // Add requested-ta-list
-            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_REQUESTED_TA_LIST);
+            // Add requested-tc-list
+            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_REQUESTED_TC_LIST);
             {
-                for (TrustedApplication* ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
+                for (TrustedComponent* ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
                     UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
                     QCBOREncode_AddBytes(&context, UsefulBuf_Const(ta_id));
                 }
@@ -265,7 +265,7 @@ const char* TeepComposeJsonSuccess(
     if (response == nullptr) {
         return nullptr;
     }
-    if (response.AddIntegerToObject("TYPE", TEEP_SUCCESS) == nullptr) {
+    if (response.AddIntegerToObject("TYPE", TEEP_MESSAGE_SUCCESS) == nullptr) {
         return nullptr;
     }
 
@@ -292,7 +292,7 @@ const char* TeepComposeJsonError(
     if (response == nullptr) {
         return nullptr;
     }
-    if (response.AddIntegerToObject("TYPE", TEEP_ERROR) == nullptr) {
+    if (response.AddIntegerToObject("TYPE", TEEP_MESSAGE_ERROR) == nullptr) {
         return nullptr;
     }
 
@@ -315,9 +315,9 @@ const char* TeepComposeJsonError(
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepHandleJsonTrustedAppInstall(void* sessionHandle, json_t* request)
+int TeepHandleJsonInstall(void* sessionHandle, json_t* request)
 {
-    printf("TeepHandleJsonTrustedAppInstall\n");
+    printf("TeepHandleJsonInstall\n");
 
     if (!json_is_object(request)) {
         return 1; /* Error */
@@ -377,7 +377,7 @@ int TeepComposeCborSuccessTBS(QCBORDecodeContext* decodeContext, UsefulBufC* enc
     QCBOREncode_OpenArray(&context);
     {
         // Add TYPE.
-        QCBOREncode_AddInt64(&context, TEEP_SUCCESS);
+        QCBOREncode_AddInt64(&context, TEEP_MESSAGE_SUCCESS);
 
         // Copy token from request.
         QCBORItem item;
@@ -421,7 +421,7 @@ int TeepComposeCborErrorTBS(QCBORDecodeContext* decodeContext, teep_error_code_t
     QCBOREncode_OpenArray(&context);
     {
         // Add TYPE.
-        QCBOREncode_AddInt64(&context, TEEP_ERROR);
+        QCBOREncode_AddInt64(&context, TEEP_MESSAGE_ERROR);
 
         // Copy token from request.
         QCBORItem item;
@@ -439,7 +439,7 @@ int TeepComposeCborErrorTBS(QCBORDecodeContext* decodeContext, teep_error_code_t
         {
             // TODO: Add ta-list.
             // UsefulBufC ta_id;
-            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TA_LIST, ta_id);
+            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TC_LIST, ta_id);
         }
         QCBOREncode_CloseMap(&context);
     }
@@ -464,9 +464,9 @@ int TeepComposeCborError(QCBORDecodeContext* context, teep_error_code_t errorCod
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepHandleCborTrustedAppInstall(void* sessionHandle, QCBORDecodeContext* context)
+int TeepHandleCborInstall(void* sessionHandle, QCBORDecodeContext* context)
 {
-    printf("TeepHandleCborTrustedAppInstall\n");
+    printf("TeepHandleCborInstall\n");
 
     /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
     /* ... TODO ... */
@@ -552,12 +552,12 @@ int TeepHandleCborTrustedAppInstall(void* sessionHandle, QCBORDecodeContext* con
     return err;
 }
 
-int TeepHandleJsonTrustedAppDelete(void* sessionHandle, json_t* object)
+int TeepHandleJsonDelete(void* sessionHandle, json_t* object)
 {
     (void)sessionHandle; // Unused.
     (void)object; // Unused.
 
-    printf("TeepHandleTrustedAppDelete\n");
+    printf("TeepHandleDelete\n");
     return 1;
 }
 
@@ -573,12 +573,12 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
     printf("TYPE=%d\n", messageType);
 
     switch (messageType) {
-    case TEEP_QUERY_REQUEST:
+    case TEEP_MESSAGE_QUERY_REQUEST:
         return TeepHandleJsonQueryRequest(sessionHandle, object);
-    case TEEP_TRUSTED_APP_INSTALL:
-        return TeepHandleJsonTrustedAppInstall(sessionHandle, object);
-    case TEEP_TRUSTED_APP_DELETE:
-        return TeepHandleJsonTrustedAppDelete(sessionHandle, object);
+    case TEEP_MESSAGE_INSTALL:
+        return TeepHandleJsonInstall(sessionHandle, object);
+    case TEEP_MESSAGE_DELETE:
+        return TeepHandleJsonDelete(sessionHandle, object);
     default:
         // Not a legal message from the TAM.
         return 1;
@@ -615,13 +615,13 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
     printf("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
-    case TEEP_QUERY_REQUEST:
+    case TEEP_MESSAGE_QUERY_REQUEST:
         if (TeepHandleCborQueryRequest(sessionHandle, &context) != 0) {
             return 1;
         }
         break;
-    case TEEP_TRUSTED_APP_INSTALL:
-        if (TeepHandleCborTrustedAppInstall(sessionHandle, &context) != 0) {
+    case TEEP_MESSAGE_INSTALL:
+        if (TeepHandleCborInstall(sessionHandle, &context) != 0) {
             return 1;
         }
         break;
@@ -702,8 +702,8 @@ int ecall_RequestTA(
     }
 
     // See whether taid has already been requested.
-    TrustedApplication* ta;
-    for (ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
+    TrustedComponent* ta;
+    for (ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
         if (memcmp(ta->ID.b, requestedTaid.b, OE_UUID_SIZE) == 0) {
             // Already requested, nothing to do.
             // This counts as "pass no data back" in the broker spec.
@@ -712,9 +712,9 @@ int ecall_RequestTA(
     }
 
     // Add taid to the request list.
-    ta = new TrustedApplication(requestedTaid);
-    ta->Next = g_RequestedTAList;
-    g_RequestedTAList = ta;
+    ta = new TrustedComponent(requestedTaid);
+    ta->Next = g_RequestedComponentList;
+    g_RequestedComponentList = ta;
 
     // TODO: we may want to modify the TAM URI here.
 

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "TrustedApplication.h"
+#include "TrustedComponent.h"
 extern "C" {
 #include "jansson.h"
 #include "joseinit.h"
@@ -129,12 +129,12 @@ const char* OTrPComposeDeviceStateInformation(void)
         return nullptr;
     }
     char IDString[37];
-    for (TrustedApplication* ta = g_RequestedTAList; ta != nullptr; ta = ta->Next) {
+    for (TrustedComponent* ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
         JsonAuto jta(requestedtalist.AddObjectToArray());
         if (jta == nullptr) {
             return nullptr;
         }
-        TrustedApplication::ConvertUUIDToString(IDString, sizeof(IDString), ta->ID);
+        TrustedComponent::ConvertUUIDToString(IDString, sizeof(IDString), ta->ID);
         if (jta.AddStringToObject("taid", IDString) == nullptr) {
             return nullptr;
         }

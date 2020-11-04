@@ -24,13 +24,13 @@
     <ClCompile Include="OTrPDeviceEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TrustedApplication.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TeepDeviceEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SuitParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TrustedComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,9 +41,6 @@
     <ClInclude Include="TeepAgent_t.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="TrustedApplication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="OTrPDeviceEcallHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -51,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SuitParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrustedComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

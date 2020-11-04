@@ -2,19 +2,19 @@
 #include <openenclave/enclave.h>
 #include <stdio.h>
 #include <string.h>
-#include "TrustedApplication.h"
+#include "TrustedComponent.h"
 
-TrustedApplication::TrustedApplication(oe_uuid_t id)
+TrustedComponent::TrustedComponent(oe_uuid_t id)
 {
     this->ID = id;
 }
 
-TrustedApplication::~TrustedApplication()
+TrustedComponent::~TrustedComponent()
 {
 }
 
 // Returns TRUE on success, FALSE on failure.
-int TrustedApplication::ConvertUUIDToString(char* buffer, size_t buffer_length, oe_uuid_t uuid)
+int TrustedComponent::ConvertUUIDToString(char* buffer, size_t buffer_length, oe_uuid_t uuid)
 {
     if (buffer_length < 37) {
         // Failure.

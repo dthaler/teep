@@ -80,7 +80,7 @@
     <ClCompile Include="TeepAgent_t.c" />
     <ClCompile Include="OTrPDeviceEcallHandler.cpp" />
     <ClCompile Include="TeepDeviceEcallHandler.cpp" />
-    <ClCompile Include="TrustedApplication.cpp" />
+    <ClCompile Include="TrustedComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OTrPDeviceEcallHandler.h" />
@@ -88,7 +88,7 @@
     <ClInclude Include="TeepAgent_t.h" />
     <ClInclude Include="optee/user_ta_header_defines.h" />
     <ClInclude Include="TeepDeviceEcallHandler.h" />
-    <ClInclude Include="TrustedApplication.h" />
+    <ClInclude Include="TrustedComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <EdlItem Include="TeepAgent.edl" />

@@ -59,3 +59,8 @@ typedef enum {
     TEEP_LABEL_HAVE_BINARY = 18,
     TEEP_LABEL_SUIT_REPORTS = 19
 } teep_label_t;
+
+typedef enum {
+    TEEP_CIPHERSUITE_EDDSA = 1,
+    TEEP_CIPHERSUITE_ES256 = 2
+} teep_ciphersuite_t;

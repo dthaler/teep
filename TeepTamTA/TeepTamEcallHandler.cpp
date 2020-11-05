@@ -345,6 +345,35 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         printf("Invalid options type %d\n", item.uDataType);
         return 1; // Invalid message.
     }
+    uint16_t mapEntryCount = item.val.uCount;
+    for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
+        QCBORDecode_GetNext(context, &item);
+        teep_label_t label = (teep_label_t)item.label.int64;
+        switch (label) {
+        case TEEP_LABEL_SELECTED_VERSION:
+            if (item.val.uint64 != 0) {
+                printf("Unrecognized protocol version %lld\n", item.val.uint64);
+                return 1; /* invalid message */
+            }
+            break;
+        case TEEP_LABEL_SELECTED_CIPHER_SUITE:
+            if (item.val.uint64 != TEEP_CIPHERSUITE_ES256) {
+                printf("Unrecognized cipher suite %lld\n", item.val.uint64);
+                return 1; /* invalid message */
+            }
+            break;
+        case TEEP_LABEL_EVIDENCE_FORMAT:
+        case TEEP_LABEL_EVIDENCE:
+        case TEEP_LABEL_TC_LIST:
+        case TEEP_LABEL_REQUESTED_TC_LIST:
+        case TEEP_LABEL_UNNEEDED_TC_LIST:
+            printf("Unimplemented option label %d\n", label);
+            return 1;
+        default:
+            printf("Unrecognized option label %d\n", label);
+            return 1; /* invalid message */
+        }
+    }
 
     // 3. Compose an Install message.
     UsefulBufC install;

@@ -41,12 +41,12 @@ oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name,
 {
     FILE* fp = NULL;
     char* manifest = NULL;
-    size_t length = strlen(directory_name) + strlen(filename) + 2;
-    char* fullpathname = malloc(length);
+    size_t fullpathname_length = strlen(directory_name) + strlen(filename) + 2;
+    char* fullpathname = malloc(fullpathname_length);
     if (fullpathname == NULL) {
         return OE_OUT_OF_MEMORY;
     }
-    sprintf_s(fullpathname, length, "%s/%s", directory_name, filename);
+    sprintf_s(fullpathname, fullpathname_length, "%s/%s", directory_name, filename);
 
     oe_result_t result = OE_FAILURE;
     do {
@@ -71,7 +71,26 @@ oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name,
             break;
         }
 
-        result = ecall_ConfigureManifest(enclave, "ta1", manifest, manifest_size);
+        char* basename = _strdup(filename);
+        if (basename != NULL) {
+            int len = strlen(basename);
+            if ((len > 5) && strcmp(basename + len - 5, ".cbor") == 0) {
+                basename[len - 5] = 0;
+            }
+
+            oe_uuid_t component_id;
+            int uuid[sizeof(oe_uuid_t)];
+            sscanf_s(basename,
+                "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                &uuid[0], &uuid[1], &uuid[2], &uuid[3], &uuid[4], &uuid[5], &uuid[6], &uuid[7],
+                &uuid[8], &uuid[9], &uuid[10], &uuid[11], &uuid[12], &uuid[13], &uuid[14], &uuid[15]);
+            for (int i = 0; i < sizeof(oe_uuid_t); i++) {
+                component_id.b[i] = uuid[i];
+            }
+
+            result = ecall_ConfigureManifest(enclave, component_id, manifest, manifest_size);
+        }
+        free(basename);
     } while (0);
 
     free(manifest);

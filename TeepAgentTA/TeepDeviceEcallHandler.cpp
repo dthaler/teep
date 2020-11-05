@@ -82,14 +82,14 @@ const char* TeepComposeJsonQueryResponse(
         return nullptr;
     }
 
-    JsonAuto requestedtalist = response.AddArrayToObject("REQUESTED_TC_LIST");
-    if (requestedtalist == nullptr) {
+    JsonAuto requested_component_list = response.AddArrayToObject("REQUESTED_TC_LIST");
+    if (requested_component_list == nullptr) {
         return nullptr;
     }
     char IDString[37];
     for (TrustedComponent* component = g_RequestedComponentList; component != nullptr; component = component->Next) {
         TrustedComponent::ConvertUUIDToString(IDString, sizeof(IDString), component->ID);
-        if (requestedtalist.AddStringToArray(IDString) == nullptr) {
+        if (requested_component_list.AddStringToArray(IDString) == nullptr) {
             return nullptr;
         }
     }
@@ -155,8 +155,12 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_REQUESTED_TC_LIST);
             {
                 for (TrustedComponent* ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
-                    UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
-                    QCBOREncode_AddBytes(&context, UsefulBuf_Const(ta_id));
+                    QCBOREncode_OpenMap(&context);
+                    {
+                        UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
+                        QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_COMPONENT_ID, UsefulBuf_Const(ta_id));
+                    }
+                    QCBOREncode_CloseMap(&context);
                 }
             }
             QCBOREncode_CloseArray(&context);

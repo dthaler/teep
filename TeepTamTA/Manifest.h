@@ -2,13 +2,13 @@
 class Manifest
 {
 public:
-    static void AddManifest(const char* taid, const char* manifest, size_t manifest_size);
-    static const char* GetManifest(const char* taid, size_t* manifest_size);
+    static void AddManifest(oe_uuid_t component_id, const char* manifest, size_t manifest_size);
+    static const char* GetManifest(UsefulBufC* component_id, size_t* manifest_size);
 
 private:
-    Manifest(const char* taid, const char* manifest, size_t manifest_size);
+    Manifest(oe_uuid_t component_id, const char* manifest, size_t manifest_size);
 
-    const char* _taid;
+    oe_uuid_t _component_id;
     const char* _manifest;
     size_t _manifest_size;
 

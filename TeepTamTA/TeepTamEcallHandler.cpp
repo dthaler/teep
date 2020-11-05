@@ -1,7 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <openenclave/enclave.h>
 #include "TeepTam_t.h"
-#include "Manifest.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -24,8 +23,10 @@ extern "C" {
 #include "qcbor/qcbor_encode.h"
 #include "openssl/x509.h"
 #include "openssl/evp.h"
+#include "Manifest.h"
 #include "OTrPTamEcallHandler.h"
 #include "TeepTamEcallHandler.h"
+#include "RequestedComponentInfo.h"
 
 JsonAuto g_TamSigningKey;
 
@@ -248,7 +249,7 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborInstallTBS(UsefulBufC* encoded)
+int TeepComposeCborInstallTBS(UsefulBufC* encoded, RequestedComponentInfo* requestedComponentList)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -283,13 +284,14 @@ int TeepComposeCborInstallTBS(UsefulBufC* encoded)
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_MANIFEST_LIST);
             {
                 // Add SUIT manifest for any requested components that we decide to install.
-                // TODO: make a decision whether to install it or not.  For now, we go ahead.
-
-                const char* componentId = "ta1"; // TODO get the actual component ID
-
-                UsefulBufC manifest;
-                manifest.ptr = Manifest::GetManifest(componentId, &manifest.len);
-                QCBOREncode_AddEncoded(&context, manifest);
+                for (RequestedComponentInfo* rci = requestedComponentList; rci != nullptr; rci = rci->Next) {
+                    // TODO: make a decision whether to install it or not.  For now, we go ahead.
+                    UsefulBufC manifest;
+                    manifest.ptr = Manifest::GetManifest(&rci->ComponentId, &manifest.len);
+                    if (manifest.ptr != nullptr) {
+                        QCBOREncode_AddEncoded(&context, manifest);
+                    }
+                }
             }
             QCBOREncode_CloseArray(&context);
         }
@@ -302,10 +304,10 @@ int TeepComposeCborInstallTBS(UsefulBufC* encoded)
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborInstall(UsefulBufC* install)
+int TeepComposeCborInstall(UsefulBufC* install, RequestedComponentInfo* requestedComponentList)
 {
     /* Compose a raw Install message to be signed. */
-    return TeepComposeCborInstallTBS(install);
+    return TeepComposeCborInstallTBS(install, requestedComponentList);
 }
 
 // Returns 0 on success, non-zero on error.
@@ -345,6 +347,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         printf("Invalid options type %d\n", item.uDataType);
         return 1; // Invalid message.
     }
+    RequestedComponentInfo requestedComponentList(nullptr);
     uint16_t mapEntryCount = item.val.uCount;
     for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
         QCBORDecode_GetNext(context, &item);
@@ -357,18 +360,72 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
             }
             break;
         case TEEP_LABEL_SELECTED_CIPHER_SUITE:
-            if (item.val.uint64 != TEEP_CIPHERSUITE_ES256) {
+            if ((item.val.uint64 != TEEP_CIPHERSUITE_ES256) &&
+                (item.val.uint64 != TEEP_CIPHERSUITE_EDDSA)) {
                 printf("Unrecognized cipher suite %lld\n", item.val.uint64);
-                return 1; /* invalid message */
+                return 1; /* invalid ciphersuite */
             }
             break;
+        case TEEP_LABEL_REQUESTED_TC_LIST:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                printf("Invalid requested-tc-list type %d\n", item.uDataType);
+                return 1; // Invalid message.
+            }
+            uint16_t arrayEntryCount = item.val.uCount;
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                if (item.uDataType != QCBOR_TYPE_MAP) {
+                    printf("Invalid requested-tc-info type %d\n", item.uDataType);
+                    return 1; // Invalid message.
+                }
+                uint16_t tcInfoParameterCount = item.val.uCount;
+                RequestedComponentInfo* currentRci = nullptr;
+                for (int tcInfoParameterIndex = 0; tcInfoParameterIndex < tcInfoParameterCount; tcInfoParameterIndex++) {
+                    QCBORDecode_GetNext(context, &item);
+                    teep_label_t label = (teep_label_t)item.label.int64;
+                    switch (label) {
+                    case TEEP_LABEL_COMPONENT_ID:
+                    {
+                        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                            printf("Invalid component-id type %d\n", item.uDataType);
+                            return 1;
+                        }
+                        if (currentRci != nullptr) {
+                            // Duplicate.
+                            return 1;
+                        }
+                        currentRci = new RequestedComponentInfo(&item.val.string);
+                        currentRci->Next = requestedComponentList.Next;
+                        requestedComponentList.Next = currentRci;
+                        break;
+                    }
+                    case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
+                        if (item.uDataType != QCBOR_TYPE_UINT64) {
+                            return 1; /* invalid message */
+                        }
+                        currentRci->ManifestSequenceNumber = item.val.uint64;
+                        break;
+                    case TEEP_LABEL_HAVE_BINARY:
+                        if (item.uDataType != QCBOR_TYPE_UINT64) {
+                            return 1; /* invalid message */
+                        }
+                        currentRci->HaveBinary = (item.val.uint64 != 0);
+                        break;
+                    default:
+                        printf("Unrecognized option label %d\n", label);
+                        return 1; /* invalid message */
+                    }
+                }
+            }
+            break;
+        }
         case TEEP_LABEL_EVIDENCE_FORMAT:
         case TEEP_LABEL_EVIDENCE:
         case TEEP_LABEL_TC_LIST:
-        case TEEP_LABEL_REQUESTED_TC_LIST:
         case TEEP_LABEL_UNNEEDED_TC_LIST:
-            printf("Unimplemented option label %d\n", label);
-            return 1;
+            printf("Ignoring unimplemented option label %d\n", label);
+            break;
         default:
             printf("Unrecognized option label %d\n", label);
             return 1; /* invalid message */
@@ -376,27 +433,30 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
     }
 
     // 3. Compose an Install message.
-    UsefulBufC install;
-    int err = TeepComposeCborInstall(&install);
-    if (err != 0) {
+    if (requestedComponentList.Next != nullptr) {
+        UsefulBufC install;
+        int err = TeepComposeCborInstall(&install, requestedComponentList.Next);
+        if (err != 0) {
+            return err;
+        }
+        if (install.len == 0) {
+            return 1; // Error.
+        }
+
+        printf("Sending CBOR message: ");
+        HexPrintBuffer(install.ptr, install.len);
+
+        printf("Sending Install message...\n");
+
+        oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)install.ptr, install.len);
+        free((void*)install.ptr);
+        if (result != OE_OK) {
+            return result;
+        }
         return err;
     }
-    if (install.len == 0) {
-        return 1; // Error.
-    }
 
-    printf("Sending CBOR message: ");
-    HexPrintBuffer(install.ptr, install.len);
-
-    printf("Sending Install message...\n");
-
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)install.ptr, install.len);
-    free((void*)install.ptr);
-    if (result != OE_OK) {
-        return result;
-    }
-
-    return err;
+    return 0;
 }
 
 /* Handle an incoming message from a TEEP Agent. */

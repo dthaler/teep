@@ -3,7 +3,7 @@
 
 extern oe_enclave_t* g_ta_eid;
 
-oe_result_t create_TeepAgent_enclave(const char* enclave_name, oe_enclave_t** out_enclave)
+oe_result_t create_TeepAgent_enclave(const char* enclave_name, int simulated_tee, oe_enclave_t** out_enclave)
 {
     oe_enclave_t* enclave = NULL;
     uint32_t enclave_flags = 0;
@@ -15,6 +15,9 @@ oe_result_t create_TeepAgent_enclave(const char* enclave_name, oe_enclave_t** ou
 #ifdef _DEBUG
     enclave_flags |= OE_ENCLAVE_FLAG_DEBUG;
 #endif
+    if (simulated_tee) {
+        enclave_flags |= OE_ENCLAVE_FLAG_SIMULATE;
+    }
     result = oe_create_TeepAgent_enclave(
         enclave_name,
         OE_ENCLAVE_TYPE_AUTO,
@@ -31,7 +34,7 @@ oe_result_t create_TeepAgent_enclave(const char* enclave_name, oe_enclave_t** ou
     return OE_OK;
 }
 
-int StartAgentBroker(void)
+int StartAgentBroker(int simulated_tee)
 {
     oe_enclave_t* enclave = NULL;
     oe_result_t result = create_TeepAgent_enclave(
@@ -40,6 +43,7 @@ int StartAgentBroker(void)
 #else
         "TeepAgentTA.elf.signed",
 #endif
+        simulated_tee,
         &enclave);
     g_ta_eid = enclave;
     if (result != OE_OK)

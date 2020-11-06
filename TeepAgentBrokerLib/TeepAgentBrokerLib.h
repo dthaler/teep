@@ -10,7 +10,7 @@ extern "C" {
     int TeepHandleMessage(_In_ void* sessionHandle, _In_z_ const char* mediaType, _In_reads_(messageLength) const char* message, int messageLength);
     int OTrPHandleMessage(_In_ void* sessionHandle, _In_z_ const char* mediaType, _In_reads_(messageLength) const char* message, int messageLength);
 
-    int StartAgentBroker(void);
+    int StartAgentBroker(int simulated_tee);
     void StopAgentBroker(void);
 
     int AgentBrokerRequestTA(

@@ -9,7 +9,7 @@
 
 extern oe_enclave_t* g_ta_eid;
 
-oe_result_t create_TeepTam_enclave(const char* enclave_name, oe_enclave_t** out_enclave)
+oe_result_t create_TeepTam_enclave(const char* enclave_name, int simulated_tee, oe_enclave_t** out_enclave)
 {
     oe_enclave_t* enclave = NULL;
     uint32_t enclave_flags = 0;
@@ -21,6 +21,9 @@ oe_result_t create_TeepTam_enclave(const char* enclave_name, oe_enclave_t** out_
 #ifdef _DEBUG
     enclave_flags |= OE_ENCLAVE_FLAG_DEBUG;
 #endif
+    if (simulated_tee) {
+        enclave_flags |= OE_ENCLAVE_FLAG_SIMULATE;
+    }
     result = oe_create_TeepTam_enclave(
         enclave_name,
         OE_ENCLAVE_TYPE_AUTO,
@@ -132,7 +135,7 @@ oe_result_t ConfigureManifests(oe_enclave_t* enclave, const char* directory_name
     return result;
 }
 
-int StartTamBroker(_In_z_ const char* manifestDirectory)
+int StartTamBroker(_In_z_ const char* manifestDirectory, int simulate_tee)
 {
     oe_enclave_t* enclave = NULL;
     oe_result_t result = create_TeepTam_enclave(
@@ -141,6 +144,7 @@ int StartTamBroker(_In_z_ const char* manifestDirectory)
 #else
         "TeepTamTA.elf.signed",
 #endif
+        simulate_tee,
         &enclave);
     g_ta_eid = enclave;
     if (result != OE_OK)

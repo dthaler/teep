@@ -1,5 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #include <stdio.h>
+#include <string.h>
 #include "../TeepTamBrokerLib/TeepTamBrokerLib.h"
 
 #define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"
@@ -7,16 +8,24 @@
 int wmain(int argc, wchar_t** argv)
 {
     if (argc < 2) {
-        printf("Usage: TamHost <TAM URI>\n");
-        printf("       where <TAM URI> is the TAM URI to use, e.g., http://192.168.1.37:54321/TEEP\n");
+        printf("Usage: TamHost [-s] <TAM URI>\n");
+        printf("       where -s if present means to only simulate a TEE\n");
+        printf("             <TAM URI> is the TAM URI to use, e.g., http://192.168.1.37:54321/TEEP\n");
         printf("\nCurrently the <TAM URI> must end in /TEEP\n");
         return 0;
+    }
+
+    int simulated_tee = 0;
+    if ((argc > 2) && (wcscmp(argv[1], L"-s") == 0)) {
+        simulated_tee = 1;
+        argc--;
+        argv++;
     }
 
     const wchar_t* tamUri = argv[1];
     printf("Using TAM URI: %ls\n", tamUri);
 
-    int err = StartTamBroker(DEFAULT_MANIFEST_DIRECTORY);
+    int err = StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, simulated_tee);
     if (err != 0) {
         return err;
     }

@@ -7,6 +7,13 @@
 
 int wmain(int argc, wchar_t** argv)
 {
+    int simulated_tee = 0;
+    if ((argc > 1) && (wcscmp(argv[1], L"-s") == 0)) {
+        simulated_tee = 1;
+        argc--;
+        argv++;
+    }
+
     if (argc < 2) {
         printf("Usage: TamHost [-s] <TAM URI>\n");
         printf("       where -s if present means to only simulate a TEE\n");
@@ -15,15 +22,8 @@ int wmain(int argc, wchar_t** argv)
         return 0;
     }
 
-    int simulated_tee = 0;
-    if ((argc > 2) && (wcscmp(argv[1], L"-s") == 0)) {
-        simulated_tee = 1;
-        argc--;
-        argv++;
-    }
-
     const wchar_t* tamUri = argv[1];
-    printf("Using TAM URI: %ls\n", tamUri);
+    printf("Listening on TAM URI: %ls\n", tamUri);
 
     int err = StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, simulated_tee);
     if (err != 0) {

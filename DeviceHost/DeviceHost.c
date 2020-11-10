@@ -36,6 +36,19 @@ int ConvertStringToUUID(oe_uuid_t* uuid, const char* idString)
 
 int main(int argc, char** argv)
 {
+    int useCbor = 1;
+    int simulated_tee = 0;
+    if ((argc > 1) && (strcmp(argv[1], "-j") == 0)) {
+        useCbor = 0;
+        argc--;
+        argv++;
+    }
+    if ((argc > 1) && (strcmp(argv[1], "-s") == 0)) {
+        simulated_tee = 1;
+        argc--;
+        argv++;
+    }
+
     if (argc < 2) {
         printf("Usage: DeviceHost [-j] [-s] <TAM URI> [<TA ID>]\n");
         printf("       where -j if present means to try JSON instead of CBOR\n");
@@ -45,19 +58,6 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    int useCbor = 1;
-    int simulated_tee = 0;
-    if ((argc > 2) && (strcmp(argv[1], "-j") == 0)) {
-        useCbor = 0;
-        argc--;
-        argv++;
-    }
-    if ((argc > 2) && (strcmp(argv[1], "-s") == 0)) {
-        simulated_tee = 1;
-        argc--;
-        argv++;
-    }
-
     const char* defaultTamUri = argv[1];
     printf("Using default TAM URI: %s\n", defaultTamUri);
 
@@ -65,14 +65,13 @@ int main(int argc, char** argv)
     if (argc > 2) {
         requestedTa = argv[2];
     }
-    
     oe_uuid_t requestedTaid;
     int err = ConvertStringToUUID(&requestedTaid, requestedTa);
     if (err != 0) {
         printf("Invalid TA ID: %s\n", requestedTa);
         return err;
     }
-    printf("Using TA ID: %s\n", requestedTa);
+    printf("Requesting TA ID: %s\n", requestedTa);
 
     err = StartAgentBroker(simulated_tee);
     if (err != 0) {

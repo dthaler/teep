@@ -37,6 +37,11 @@ TEEP:
 
 * TeepCommonTALib: TEEP trusted code that is needed by both an Agent and a TAM.
 
+* manifests: Repository of SUIT manifest files for Trusted Components. This
+  directory is read by the TeepTamBrokerLib and used to populate the TAM's
+  repository of manifests.  A sample SUIT manifest is included by default.
+  The files must be named as `<UUID>.cbor` where UUID is the TA ID.
+
 Sample:
 
 * DeviceHost: Sample host app to run an TEEP Agent Broker.
@@ -53,7 +58,8 @@ git clone --recurse-submodules https://github.com/dthaler/OTrP.git
 
 You must have the following installed to compile and debug:
 * [Visual Studio 2019](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
-* [Open Enclave Visual Studio Extension v0.7.29 or later](https://1drv.ms/u/s!Aqj-Bj9PNivcnvAKGa6fr8AlGk_a0g?e=am23nd) and its [prerequisites](https://github.com/dthaler/openenclave/blob/feature.vsextension/docs/GettingStartedDocs/VisualStudioWindows.md)
+* [Open Enclave Visual Studio Extension v0.12.31 or later](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.12.31 or later
+and its [prerequisites](https://github.com/dthaler/openenclave/blob/master/docs/GettingStartedDocs/VisualStudioWindows.md)
 
 The TAM is currently written to run on Windows, due to the HTTP layer.
 However, the TeepAgentBrokerLib/HttpHelper.h API should already be
@@ -64,22 +70,28 @@ a different implementation for other platforms.
 
 Compiling on Windows will result in generating DeviceHost.exe and TamHost.exe.
 
-TamHost.exe represents the TAM and can be run without any command-line arguments, but must be run as Administrator.
-
 DeviceHost.exe is run as follows:
 
 ```
-Usage: DeviceHost <TAM URI> [<TA ID>]
-        where <TAM URI> is the default TAM URI to use
-        <TA ID> is the TA to request ("X" if none specified)
+Usage: DeviceHost [-j] [j] <TAM URI> [<TA ID>]
+       where -j if present means to try JSON instead of CBOR
+             -s if present means to only simulate a TEE
+             <TAM URI> is the default TAM URI to use
+             <TA ID> is the TA ID to request (38b08738-227d-4f6a-b1f0-b208bc02a781 if none specified)
 ```
 
-TamHost.exe is run as follows:
+The `<TA ID>` to request ought to be one of the SUIT manifests configured
+on the TAM as noted above in the description of the `manifests` directory.
+
+TamHost.exe is run as follows, but must be run as Administrator in order to
+register the URI to listen on:
 
 ```
-Usage: TamHost <TAM URI>
-        where <TAM URI> is the TAM URI to use, e.g., http://192.168.1.37:54321/TEEP
-        Currently the <TAM URI> must end in /TEEP
+Usage: TamHost [-s] <TAM URI>
+       where -s if present means to only simulate a TEE
+             <TAM URI> is the TAM URI to use, e.g., http://192.168.1.37:54321/TEEP
+
+Currently the <TAM URI> must end in /TEEP
 ```
 
 ## Configurations

@@ -28,6 +28,7 @@ extern "C" {
 #include "TeepTamEcallHandler.h"
 #include "RequestedComponentInfo.h"
 
+#ifdef TEEP_ENABLE_JSON
 JsonAuto g_TamSigningKey;
 
 json_t* GetTamSigningKey()
@@ -47,6 +48,7 @@ json_t* GetTamEncryptionKey()
     }
     return g_TamEncryptionKey;
 }
+#endif
 
 const unsigned char* g_TamDerCertificate = nullptr;
 size_t g_TamDerCertificateSize = 0;
@@ -57,8 +59,13 @@ const unsigned char* GetTamDerCertificate(size_t *pCertLen)
         // Construct a self-signed DER certificate based on the JWK.
 
         // First get the RSA key.
+#ifdef TEEP_ENABLE_JSON
         json_t* jwk = GetTamEncryptionKey();
         g_TamDerCertificate = GetDerCertificate(jwk, &g_TamDerCertificateSize);
+#else
+        // TODO
+        return nullptr;
+#endif
     }
 
     *pCertLen = g_TamDerCertificateSize;
@@ -172,6 +179,7 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
 
     int err = 0;
     UsefulBufC encoded;
+#ifdef TEEP_ENABLE_JSON
     if (strcmp(mediaType, TEEP_JSON_MEDIA_TYPE) == 0) {
         const char* message = TeepComposeJsonQueryRequest();
         if (message == nullptr) {
@@ -179,7 +187,9 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
         }
         encoded.ptr = message;
         encoded.len = strlen(message);
-    } else {
+    } else
+#endif
+    {
         int maxBufferLength = 4096;
         char* buffer = (char*)malloc(maxBufferLength);
         if (buffer == nullptr) {
@@ -214,10 +224,16 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
 
 int ecall_ProcessTeepConnect(void* sessionHandle, const char* acceptMediaType)
 {
+#ifdef ENABLE_OTRP
     if (strncmp(acceptMediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
         return OTrPProcessConnect(sessionHandle);
-    } else if (strncmp(acceptMediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0 ||
-               strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
+    } else
+#endif
+    if ((strncmp(acceptMediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0)
+#ifdef TEEP_ENABLE_JSON
+            || (strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0)
+#endif
+        ) {
         return TeepProcessConnect(sessionHandle, acceptMediaType);
     } else {
         return 1;

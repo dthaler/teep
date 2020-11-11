@@ -107,3 +107,10 @@ to $(OutDir).  To do this, right click on the project,
 and change Properties -> Debugging -> Working Directory and change the
 value to $(OutDir) instead of $(ProjectDir).  This is because the apps
 will attempt to load the enclaves from the current directory.
+
+Partial OTrP support, and partial support for the obsolete use of JSON
+in TEEP, and both still in the code but not defined by default.
+OTrP support is gated by `ENABLE_OTRP` and TEEP JSON support is gated by
+`TEEP_ENABLE_JSON` so if you have a need to experiment with those, define
+those symbols globally in Visual Studio, but expect that TEEP JSON support
+will be deleted in the near future.

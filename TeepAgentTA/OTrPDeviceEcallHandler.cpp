@@ -1,4 +1,5 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+#ifdef ENABLE_OTRP
 #include <openenclave/enclave.h>
 #include "TeepAgent_t.h"
 
@@ -749,3 +750,4 @@ int OTrPHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
     /* Unrecognized message. */
     return 1;
 }
+#endif // ENABLE_OTRP

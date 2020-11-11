@@ -8,6 +8,7 @@
 #include <string.h>
 #include "TrustedComponent.h"
 extern "C" {
+#ifdef TEEP_ENABLE_JSON
 #include "jansson.h"
 #include "joseinit.h"
 #include "jose/b64.h"
@@ -15,11 +16,14 @@ extern "C" {
 #include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/openssl.h"
+#endif
 #include "../TeepCommonTALib/common.h"
 #include "../TeepCommonTALib/otrp.h"
 #include "../TeepCommonTALib/teep_protocol.h"
 };
+#ifdef TEEP_ENABLE_JSON
 #include "../jansson/JsonAuto.h"
+#endif
 #include "openssl/bio.h"
 #include "openssl/evp.h"
 #include "openssl/x509.h"
@@ -43,8 +47,13 @@ const unsigned char* GetAgentDerCertificate(size_t* pCertLen)
         // Construct a self-signed DER certificate based on the JWK.
 
         // First get the RSA key.
+#ifdef TEEP_ENABLE_JSON
         json_t* jwk = GetAgentSigningKey();
         g_AgentDerCertificate = GetDerCertificate(jwk, &g_AgentDerCertificateSize);
+#else
+        // TODO
+        return nullptr;
+#endif
     }
 
     *pCertLen = g_AgentDerCertificateSize;
@@ -64,6 +73,7 @@ int ecall_RequestPolicyCheck(void)
     return 0;
 }
 
+#ifdef TEEP_ENABLE_JSON
 /* Compose a TEEP QueryResponse message. */
 const char* TeepComposeJsonQueryResponse(
     const json_t* request)    // Request we're responding to.
@@ -103,6 +113,7 @@ const char* TeepComposeJsonQueryResponse(
     const char* message = json_dumps(response, 0);
     return message;
 }
+#endif
 
 // Returns 0 on success, non-zero on error.
 int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
@@ -257,6 +268,7 @@ int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
     return err;
 }
 
+#ifdef TEEP_ENABLE_JSON
 // Returns 0 on success, non-zero on error.
 int TeepHandleJsonQueryRequest(void* sessionHandle, json_t* object)
 {
@@ -393,6 +405,7 @@ int TeepHandleJsonInstall(void* sessionHandle, json_t* request)
     }
     return 0;
 }
+#endif
 
 // Returns 0 on success, non-zero on error.
 int TeepComposeCborSuccessTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
@@ -590,6 +603,7 @@ int TeepHandleCborInstall(void* sessionHandle, QCBORDecodeContext* context)
     return err;
 }
 
+#ifdef TEEP_ENABLE_JSON
 int TeepHandleJsonDelete(void* sessionHandle, json_t* object)
 {
     (void)sessionHandle; // Unused.
@@ -622,6 +636,7 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
         return 1;
     }
 }
+#endif
 
 /* Handle an incoming message from a TEEP Agent. */
 /* Returns 0 on success, or non-zero if error. */
@@ -672,6 +687,7 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     return err;
 }
 
+#ifdef TEEP_ENABLE_JSON
 /* Handle an incoming message from a TEEP Agent. */
 /* Returns 0 on success, or non-zero if error. */
 int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
@@ -720,6 +736,7 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
         return TeepHandleRawJsonMessage(sessionHandle, (json_t*)request);
     }
 }
+#endif
 
 int ecall_RequestTA(
     int useCbor,
@@ -763,7 +780,11 @@ int ecall_RequestTA(
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
         printf("Sending an empty message...\n");
+#ifdef TEEP_ENABLE_JSON
         const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
+#else
+        const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
+#endif
         result = ocall_Connect(&err, tamUri, acceptMediaType);
         if (result != OE_OK) {
             return result;
@@ -821,7 +842,11 @@ int ecall_UnrequestTA(
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
         printf("Sending an empty message...\n");
+#ifdef TEEP_ENABLE_JSON
         const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
+#else
+        const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
+#endif
         result = ocall_Connect(&err, tamUri, acceptMediaType);
         if (result != OE_OK) {
             return result;
@@ -837,6 +862,7 @@ int ecall_UnrequestTA(
     return err;
 }
 
+#ifdef TEEP_ENABLE_JSON
 JsonAuto g_AgentSigningKey;
 
 json_t* GetAgentSigningKey()
@@ -856,3 +882,4 @@ json_t* GetAgentEncryptionKey()
     }
     return g_AgentEncryptionKey;
 }
+#endif

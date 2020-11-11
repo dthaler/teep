@@ -272,12 +272,17 @@ int ecall_ProcessTeepMessage(
         return 1; /* error */
     }
 
+#ifdef ENABLE_OTRP
     if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
         err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
-    } else if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
+    } else
+#endif
+    if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
         err = TeepHandleCborMessage(sessionHandle, message, messageLength);
+#ifdef TEEP_ENABLE_JSON
     } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
         err = TeepHandleJsonMessage(sessionHandle, message, messageLength);
+#endif
     } else {
         err = 1; /* Error */
     }

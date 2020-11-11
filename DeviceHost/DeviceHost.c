@@ -41,11 +41,13 @@ int main(int argc, char** argv)
     int useCbor = 1;
     int simulated_tee = 0;
 
+#ifdef TEEP_ENABLE_JSON
     if ((argc > 1) && (strcmp(argv[1], "-j") == 0)) {
         useCbor = 0;
         argc--;
         argv++;
     }
+#endif
     if ((argc > 1) && (strcmp(argv[1], "-s") == 0)) {
         simulated_tee = 1;
         argc--;
@@ -64,9 +66,13 @@ int main(int argc, char** argv)
     }
 
     if (argc < 2) {
+#ifdef TEEP_ENABLE_JSON
         printf("Usage: DeviceHost [-j] [-s] [-r <TA ID>] [-u <TA ID>] <TAM URI>\n");
         printf("       where -j if present means to try JSON instead of CBOR\n");
-        printf("             -s if present means to only simulate a TEE\n");
+#else
+        printf("Usage: DeviceHost [-s] [-r <TA ID>] [-u <TA ID>] <TAM URI>\n");
+#endif
+        printf("       where -s if present means to only simulate a TEE\n");
         printf("             -r <TA ID> if present is a TA ID to request (%s if absent)\n", DEFAULT_TA_ID);
         printf("             -u <TA ID> if present is a TA ID that is no longer needed by any normal app\n");
         printf("             <TAM URI> is the default TAM URI to use\n");

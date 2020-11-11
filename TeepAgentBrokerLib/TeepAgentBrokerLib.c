@@ -14,22 +14,8 @@
 
 oe_enclave_t* g_ta_eid = NULL;
 
-int AgentBrokerRequestTA(
-    int useCbor,
-    oe_uuid_t requestedTaid,
-    _In_z_ const char *tamUri)
+static int HandleMessages(void)
 {
-    int err;
-
-    // Invoke a "RequestTA" API in the agent.
-    oe_result_t result = ecall_RequestTA(g_ta_eid, &err, useCbor, requestedTaid, tamUri);
-    if (result != OE_OK) {
-        return result;
-    }
-    if (err != 0) {
-        return err;
-    }
-
     // Handle messages until we have no outstanding HTTP responses.
     while (g_Session.InboundMessage != NULL || g_Session.OutboundMessage != NULL) {
         if (g_Session.OutboundMessage != NULL) {
@@ -52,7 +38,8 @@ int AgentBrokerRequestTA(
         }
 
         if (g_Session.InboundMessage != NULL) {
-            result = ecall_ProcessTeepMessage(
+            int err;
+            oe_result_t result = ecall_ProcessTeepMessage(
                 g_ta_eid,
                 &err,
                 &g_Session,
@@ -74,4 +61,42 @@ int AgentBrokerRequestTA(
 
     printf("Done with request\n");
     return 0;
+}
+
+int AgentBrokerRequestTA(
+    int useCbor,
+    oe_uuid_t requestedTaid,
+    _In_z_ const char* tamUri)
+{
+    int err;
+
+    // Invoke a "RequestTA" API in the agent.
+    oe_result_t result = ecall_RequestTA(g_ta_eid, &err, useCbor, requestedTaid, tamUri);
+    if (result != OE_OK) {
+        return result;
+    }
+    if (err != 0) {
+        return err;
+    }
+
+    return HandleMessages();
+}
+
+int AgentBrokerUnrequestTA(
+    int useCbor,
+    oe_uuid_t unneededTaid,
+    _In_z_ const char* tamUri)
+{
+    int err;
+
+    // Invoke an "UnrequestTA" API in the agent.
+    oe_result_t result = ecall_UnrequestTA(g_ta_eid, &err, useCbor, unneededTaid, tamUri);
+    if (result != OE_OK) {
+        return result;
+    }
+    if (err != 0) {
+        return err;
+    }
+
+    return HandleMessages();
 }

@@ -28,8 +28,11 @@ extern "C" {
 #include "TeepDeviceEcallHandler.h"
 #include "SuitParser.h"
 
-// List of Trusted Components requested.
+// List of requested Trusted Components.
 TrustedComponent* g_RequestedComponentList = nullptr;
+
+// List of unneeded Trusted Components.
+TrustedComponent* g_UnneededComponentList = nullptr;
 
 const unsigned char* g_AgentDerCertificate = nullptr;
 size_t g_AgentDerCertificateSize = 0;
@@ -82,15 +85,17 @@ const char* TeepComposeJsonQueryResponse(
         return nullptr;
     }
 
-    JsonAuto requested_component_list = response.AddArrayToObject("REQUESTED_TC_LIST");
-    if (requested_component_list == nullptr) {
-        return nullptr;
-    }
-    char IDString[37];
-    for (TrustedComponent* component = g_RequestedComponentList; component != nullptr; component = component->Next) {
-        TrustedComponent::ConvertUUIDToString(IDString, sizeof(IDString), component->ID);
-        if (requested_component_list.AddStringToArray(IDString) == nullptr) {
+    if (g_RequestedComponentList != nullptr) {
+        JsonAuto requested_component_list = response.AddArrayToObject("REQUESTED_TC_LIST");
+        if (requested_component_list == nullptr) {
             return nullptr;
+        }
+        char IDString[37];
+        for (TrustedComponent* component = g_RequestedComponentList; component != nullptr; component = component->Next) {
+            TrustedComponent::ConvertUUIDToString(IDString, sizeof(IDString), component->ID);
+            if (requested_component_list.AddStringToArray(IDString) == nullptr) {
+                return nullptr;
+            }
         }
     }
 
@@ -147,14 +152,13 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
 
         QCBOREncode_OpenMap(&context);
         {
-            // TODO: Add tc-list.
-            // UsefulBufC ta_id;
-            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TC_LIST, ta_id);
-
-            // Add requested-tc-list
-            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_REQUESTED_TC_LIST);
+            // Add tc-list.  Currently we populate this from the list of
+            // "unneeded" components since most TEEs (like SGX) can't enumerate
+            // any others anyway.
+            // TODO: only include this if the QueryRequest asked for it.
+            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
             {
-                for (TrustedComponent* ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
+                for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
                     QCBOREncode_OpenMap(&context);
                     {
                         UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
@@ -164,6 +168,36 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
                 }
             }
             QCBOREncode_CloseArray(&context);
+
+            if (g_RequestedComponentList != nullptr)
+            {
+                // Add requested-tc-list.
+                QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_REQUESTED_TC_LIST);
+                {
+                    for (TrustedComponent* ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
+                        QCBOREncode_OpenMap(&context);
+                        {
+                            UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
+                            QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_COMPONENT_ID, UsefulBuf_Const(ta_id));
+                        }
+                        QCBOREncode_CloseMap(&context);
+                    }
+                }
+                QCBOREncode_CloseArray(&context);
+            }
+
+            if (g_UnneededComponentList != nullptr)
+            {
+                // Add unneeded-tc-list.
+                QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_UNNEEDED_TC_LIST);
+                {
+                    for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
+                        UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
+                        QCBOREncode_AddBytes(&context, UsefulBuf_Const(ta_id));
+                    }
+                }
+                QCBOREncode_CloseArray(&context);
+            }
         }
         QCBOREncode_CloseMap(&context);
     }
@@ -719,6 +753,64 @@ int ecall_RequestTA(
     ta = new TrustedComponent(requestedTaid);
     ta->Next = g_RequestedComponentList;
     g_RequestedComponentList = ta;
+
+    // TODO: we may want to modify the TAM URI here.
+
+    // TODO: see whether we already have a TAM cert we trust.
+    // For now we skip this step and say we don't.
+    bool haveTrustedTamCert = false;
+
+    if (!haveTrustedTamCert) {
+        // Pass back a TAM URI with no buffer.
+        printf("Sending an empty message...\n");
+        const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
+        result = ocall_Connect(&err, tamUri, acceptMediaType);
+        if (result != OE_OK) {
+            return result;
+        }
+        if (err != 0) {
+            return err;
+        }
+    } else {
+        // TODO: implement going on to the next message.
+        oe_assert(false);
+    }
+
+    return err;
+}
+
+int ecall_UnrequestTA(
+    int useCbor,
+    oe_uuid_t unneededTaid,
+    const char* tamUri)
+{
+    int err = 0;
+    oe_result_t result = OE_OK;
+
+    // TODO: See whether taid is already installed.
+    // For now we skip this step and pretend it is.
+    bool isInstalled = true;
+
+    if (!isInstalled) {
+        // Already not installed, nothing to do.
+        // This counts as "pass no data back" in the broker spec.
+        return 0;
+    }
+
+    // See whether taid has already been notified to the TAM.
+    TrustedComponent* ta;
+    for (ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
+        if (memcmp(ta->ID.b, unneededTaid.b, OE_UUID_SIZE) == 0) {
+            // Already requested, nothing to do.
+            // This counts as "pass no data back" in the broker spec.
+            return 0;
+        }
+    }
+
+    // Add taid to the unneeded list.
+    ta = new TrustedComponent(unneededTaid);
+    ta->Next = g_UnneededComponentList;
+    g_UnneededComponentList = ta;
 
     // TODO: we may want to modify the TAM URI here.
 

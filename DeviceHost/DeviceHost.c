@@ -36,8 +36,11 @@ int ConvertStringToUUID(oe_uuid_t* uuid, const char* idString)
 
 int main(int argc, char** argv)
 {
+    const char* requestedTa = DEFAULT_TA_ID;
+    const char* unneededTa = NULL;
     int useCbor = 1;
     int simulated_tee = 0;
+
     if ((argc > 1) && (strcmp(argv[1], "-j") == 0)) {
         useCbor = 0;
         argc--;
@@ -48,39 +51,61 @@ int main(int argc, char** argv)
         argc--;
         argv++;
     }
+    if ((argc > 2) && (strcmp(argv[1], "-r") == 0)) {
+        requestedTa = argv[2];
+        argc -= 2;
+        argv += 2;
+    }
+    if ((argc > 2) && (strcmp(argv[1], "-u") == 0)) {
+        unneededTa = argv[2];
+        printf("Unneeded TA ID: %s\n", unneededTa);
+        argc -= 2;
+        argv += 2;
+    }
 
     if (argc < 2) {
-        printf("Usage: DeviceHost [-j] [-s] <TAM URI> [<TA ID>]\n");
+        printf("Usage: DeviceHost [-j] [-s] [-r <TA ID>] [-u <TA ID>] <TAM URI>\n");
         printf("       where -j if present means to try JSON instead of CBOR\n");
         printf("             -s if present means to only simulate a TEE\n");
+        printf("             -r <TA ID> if present is a TA ID to request (%s if absent)\n", DEFAULT_TA_ID);
+        printf("             -u <TA ID> if present is a TA ID that is no longer needed by any normal app\n");
         printf("             <TAM URI> is the default TAM URI to use\n");
-        printf("             <TA ID> is the TA ID to request (%s if none specified)\n", DEFAULT_TA_ID);
         return 0;
     }
 
     const char* defaultTamUri = argv[1];
     printf("Using default TAM URI: %s\n", defaultTamUri);
 
-    const char* requestedTa = DEFAULT_TA_ID;
-    if (argc > 2) {
-        requestedTa = argv[2];
-    }
-    oe_uuid_t requestedTaid;
-    int err = ConvertStringToUUID(&requestedTaid, requestedTa);
-    if (err != 0) {
-        printf("Invalid TA ID: %s\n", requestedTa);
-        return err;
-    }
-    printf("Requesting TA ID: %s\n", requestedTa);
-
-    err = StartAgentBroker(simulated_tee);
+    int err = StartAgentBroker(simulated_tee);
     if (err != 0) {
         return err;
     }
 
-    err = AgentBrokerRequestTA(useCbor, requestedTaid, defaultTamUri);
-    if (err != 0) {
-        goto exit;
+    if (unneededTa != NULL) {
+        oe_uuid_t unneededTaid;
+        err = ConvertStringToUUID(&unneededTaid, unneededTa);
+        if (err != 0) {
+            printf("Invalid TA ID: %s\n", unneededTa);
+            return err;
+        }
+        err = AgentBrokerUnrequestTA(useCbor, unneededTaid, defaultTamUri);
+        if (err != 0) {
+            goto exit;
+        }
+    }
+
+    if (requestedTa != NULL) {
+        oe_uuid_t requestedTaid;
+        err = ConvertStringToUUID(&requestedTaid, requestedTa);
+        if (err != 0) {
+            printf("Invalid TA ID: %s\n", requestedTa);
+            return err;
+        }
+        printf("Requesting TA ID: %s\n", requestedTa);
+        err = AgentBrokerRequestTA(useCbor, requestedTaid, defaultTamUri);
+        if (err != 0) {
+            goto exit;
+        }
     }
 
 exit:

@@ -58,7 +58,7 @@ git clone --recurse-submodules https://github.com/dthaler/OTrP.git
 
 You must have the following installed to compile and debug:
 * [Visual Studio 2019](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
-* [Open Enclave Visual Studio Extension v0.12.31 or later](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.12.31 or later
+* [Open Enclave Visual Studio Extension](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.12.31 or later
 and its [prerequisites](https://github.com/dthaler/openenclave/blob/master/docs/GettingStartedDocs/VisualStudioWindows.md)
 
 The TAM is currently written to run on Windows, due to the HTTP layer.
@@ -73,11 +73,12 @@ Compiling on Windows will result in generating DeviceHost.exe and TamHost.exe.
 DeviceHost.exe is run as follows:
 
 ```
-Usage: DeviceHost [-j] [j] <TAM URI> [<TA ID>]
+Usage: DeviceHost [-j] [-s] [-r <TA ID>] [-u <TA ID>] <TAM URI>
        where -j if present means to try JSON instead of CBOR
              -s if present means to only simulate a TEE
+             -r <TA ID> if present is a TA ID to request (38b08738-227d-4f6a-b1f0-b208bc02a781 if none specified)
+             -u <TA ID> if present is a TA ID that is no longer needed by any normal app
              <TAM URI> is the default TAM URI to use
-             <TA ID> is the TA ID to request (38b08738-227d-4f6a-b1f0-b208bc02a781 if none specified)
 ```
 
 The `<TA ID>` to request ought to be one of the SUIT manifests configured
@@ -98,7 +99,8 @@ Currently the <TAM URI> must end in /TEEP
 
 The following configurations should work:
 
-* Debug | x64 - use this to test/run on an SGX-capable development machine
+* Debug | x64 - use this to test/run on an SGX-capable machine
+                or with the `-s` option to run on a non-SGX-capable machine
 
 To run and debug inside Visual Studio, change the debugger Working Directory
 to $(OutDir).  To do this, right click on the project,

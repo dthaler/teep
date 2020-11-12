@@ -60,7 +60,7 @@ git clone --recurse-submodules https://github.com/dthaler/OTrP.git
 
 You must have the following installed to compile and debug:
 * [Visual Studio 2019](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
-* [Open Enclave Visual Studio Extension](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.12.31 or later
+* [Open Enclave Visual Studio Extension](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.12.32 or later
 and its [prerequisites](https://github.com/dthaler/openenclave/blob/master/docs/GettingStartedDocs/VisualStudioWindows.md)
 
 The TAM is currently written to run on Windows, due to the HTTP layer.

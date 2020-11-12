@@ -19,6 +19,9 @@
   <ItemGroup>
     <EdlItem Include="..\UntrustedTime.edl" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4D10CAF1-DDEB-4D8D-8E7A-3947B1F836F5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -90,17 +93,14 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets" Condition="Exists('..\..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets')" />
+    <Import Project="..\..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets" Condition="Exists('..\..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets'))" />
+    <Error Condition="!Exists('..\..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets'))" />
   </Target>
 </Project>

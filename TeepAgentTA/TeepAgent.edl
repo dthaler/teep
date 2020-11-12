@@ -1,6 +1,8 @@
 enclave {
     from "..\UntrustedTime\UntrustedTime.edl" import *;
     from "..\TeepCommonTALib\TeepCommonTALib.edl" import *;
+    from "openenclave/edl/syscall.edl" import *;
+    from "platform.edl" import *;
 
     trusted {
         /* define ECALLs here. */

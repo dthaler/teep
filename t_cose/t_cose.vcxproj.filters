@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\external\t_cose\src\t_cose_parameters.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -30,5 +27,8 @@
     <ClCompile Include="..\external\t_cose\src\t_cose_util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

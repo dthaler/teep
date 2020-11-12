@@ -96,9 +96,6 @@
     <ClCompile Include="DeviceHost.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\TeepAgentBrokerLib\TeepAgentBrokerLib.vcxproj">
       <Project>{0d5ac8ae-35d9-4f5c-b74c-f0ff75f03497}</Project>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -107,14 +104,17 @@
       <Project>{4d10caf1-ddeb-4d8d-8e7a-3947b1f836f5}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets')" />
+    <Import Project="..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets'))" />
+    <Error Condition="!Exists('..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets'))" />
   </Target>
 </Project>

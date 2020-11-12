@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\external\qcbor\src\ieee754.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -30,5 +27,8 @@
     <ClCompile Include="..\external\qcbor\src\UsefulBuf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

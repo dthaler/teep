@@ -92,11 +92,11 @@
   </ItemGroup>
   <ItemGroup>
     <EdlItem Include="TeepAgent.edl" />
+    <None Include="packages.config" />
     <None Include="TeepAgentTA_private.pem" />
     <None Include="optee/sub.mk" />
     <None Include="optee/linux_gcc.mak" />
     <None Include="optee/uuids.reg" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="TeepAgentTA.config.xml" />
@@ -129,12 +129,12 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets')" />
+    <Import Project="..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave-cross.0.8.1-c3b6262c-3\build\native\open-enclave-cross.targets'))" />
+    <Error Condition="!Exists('..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave-cross.0.12.0\build\native\open-enclave-cross.targets'))" />
   </Target>
 </Project>

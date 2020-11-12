@@ -55,9 +55,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <EdlItem Include="..\TeepTamTA\TeepTam.edl" />
   </ItemGroup>
   <ItemGroup>
-    <EdlItem Include="..\TeepTamTA\TeepTam.edl" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

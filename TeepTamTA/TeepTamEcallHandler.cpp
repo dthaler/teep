@@ -327,6 +327,64 @@ int TeepComposeCborInstall(UsefulBufC* install, RequestedComponentInfo* requeste
 }
 
 // Returns 0 on success, non-zero on error.
+int TeepComposeCborDeleteTBS(UsefulBufC* encoded, RequestedComponentInfo* unneededComponentList)
+{
+    encoded->ptr = nullptr;
+    encoded->len = 0;
+
+    int maxBufferLength = 4096;
+    char* rawBuffer = (char*)malloc(maxBufferLength);
+    if (rawBuffer == nullptr) {
+        return 1; /* Error */
+    }
+    encoded->ptr = rawBuffer;
+    encoded->len = maxBufferLength;
+
+    QCBOREncodeContext context;
+    UsefulBuf buffer = UsefulBuf_Unconst(*encoded);
+    QCBOREncode_Init(&context, buffer);
+
+    QCBOREncode_OpenArray(&context);
+    {
+        // Add TYPE.
+        QCBOREncode_AddInt64(&context, TEEP_MESSAGE_DELETE);
+
+        /* Create a random 16-byte token. */
+        unsigned char token[UUID_LENGTH];
+        oe_result_t result = oe_random(token, sizeof(token));
+        if (result != OE_OK) {
+            return result;
+        }
+        QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+
+        QCBOREncode_OpenMap(&context);
+        {
+            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
+            {
+                // List any unneed components that we decide to delete.
+                for (RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
+                    // TODO: make a decision whether to delete it or not.  For now, we go ahead.
+                    QCBOREncode_AddBytes(&context, rci->ComponentId);
+                }
+            }
+            QCBOREncode_CloseArray(&context);
+        }
+        QCBOREncode_CloseMap(&context);
+    }
+    QCBOREncode_CloseArray(&context);
+
+    QCBORError err = QCBOREncode_Finish(&context, encoded);
+    return err;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepComposeCborDelete(UsefulBufC* install, RequestedComponentInfo* unneededComponentList)
+{
+    /* Compose a raw Delete message to be signed. */
+    return TeepComposeCborDeleteTBS(install, unneededComponentList);
+}
+
+// Returns 0 on success, non-zero on error.
 int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context)
 {
     (void)sessionHandle;
@@ -364,6 +422,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         return 1; // Invalid message.
     }
     RequestedComponentInfo requestedComponentList(nullptr);
+    RequestedComponentInfo unneededComponentList(nullptr);
     uint16_t mapEntryCount = item.val.uCount;
     for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
         QCBORDecode_GetNext(context, &item);
@@ -436,10 +495,68 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
             }
             break;
         }
+        case TEEP_LABEL_UNNEEDED_TC_LIST:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                printf("Invalid unneeded-tc-list type %d\n", item.uDataType);
+                return 1; // Invalid message.
+            }
+            uint16_t arrayEntryCount = item.val.uCount;
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                    printf("Invalid component-id type %d\n", item.uDataType);
+                    return 1;
+                }
+                RequestedComponentInfo* currentUci = new RequestedComponentInfo(&item.val.string);
+                currentUci->Next = unneededComponentList.Next;
+                unneededComponentList.Next = currentUci;
+            }
+            break;
+        }
+        case TEEP_LABEL_TC_LIST:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                printf("Invalid tc-list type %d\n", item.uDataType);
+                return 1; // Invalid message.
+            }
+            uint16_t arrayEntryCount = item.val.uCount;
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                if (item.uDataType != QCBOR_TYPE_MAP) {
+                    printf("Invalid tc-info type %d\n", item.uDataType);
+                    return 1; // Invalid message.
+                }
+                uint16_t tcInfoParameterCount = item.val.uCount;
+                for (int tcInfoParameterIndex = 0; tcInfoParameterIndex < tcInfoParameterCount; tcInfoParameterIndex++) {
+                    QCBORDecode_GetNext(context, &item);
+                    teep_label_t label = (teep_label_t)item.label.int64;
+                    switch (label) {
+                    case TEEP_LABEL_COMPONENT_ID:
+                    {
+                        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                            printf("Invalid component-id type %d\n", item.uDataType);
+                            return 1;
+                        }
+                        /* This information is ignored for now. */
+                        break;
+                    }
+                    case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
+                        if (item.uDataType != QCBOR_TYPE_UINT64) {
+                            return 1; /* invalid message */
+                        }
+                        /* This information is ignored for now. */
+                        break;
+                    default:
+                        printf("Unrecognized option label %d\n", label);
+                        return 1; /* invalid message */
+                    }
+                }
+            }
+            break;
+        }
         case TEEP_LABEL_EVIDENCE_FORMAT:
         case TEEP_LABEL_EVIDENCE:
-        case TEEP_LABEL_TC_LIST:
-        case TEEP_LABEL_UNNEEDED_TC_LIST:
             printf("Ignoring unimplemented option label %d\n", label);
             break;
         default:
@@ -448,8 +565,8 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         }
     }
 
-    // 3. Compose an Install message.
     if (requestedComponentList.Next != nullptr) {
+        // 3. Compose an Install message.
         UsefulBufC install;
         int err = TeepComposeCborInstall(&install, requestedComponentList.Next);
         if (err != 0) {
@@ -466,6 +583,30 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
 
         oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)install.ptr, install.len);
         free((void*)install.ptr);
+        if (result != OE_OK) {
+            return result;
+        }
+        return err;
+    }
+
+    if (unneededComponentList.Next != nullptr) {
+        // 4. Compose a Delete message.
+        UsefulBufC deleteMessage;
+        int err = TeepComposeCborDelete(&deleteMessage, unneededComponentList.Next);
+        if (err != 0) {
+            return err;
+        }
+        if (deleteMessage.len == 0) {
+            return 1; // Error.
+        }
+
+        printf("Sending CBOR message: ");
+        HexPrintBuffer(deleteMessage.ptr, deleteMessage.len);
+
+        printf("Sending Delete message...\n");
+
+        oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)deleteMessage.ptr, deleteMessage.len);
+        free((void*)deleteMessage.ptr);
         if (result != OE_OK) {
             return result;
         }

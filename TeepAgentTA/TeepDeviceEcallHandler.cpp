@@ -141,11 +141,11 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
         // Copy token from request.
         QCBORItem item;
         QCBORDecode_GetNext(decodeContext, &item);
-        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+        if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
             printf("Invalid token type %d\n", item.uDataType);
             return 1; /* invalid message */
         }
-        QCBOREncode_AddBytes(&context, item.val.string);
+        QCBOREncode_AddUInt64(&context, item.val.uint64);
 
         // Parse the options map.
         QCBORDecode_GetNext(decodeContext, &item);
@@ -408,7 +408,7 @@ int TeepHandleJsonInstall(void* sessionHandle, json_t* request)
 #endif
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborSuccessTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
+int TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -431,13 +431,7 @@ int TeepComposeCborSuccessTBS(QCBORDecodeContext* decodeContext, UsefulBufC* enc
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_SUCCESS);
 
         // Copy token from request.
-        QCBORItem item;
-        QCBORDecode_GetNext(decodeContext, &item);
-        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-            printf("Invalid token type %d\n", item.uDataType);
-            return 1; /* invalid message */
-        }
-        QCBOREncode_AddBytes(&context, item.val.string);
+        QCBOREncode_AddUInt64(&context, token);
 
         // Add option map.
         QCBOREncode_OpenMap(&context);
@@ -452,7 +446,7 @@ int TeepComposeCborSuccessTBS(QCBORDecodeContext* decodeContext, UsefulBufC* enc
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborErrorTBS(QCBORDecodeContext* decodeContext, teep_error_code_t errorCode, UsefulBufC* encoded)
+int TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -475,13 +469,7 @@ int TeepComposeCborErrorTBS(QCBORDecodeContext* decodeContext, teep_error_code_t
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_ERROR);
 
         // Copy token from request.
-        QCBORItem item;
-        QCBORDecode_GetNext(decodeContext, &item);
-        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-            printf("Invalid token type %d\n", item.uDataType);
-            return 1; /* invalid message */
-        }
-        QCBOREncode_AddBytes(&context, item.val.string);
+        QCBOREncode_AddUInt64(&context, token);
 
         // Add err-code uint.
         QCBOREncode_AddInt64(&context, errorCode);
@@ -501,17 +489,17 @@ int TeepComposeCborErrorTBS(QCBORDecodeContext* decodeContext, teep_error_code_t
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborSuccess(QCBORDecodeContext* context, UsefulBufC* reply)
+int TeepComposeCborSuccess(uint64_t token, UsefulBufC* reply)
 {
     /* Compose a raw QueryResponse message to be signed. */
-    return TeepComposeCborSuccessTBS(context, reply);
+    return TeepComposeCborSuccessTBS(token, reply);
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborError(QCBORDecodeContext* context, teep_error_code_t errorCode, UsefulBufC* reply)
+int TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC* reply)
 {
     /* Compose a raw QueryResponse message to be signed. */
-    return TeepComposeCborErrorTBS(context, errorCode, reply);
+    return TeepComposeCborErrorTBS(token, errorCode, reply);
 }
 
 // Returns 0 on success, non-zero on error.
@@ -536,10 +524,11 @@ int TeepHandleCborInstall(void* sessionHandle, QCBORDecodeContext* context)
     // Get token from request.
     QCBORItem item;
     QCBORDecode_GetNext(context, &item);
-    if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+    if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
         printf("Invalid token type %d\n", item.uDataType);
         return 1; /* invalid message */
     }
+    uint64_t token = item.val.uint64;
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
@@ -582,8 +571,95 @@ int TeepHandleCborInstall(void* sessionHandle, QCBORDecodeContext* context)
 
     /* 3. Compose a success or error reply. */
     UsefulBufC reply;
-    int err = TeepComposeCborError(context, errorCode, &reply);
-    //int err = TeepComposeCborSuccess(context, &reply);
+    int err = TeepComposeCborError(token, errorCode, &reply);
+    //int err = TeepComposeCborSuccess(token, &reply);
+    if (err != 0) {
+        return err;
+    }
+    if (reply.len == 0) {
+        return 1; /* Error */
+    }
+
+    printf("Sending CBOR message: ");
+    HexPrintBuffer(reply.ptr, reply.len);
+
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    free((void*)reply.ptr);
+    if (result != OE_OK) {
+        return result;
+    }
+
+    return err;
+}
+
+// Returns 0 on success, non-zero on error.
+int TeepHandleCborDelete(void* sessionHandle, QCBORDecodeContext* context)
+{
+    printf("TeepHandleCborDelete\n");
+
+    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
+    /* ... TODO ... */
+
+    /* 2.  Validate that the request TAM certificate is chained to a trusted
+     *     CA that the TEE embeds as its trust anchor.
+     *
+     *     *  Cache the CA OCSP stapling data and certificate revocation
+     *        check status for other subsequent requests.
+     *
+     *     *  A TEE can use its own clock time for the OCSP stapling data
+     *        validation.
+     */
+     /* ... TODO ... */
+
+    // Get token from request.
+    QCBORItem item;
+    QCBORDecode_GetNext(context, &item);
+    if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
+        printf("Invalid token type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+    uint64_t token = item.val.uint64;
+
+    // Parse the options map.
+    QCBORDecode_GetNext(context, &item);
+    if (item.uDataType != QCBOR_TYPE_MAP) {
+        printf("Invalid options type %d\n", item.uDataType);
+        return 1; /* invalid message */
+    }
+    teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
+    uint16_t mapEntryCount = item.val.uCount;
+    for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
+        QCBORDecode_GetNext(context, &item);
+        teep_label_t label = (teep_label_t)item.label.int64;
+        switch (label) {
+        case TEEP_LABEL_TC_LIST:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                printf("Invalid option type %d\n", item.uDataType);
+                return 1; /* invalid message */
+            }
+            uint16_t arrayEntryCount = item.val.uCount;
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                    printf("Invalid component-id type %d\n", item.uDataType);
+                    return 1; /* invalid message */
+                }
+                /* TODO: do a delete */
+            }
+            break;
+        }
+        default:
+            printf("Unrecognized option label %d\n", label);
+            return 1; /* invalid message */
+            break;
+        }
+    }
+
+    /* 3. Compose a success or error reply. */
+    UsefulBufC reply;
+    int err = TeepComposeCborError(token, errorCode, &reply);
+    //int err = TeepComposeCborSuccess(token, &reply);
     if (err != 0) {
         return err;
     }
@@ -675,6 +751,11 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
         break;
     case TEEP_MESSAGE_INSTALL:
         if (TeepHandleCborInstall(sessionHandle, &context) != 0) {
+            return 1;
+        }
+        break;
+    case TEEP_MESSAGE_DELETE:
+        if (TeepHandleCborDelete(sessionHandle, &context) != 0) {
             return 1;
         }
         break;

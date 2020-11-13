@@ -72,6 +72,7 @@ const unsigned char* GetTamDerCertificate(size_t *pCertLen)
     return g_TamDerCertificate;
 }
 
+#if defined(TEEP_ENABLE_JSON) || defined(ENABLE_OTRP)
 json_t* GetNewGloballyUniqueID(void);
 
 /* Construct a unique request token.  The TEEP spec does not say what
@@ -82,7 +83,9 @@ json_t* GetNewToken(void)
 {
     return GetNewGloballyUniqueID();
 }
+#endif
 
+#ifdef TEEP_ENABLE_JSON
 // Compose a JSON Query Request message to be signed.
 const char* TeepComposeJsonQueryRequestTBS(void)
 {
@@ -110,6 +113,7 @@ const char* TeepComposeJsonQueryRequestTBS(void)
     const char* message = json_dumps(request, 0);
     return message;
 }
+#endif
 
 int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
 {
@@ -122,13 +126,13 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_QUERY_REQUEST);
 
-        // Create a random 16-byte token.
-        unsigned char token[UUID_LENGTH];
-        oe_result_t result = oe_random(token, sizeof(token));
+        // Create a random 64-bit token.
+        uint64_t token;
+        oe_result_t result = oe_random(&token, sizeof(token));
         if (result != OE_OK) {
             return result;
         }
-        QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+        QCBOREncode_AddUInt64(&context, token);
 
         // Draft -03 implies we have to store the token for validation
         // upon receiving a QueryResponse, but that adversely affects
@@ -153,6 +157,7 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
     return err;
 }
 
+#ifdef TEEP_ENABLE_JSON
 const char* TeepComposeJsonQueryRequest()
 {
     // Compose a raw QueryRequest message to be signed.
@@ -165,6 +170,7 @@ const char* TeepComposeJsonQueryRequest()
 #endif
     return tbsRequest;
 }
+#endif
 
 int TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
 {
@@ -287,13 +293,13 @@ int TeepComposeCborInstallTBS(UsefulBufC* encoded, RequestedComponentInfo* reque
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_INSTALL);
 
-        /* Create a random 16-byte token. */
-        unsigned char token[UUID_LENGTH];
-        oe_result_t result = oe_random(token, sizeof(token));
+        /* Create a random 64-bit token. */
+        uint64_t token;
+        oe_result_t result = oe_random(&token, sizeof(token));
         if (result != OE_OK) {
             return result;
         }
-        QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+        QCBOREncode_AddUInt64(&context, token);
 
         QCBOREncode_OpenMap(&context);
         {
@@ -349,13 +355,13 @@ int TeepComposeCborDeleteTBS(UsefulBufC* encoded, RequestedComponentInfo* unneed
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_DELETE);
 
-        /* Create a random 16-byte token. */
-        unsigned char token[UUID_LENGTH];
-        oe_result_t result = oe_random(token, sizeof(token));
+        /* Create a random 64-bit token. */
+        uint64_t token;
+        oe_result_t result = oe_random(&token, sizeof(token));
         if (result != OE_OK) {
             return result;
         }
-        QCBOREncode_AddBytes(&context, UsefulBuf_FROM_BYTE_ARRAY_LITERAL(token));
+        QCBOREncode_AddUInt64(&context, token);
 
         QCBOREncode_OpenMap(&context);
         {
@@ -402,7 +408,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
 
     QCBORItem item;
     QCBORDecode_GetNext(context, &item);
-    if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+    if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
         printf("Invalid token type %d\n", item.uDataType);
         return 1; // Invalid message.
     }

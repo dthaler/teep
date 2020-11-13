@@ -10,9 +10,10 @@ enclave {
 
         /* TODO: this call is currently insecure, it needs to be secured. */
         public void ecall_ConfigureManifest(
-        oe_uuid_t component_id,
-        [in, count=manifest_len] const char* manifest,
-        size_t manifest_len);
+            oe_uuid_t component_id,
+            [in, count=manifest_len] const char* manifest,
+            size_t manifest_len,
+            int is_required);
     };
 
     untrusted {

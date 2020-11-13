@@ -571,8 +571,8 @@ int TeepHandleCborInstall(void* sessionHandle, QCBORDecodeContext* context)
 
     /* 3. Compose a success or error reply. */
     UsefulBufC reply;
-    int err = TeepComposeCborError(token, errorCode, &reply);
-    //int err = TeepComposeCborSuccess(token, &reply);
+    //int err = TeepComposeCborError(token, errorCode, &reply);
+    int err = TeepComposeCborSuccess(token, &reply);
     if (err != 0) {
         return err;
     }
@@ -658,8 +658,8 @@ int TeepHandleCborDelete(void* sessionHandle, QCBORDecodeContext* context)
 
     /* 3. Compose a success or error reply. */
     UsefulBufC reply;
-    int err = TeepComposeCborError(token, errorCode, &reply);
-    //int err = TeepComposeCborSuccess(token, &reply);
+    //int err = TeepComposeCborError(token, errorCode, &reply);
+    int err = TeepComposeCborSuccess(token, &reply);
     if (err != 0) {
         return err;
     }

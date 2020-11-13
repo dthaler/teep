@@ -216,7 +216,7 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
         printf("Sending CBOR message: ");
         HexPrintBuffer(encoded.ptr, encoded.len);
     }
-    
+
     printf("Sending QueryRequest...\n");
 
     oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, mediaType, (const char*)encoded.ptr, encoded.len);
@@ -271,8 +271,9 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborInstallTBS(UsefulBufC* encoded, RequestedComponentInfo* requestedComponentList)
+int TeepComposeCborInstallTBS(UsefulBufC* encoded, RequestedComponentInfo* currentComponentList, RequestedComponentInfo* requestedComponentList, int* count)
 {
+    *count = 0;
     encoded->ptr = nullptr;
     encoded->len = 0;
 
@@ -305,14 +306,31 @@ int TeepComposeCborInstallTBS(UsefulBufC* encoded, RequestedComponentInfo* reque
         {
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_MANIFEST_LIST);
             {
-                // Add SUIT manifest for any requested components that we decide to install.
-                for (RequestedComponentInfo* rci = requestedComponentList; rci != nullptr; rci = rci->Next) {
-                    // TODO: make a decision whether to install it or not.  For now, we go ahead.
-                    UsefulBufC manifest;
-                    manifest.ptr = Manifest::GetManifest(&rci->ComponentId, &manifest.len);
-                    if (manifest.ptr != nullptr) {
-                        QCBOREncode_AddEncoded(&context, manifest);
+                // Any SUIT manifest for any required components that aren't reported to be present.
+                for (Manifest* manifest = Manifest::First(); manifest != nullptr; manifest = manifest->Next) {
+                    bool found = false;
+                    for (RequestedComponentInfo* cci = currentComponentList; cci != nullptr; cci = cci->Next) {
+                        if (manifest->HasComponentId(&cci->ComponentId)) {
+                            found = true;
+                            break;
+                        }
                     }
+                    if (!found) {
+                        QCBOREncode_AddEncoded(&context, manifest->ManifestContents);
+                        (*count)++;
+                    }
+                }
+
+                // Add SUIT manifest for any optional components that were requested.
+                for (RequestedComponentInfo* rci = requestedComponentList; rci != nullptr; rci = rci->Next) {
+                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
+                    if ((manifest == nullptr) || (manifest->IsRequired)) {
+                        continue;
+                    }
+
+                    // The component is allowed and optional, so ok to install on request.
+                    QCBOREncode_AddEncoded(&context, manifest->ManifestContents);
+                    (*count)++;
                 }
             }
             QCBOREncode_CloseArray(&context);
@@ -326,15 +344,16 @@ int TeepComposeCborInstallTBS(UsefulBufC* encoded, RequestedComponentInfo* reque
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborInstall(UsefulBufC* install, RequestedComponentInfo* requestedComponentList)
+int TeepComposeCborInstall(UsefulBufC* install, RequestedComponentInfo* currentComponentList, RequestedComponentInfo* requestedComponentList, int* count)
 {
     /* Compose a raw Install message to be signed. */
-    return TeepComposeCborInstallTBS(install, requestedComponentList);
+    return TeepComposeCborInstallTBS(install, currentComponentList, requestedComponentList, count);
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborDeleteTBS(UsefulBufC* encoded, RequestedComponentInfo* unneededComponentList)
+int TeepComposeCborDeleteTBS(UsefulBufC* encoded, RequestedComponentInfo* currentComponentList, RequestedComponentInfo* unneededComponentList, int* count)
 {
+    *count = 0;
     encoded->ptr = nullptr;
     encoded->len = 0;
 
@@ -367,10 +386,28 @@ int TeepComposeCborDeleteTBS(UsefulBufC* encoded, RequestedComponentInfo* unneed
         {
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
             {
-                // List any unneed components that we decide to delete.
+                // List any optional components that are reported as unneeded.
                 for (RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
-                    // TODO: make a decision whether to delete it or not.  For now, we go ahead.
+                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
+                    if ((manifest == nullptr) || (manifest->IsRequired)) {
+                        continue;
+                    }
+
+                    // The component is allowed but optional, so ok to delete on request.
                     QCBOREncode_AddBytes(&context, rci->ComponentId);
+                    (*count)++;
+                }
+
+                // List any installed components that are not in the required or optional list.
+                for (RequestedComponentInfo* rci = currentComponentList; rci != nullptr; rci = rci->Next) {
+                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
+                    if (manifest != nullptr) {
+                        continue;
+                    }
+
+                    // The installed component is not found in the latest policy.
+                    QCBOREncode_AddBytes(&context, rci->ComponentId);
+                    (*count)++;
                 }
             }
             QCBOREncode_CloseArray(&context);
@@ -384,10 +421,10 @@ int TeepComposeCborDeleteTBS(UsefulBufC* encoded, RequestedComponentInfo* unneed
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepComposeCborDelete(UsefulBufC* install, RequestedComponentInfo* unneededComponentList)
+int TeepComposeCborDelete(UsefulBufC* install, RequestedComponentInfo* currentComponentList, RequestedComponentInfo* unneededComponentList, int* count)
 {
     /* Compose a raw Delete message to be signed. */
-    return TeepComposeCborDeleteTBS(install, unneededComponentList);
+    return TeepComposeCborDeleteTBS(install, currentComponentList, unneededComponentList, count);
 }
 
 // Returns 0 on success, non-zero on error.
@@ -427,6 +464,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         printf("Invalid options type %d\n", item.uDataType);
         return 1; // Invalid message.
     }
+    RequestedComponentInfo currentComponentList(nullptr);
     RequestedComponentInfo requestedComponentList(nullptr);
     RequestedComponentInfo unneededComponentList(nullptr);
     uint16_t mapEntryCount = item.val.uCount;
@@ -485,11 +523,17 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
                             return 1; /* invalid message */
                         }
+                        if (currentRci == nullptr) {
+                            return 1;
+                        }
                         currentRci->ManifestSequenceNumber = item.val.uint64;
                         break;
                     case TEEP_LABEL_HAVE_BINARY:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
                             return 1; /* invalid message */
+                        }
+                        if (currentRci == nullptr) {
+                            return 1;
                         }
                         currentRci->HaveBinary = (item.val.uint64 != 0);
                         break;
@@ -526,6 +570,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                 printf("Invalid tc-list type %d\n", item.uDataType);
                 return 1; // Invalid message.
             }
+            RequestedComponentInfo* currentRci = nullptr;
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
@@ -544,14 +589,23 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                             printf("Invalid component-id type %d\n", item.uDataType);
                             return 1;
                         }
-                        /* This information is ignored for now. */
+                        if (currentRci != nullptr) {
+                            // Duplicate.
+                            return 1;
+                        }
+                        currentRci = new RequestedComponentInfo(&item.val.string);
+                        currentRci->Next = currentComponentList.Next;
+                        currentComponentList.Next = currentRci;
                         break;
                     }
                     case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
                             return 1; /* invalid message */
                         }
-                        /* This information is ignored for now. */
+                        if (currentRci == nullptr) {
+                            return 1;
+                        }
+                        currentRci->ManifestSequenceNumber = item.val.uint64;
                         break;
                     default:
                         printf("Unrecognized option label %d\n", label);
@@ -571,52 +625,58 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         }
     }
 
-    if (requestedComponentList.Next != nullptr) {
-        // 3. Compose an Install message.
-        UsefulBufC install;
-        int err = TeepComposeCborInstall(&install, requestedComponentList.Next);
+    if (unneededComponentList.Next != nullptr) {
+        // 3. Compose a Delete message.
+        UsefulBufC deleteMessage;
+        int count;
+        int err = TeepComposeCborDelete(&deleteMessage, currentComponentList.Next, unneededComponentList.Next, &count);
         if (err != 0) {
             return err;
         }
-        if (install.len == 0) {
-            return 1; // Error.
+        if (count > 0) {
+            if (deleteMessage.len == 0) {
+                return 1; // Error.
+            }
+
+            printf("Sending CBOR message: ");
+            HexPrintBuffer(deleteMessage.ptr, deleteMessage.len);
+
+            printf("Sending Delete message...\n");
+
+            oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)deleteMessage.ptr, deleteMessage.len);
+            free((void*)deleteMessage.ptr);
+            if (result != OE_OK) {
+                return result;
+            }
+            return err;
         }
-
-        printf("Sending CBOR message: ");
-        HexPrintBuffer(install.ptr, install.len);
-
-        printf("Sending Install message...\n");
-
-        oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)install.ptr, install.len);
-        free((void*)install.ptr);
-        if (result != OE_OK) {
-            return result;
-        }
-        return err;
     }
 
-    if (unneededComponentList.Next != nullptr) {
-        // 4. Compose a Delete message.
-        UsefulBufC deleteMessage;
-        int err = TeepComposeCborDelete(&deleteMessage, unneededComponentList.Next);
+    if (requestedComponentList.Next != nullptr) {
+        // 4. Compose an Install message.
+        UsefulBufC install;
+        int count;
+        int err = TeepComposeCborInstall(&install, currentComponentList.Next, requestedComponentList.Next, &count);
         if (err != 0) {
             return err;
         }
-        if (deleteMessage.len == 0) {
-            return 1; // Error.
+        if (count > 0) {
+            if (install.len == 0) {
+                return 1; // Error.
+            }
+
+            printf("Sending CBOR message: ");
+            HexPrintBuffer(install.ptr, install.len);
+
+            printf("Sending Install message...\n");
+
+            oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)install.ptr, install.len);
+            free((void*)install.ptr);
+            if (result != OE_OK) {
+                return result;
+            }
+            return err;
         }
-
-        printf("Sending CBOR message: ");
-        HexPrintBuffer(deleteMessage.ptr, deleteMessage.len);
-
-        printf("Sending Delete message...\n");
-
-        oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)deleteMessage.ptr, deleteMessage.len);
-        free((void*)deleteMessage.ptr);
-        if (result != OE_OK) {
-            return result;
-        }
-        return err;
     }
 
     return 0;

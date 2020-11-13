@@ -40,7 +40,7 @@ oe_result_t create_TeepTam_enclave(const char* enclave_name, int simulated_tee, 
     return OE_OK;
 }
 
-oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name, const char* filename)
+oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name, const char* filename, int is_required)
 {
     FILE* fp = NULL;
     char* manifest = NULL;
@@ -76,7 +76,7 @@ oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name,
 
         char* basename = _strdup(filename);
         if (basename != NULL) {
-            int len = strlen(basename);
+            size_t len = strlen(basename);
             if ((len > 5) && strcmp(basename + len - 5, ".cbor") == 0) {
                 basename[len - 5] = 0;
             }
@@ -91,7 +91,7 @@ oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name,
                 component_id.b[i] = uuid[i];
             }
 
-            result = ecall_ConfigureManifest(enclave, component_id, manifest, manifest_size);
+            result = ecall_ConfigureManifest(enclave, component_id, manifest, manifest_size, is_required);
         }
         free(basename);
     } while (0);
@@ -108,7 +108,7 @@ oe_result_t ConfigureManifest(oe_enclave_t* enclave, const char* directory_name,
  * manifests from a trusted location, or use sealed storage
  * (decrypting the contents inside the enclave).
  */
-oe_result_t ConfigureManifests(oe_enclave_t* enclave, const char* directory_name)
+oe_result_t ConfigureManifests(oe_enclave_t* enclave, const char* directory_name, int is_required)
 {
     oe_result_t result = OE_OK;
     DIR* dir = opendir(directory_name);
@@ -126,7 +126,7 @@ oe_result_t ConfigureManifests(oe_enclave_t* enclave, const char* directory_name
             strcmp(filename + filename_length - 5, ".cbor") != 0) {
             continue;
         }
-        result = ConfigureManifest(enclave, directory_name, filename);
+        result = ConfigureManifest(enclave, directory_name, filename, is_required);
         if (result != OE_OK) {
             break;
         }
@@ -162,7 +162,12 @@ int StartTamBroker(_In_z_ const char* manifestDirectory, int simulate_tee)
         return result;
     }
 
-    result = ConfigureManifests(enclave, manifestDirectory);
+    char path[MAX_PATH];
+    sprintf_s(path, sizeof(path), "%s%s", manifestDirectory, "/required");
+    result = ConfigureManifests(enclave, path, TRUE);
+    sprintf_s(path, sizeof(path), "%s%s", manifestDirectory, "/optional");
+    result = ConfigureManifests(enclave, path, FALSE);
+
     return result;
 }
 

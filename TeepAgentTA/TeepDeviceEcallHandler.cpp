@@ -503,99 +503,9 @@ int TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepHandleCborInstall(void* sessionHandle, QCBORDecodeContext* context)
+int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
 {
     printf("TeepHandleCborInstall\n");
-
-    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
-    /* ... TODO ... */
-
-    /* 2.  Validate that the request TAM certificate is chained to a trusted
-     *     CA that the TEE embeds as its trust anchor.
-     *
-     *     *  Cache the CA OCSP stapling data and certificate revocation
-     *        check status for other subsequent requests.
-     *
-     *     *  A TEE can use its own clock time for the OCSP stapling data
-     *        validation.
-     */
-     /* ... TODO ... */
-
-    // Get token from request.
-    QCBORItem item;
-    QCBORDecode_GetNext(context, &item);
-    if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-        printf("Invalid token type %d\n", item.uDataType);
-        return 1; /* invalid message */
-    }
-    uint64_t token = item.val.uint64;
-
-    // Parse the options map.
-    QCBORDecode_GetNext(context, &item);
-    if (item.uDataType != QCBOR_TYPE_MAP) {
-        printf("Invalid options type %d\n", item.uDataType);
-        return 1; /* invalid message */
-    }
-    teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
-    uint16_t mapEntryCount = item.val.uCount;
-    for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
-        QCBORDecode_GetNext(context, &item);
-        teep_label_t label = (teep_label_t)item.label.int64;
-        switch (label) {
-        case TEEP_LABEL_MANIFEST_LIST:
-        {
-            if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                printf("Invalid option type %d\n", item.uDataType);
-                return 1; /* invalid message */
-            }
-            uint16_t arrayEntryCount = item.val.uCount;
-            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
-                QCBORDecode_GetNext(context, &item);
-                if (item.uDataType != QCBOR_TYPE_MAP) {
-                    printf("Invalid suit envelope type %d\n", item.uDataType);
-                    return 1; /* invalid message */
-                }
-                if (errorCode == TEEP_ERR_SUCCESS) {
-                    // Try until we hit the first error.
-                    errorCode = TryProcessSuitEnvelope(context, item.val.uCount);
-                }
-            }
-            break;
-        }
-        default:
-            printf("Unrecognized option label %d\n", label);
-            return 1; /* invalid message */
-            break;
-        }
-    }
-
-    /* 3. Compose a success or error reply. */
-    UsefulBufC reply;
-    //int err = TeepComposeCborError(token, errorCode, &reply);
-    int err = TeepComposeCborSuccess(token, &reply);
-    if (err != 0) {
-        return err;
-    }
-    if (reply.len == 0) {
-        return 1; /* Error */
-    }
-
-    printf("Sending CBOR message: ");
-    HexPrintBuffer(reply.ptr, reply.len);
-
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
-    free((void*)reply.ptr);
-    if (result != OE_OK) {
-        return result;
-    }
-
-    return err;
-}
-
-// Returns 0 on success, non-zero on error.
-int TeepHandleCborDelete(void* sessionHandle, QCBORDecodeContext* context)
-{
-    printf("TeepHandleCborDelete\n");
 
     /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
     /* ... TODO ... */
@@ -646,6 +556,26 @@ int TeepHandleCborDelete(void* sessionHandle, QCBORDecodeContext* context)
                     return 1; /* invalid message */
                 }
                 /* TODO: do a delete */
+            }
+            break;
+        }
+        case TEEP_LABEL_MANIFEST_LIST:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                printf("Invalid option type %d\n", item.uDataType);
+                return 1; /* invalid message */
+            }
+            uint16_t arrayEntryCount = item.val.uCount;
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                if (item.uDataType != QCBOR_TYPE_MAP) {
+                    printf("Invalid suit envelope type %d\n", item.uDataType);
+                    return 1; /* invalid message */
+                }
+                if (errorCode == TEEP_ERR_SUCCESS) {
+                    // Try until we hit the first error.
+                    errorCode = TryProcessSuitEnvelope(context, item.val.uCount);
+                }
             }
             break;
         }
@@ -749,13 +679,8 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
             return 1;
         }
         break;
-    case TEEP_MESSAGE_INSTALL:
-        if (TeepHandleCborInstall(sessionHandle, &context) != 0) {
-            return 1;
-        }
-        break;
-    case TEEP_MESSAGE_DELETE:
-        if (TeepHandleCborDelete(sessionHandle, &context) != 0) {
+    case TEEP_MESSAGE_UPDATE:
+        if (TeepHandleCborUpdate(sessionHandle, &context) != 0) {
             return 1;
         }
         break;

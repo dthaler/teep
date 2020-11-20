@@ -471,9 +471,6 @@ int TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulB
         // Copy token from request.
         QCBOREncode_AddUInt64(&context, token);
 
-        // Add err-code uint.
-        QCBOREncode_AddInt64(&context, errorCode);
-        
         QCBOREncode_OpenMap(&context);
         {
             // TODO: Add ta-list.
@@ -481,6 +478,9 @@ int TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulB
             // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TC_LIST, ta_id);
         }
         QCBOREncode_CloseMap(&context);
+
+        // Add err-code uint.
+        QCBOREncode_AddInt64(&context, errorCode);
     }
     QCBOREncode_CloseArray(&context);
 

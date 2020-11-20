@@ -132,7 +132,6 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
         if (result != OE_OK) {
             return result;
         }
-        QCBOREncode_AddUInt64(&context, token);
 
         // Draft -03 implies we have to store the token for validation
         // upon receiving a QueryResponse, but that adversely affects
@@ -145,11 +144,11 @@ int TeepComposeCborQueryRequestTBS(UsefulBufC* encoded)
 
         QCBOREncode_OpenMap(&context);
         {
-            // Insert optional items here once labels are defined.
+            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
         }
         QCBOREncode_CloseMap(&context);
 
-        QCBOREncode_AddInt64(&context, TEEP_TRUSTED_COMPONENTS);
+        QCBOREncode_AddUInt64(&context, TEEP_TRUSTED_COMPONENTS);
     }
     QCBOREncode_CloseArray(&context);
 
@@ -258,18 +257,6 @@ json_t* GetSha256Hash(void* buffer, int len)
     return jose_b64_enc(hash, sizeof(hash));
 }
 
-/* Handle an incoming message from a TEEP Agent. */
-/* Returns 0 on success, or non-zero if error. */
-int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
-{
-    (void)sessionHandle; // Unused.
-    (void)message; // Unused.
-    (void)messageLength; // Unused.
-
-    /* Unrecognized message. */
-    return 1;
-}
-
 // Returns 0 on success, non-zero on error.
 int TeepComposeCborUpdateTBS(
     UsefulBufC* encoded,
@@ -305,10 +292,11 @@ int TeepComposeCborUpdateTBS(
         if (result != OE_OK) {
             return result;
         }
-        QCBOREncode_AddUInt64(&context, token);
 
         QCBOREncode_OpenMap(&context);
         {
+            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
+
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
             {
                 // List any optional components that are reported as unneeded.
@@ -405,19 +393,6 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
     /* ... TODO ... */
 
     QCBORItem item;
-    QCBORDecode_GetNext(context, &item);
-    if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-        printf("Invalid token type %d\n", item.uDataType);
-        return 1; // Invalid message.
-    }
-
-    /* As discussed above in comments in TeepComposeCborQueryRequestTBS(),
-     * draft -03 requires us to validate that the token matches what was
-     * sent in the QueryRequest, but that causes performance problems and
-     * opens us to certain DOS attacks, without any obvious benefit. As such,
-     * we skip this check in the hopes that the spec will be updated to
-     * remove the check.
-     */
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
@@ -433,6 +408,20 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         QCBORDecode_GetNext(context, &item);
         teep_label_t label = (teep_label_t)item.label.int64;
         switch (label) {
+        case TEEP_LABEL_TOKEN:
+            if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
+                printf("Invalid token type %d\n", item.uDataType);
+                return 1; // Invalid message.
+            }
+
+            /* As discussed above in comments in TeepComposeCborQueryRequestTBS(),
+             * draft -03 requires us to validate that the token matches what was
+             * sent in the QueryRequest, but that causes performance problems and
+             * opens us to certain DOS attacks, without any obvious benefit. As such,
+             * we skip this check in the hopes that the spec will be updated to
+             * remove the check.
+             */
+            break;
         case TEEP_LABEL_SELECTED_VERSION:
             if (item.val.uint64 != 0) {
                 printf("Unrecognized protocol version %lld\n", item.val.uint64);
@@ -651,6 +640,8 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
             return 1;
         }
         break;
+    case TEEP_MESSAGE_SUCCESS: /* TODO */
+    case TEEP_MESSAGE_ERROR: /* TODO */
     default:
         return 1; // Unknown message type.
         break;

@@ -138,14 +138,7 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_QUERY_RESPONSE);
 
-        // Copy token from request.
         QCBORItem item;
-        QCBORDecode_GetNext(decodeContext, &item);
-        if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-            printf("Invalid token type %d\n", item.uDataType);
-            return 1; /* invalid message */
-        }
-        QCBOREncode_AddUInt64(&context, item.val.uint64);
 
         // Parse the options map.
         QCBORDecode_GetNext(decodeContext, &item);
@@ -154,15 +147,17 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
             return 1; /* invalid message */
         }
 
-        // Parse the data-item-requested.
-        QCBORDecode_GetNext(decodeContext, &item);
-        if (item.uDataType != QCBOR_TYPE_INT64) {
-            printf("Invalid data-item-requested type %d\n", item.uDataType);
-            return 1; /* invalid message */
-        }
-
         QCBOREncode_OpenMap(&context);
         {
+            // Copy token from request.
+            // TODO: only include this if the QueryRequest had one.
+            QCBORDecode_GetNext(decodeContext, &item);
+            if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
+                printf("Invalid token type %d\n", item.uDataType);
+                return 1; /* invalid message */
+            }
+            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, item.val.uint64);
+
             // Add tc-list.  Currently we populate this from the list of
             // "unneeded" components since most TEEs (like SGX) can't enumerate
             // any others anyway.
@@ -211,6 +206,13 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
             }
         }
         QCBOREncode_CloseMap(&context);
+
+        // Parse the data-item-requested.
+        QCBORDecode_GetNext(decodeContext, &item);
+        if (item.uDataType != QCBOR_TYPE_INT64) {
+            printf("Invalid data-item-requested type %d\n", item.uDataType);
+            return 1; /* invalid message */
+        }
     }
     QCBOREncode_CloseArray(&context);
 
@@ -430,12 +432,12 @@ int TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_SUCCESS);
 
-        // Copy token from request.
-        QCBOREncode_AddUInt64(&context, token);
-
         // Add option map.
         QCBOREncode_OpenMap(&context);
         {
+            // Copy token from request.
+            // TODO: only include this if the Update had one.
+            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
         }
         QCBOREncode_CloseMap(&context);
     }
@@ -468,11 +470,12 @@ int TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulB
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_ERROR);
 
-        // Copy token from request.
-        QCBOREncode_AddUInt64(&context, token);
-
         QCBOREncode_OpenMap(&context);
         {
+            // Copy token from request.
+            // TODO: only include this if the Install had one.
+            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
+
             // TODO: Add ta-list.
             // UsefulBufC ta_id;
             // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TC_LIST, ta_id);
@@ -521,14 +524,8 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
      */
      /* ... TODO ... */
 
-    // Get token from request.
     QCBORItem item;
-    QCBORDecode_GetNext(context, &item);
-    if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-        printf("Invalid token type %d\n", item.uDataType);
-        return 1; /* invalid message */
-    }
-    uint64_t token = item.val.uint64;
+    uint64_t token = 0;
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
@@ -542,6 +539,16 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
         QCBORDecode_GetNext(context, &item);
         teep_label_t label = (teep_label_t)item.label.int64;
         switch (label) {
+        case TEEP_LABEL_TOKEN:
+        {
+            // Get token from request.
+            if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
+                printf("Invalid token type %d\n", item.uDataType);
+                return 1; /* invalid message */
+            }
+            token = item.val.uint64;
+            break;
+        }
         case TEEP_LABEL_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
@@ -568,7 +575,7 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
-                if (item.uDataType != QCBOR_TYPE_MAP) {
+                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                     printf("Invalid suit envelope type %d\n", item.uDataType);
                     return 1; /* invalid message */
                 }

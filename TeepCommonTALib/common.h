@@ -1,5 +1,6 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #pragma once
+#include "teep_protocol.h"
 
 #ifdef ENABLE_OTRP
 int OTrPHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength);
@@ -7,7 +8,7 @@ int OTrPHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
 #ifdef TEEP_ENABLE_JSON
 int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength);
 #endif
-int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength);
+teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength);
 void HexPrintBuffer(const void* buffer, int length);
 
 #if defined(ENABLE_OTRP) || defined(TEEP_ENABLE_JSON)

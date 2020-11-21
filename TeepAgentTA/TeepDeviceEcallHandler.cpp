@@ -115,8 +115,7 @@ const char* TeepComposeJsonQueryResponse(
 }
 #endif
 
-// Returns 0 on success, non-zero on error.
-int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
+static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -124,7 +123,7 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
-        return 1; /* Error */
+        return TEEP_ERR_INTERNAL_ERROR;
     }
     encoded->ptr = rawBuffer;
     encoded->len = maxBufferLength;
@@ -144,7 +143,7 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_MAP) {
             REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
-            return 1;
+            return TEEP_ERR_ILLEGAL_PARAMETER;
         }
 
         QCBOREncode_OpenMap(&context);
@@ -154,7 +153,7 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
             QCBORDecode_GetNext(decodeContext, &item);
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
                 REPORT_TYPE_ERROR("token", QCBOR_TYPE_UINT64, item);
-                return 1;
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, item.val.uint64);
 
@@ -211,24 +210,22 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_INT64) {
             REPORT_TYPE_ERROR("data-item-requested", QCBOR_TYPE_INT64, item);
-            return 1;
+            return TEEP_ERR_ILLEGAL_PARAMETER;
         }
     }
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    return err;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
 }
 
-// Returns 0 on success, non-zero on error.
-int TeepComposeCborQueryResponse(QCBORDecodeContext* context, UsefulBufC* queryResponse)
+static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* context, UsefulBufC* queryResponse)
 {
     /* Compose a raw QueryResponse message to be signed. */
     return TeepComposeCborQueryResponseTBS(context, queryResponse);
 }
 
-// Returns 0 on success, non-zero on error.
-int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
     printf("TeepHandleCborQueryRequest\n");
 
@@ -248,12 +245,12 @@ int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 
     /* 3. Compose a response. */
     UsefulBufC queryResponse;
-    int err = TeepComposeCborQueryResponse(context, &queryResponse);
-    if (err != 0) {
+    teep_error_code_t err = TeepComposeCborQueryResponse(context, &queryResponse);
+    if (err != TEEP_ERR_SUCCESS) {
         return err;
     }
     if (queryResponse.len == 0) {
-        return 1; /* Error */
+        return TEEP_ERR_ILLEGAL_PARAMETER;
     }
 
     printf("Sending CBOR message: ");
@@ -261,10 +258,11 @@ int TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 
     printf("Sending QueryResponse...\n");
 
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
+    int retval;
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&retval, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
     free((void*)queryResponse.ptr);
     if (result != OE_OK) {
-        return result;
+        return TEEP_ERR_INTERNAL_ERROR;
     }
 
     return err;
@@ -579,7 +577,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
                 }
                 if (errorCode == TEEP_ERR_SUCCESS) {
                     // Try until we hit the first error.
-                    errorCode = TryProcessSuitEnvelope(context, item.val.uCount);
+                    errorCode = TryProcessSuitEnvelope(item.val.string);
                 }
             }
             break;
@@ -651,9 +649,9 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
 #endif
 
 /* Handle an incoming message from a TEEP Agent. */
-/* Returns 0 on success, or non-zero if error. */
-int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
+teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
+    teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
@@ -668,35 +666,34 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
         REPORT_TYPE_ERROR("message", QCBOR_TYPE_ARRAY, item);
-        return 1;
+        return TEEP_ERR_ILLEGAL_PARAMETER;
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
         REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_INT64, item);
-        return 1;
+        return TEEP_ERR_ILLEGAL_PARAMETER;
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
     printf("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_REQUEST:
-        if (TeepHandleCborQueryRequest(sessionHandle, &context) != 0) {
-            return 1;
-        }
+        teeperr = TeepHandleCborQueryRequest(sessionHandle, &context);
         break;
     case TEEP_MESSAGE_UPDATE:
-        if (TeepHandleCborUpdate(sessionHandle, &context) != 0) {
-            return 1;
-        }
+        teeperr = TeepHandleCborUpdate(sessionHandle, &context);
         break;
     default:
-        return 1; /* unknown message type */
+        teeperr = TEEP_ERR_ILLEGAL_PARAMETER;
         break;
+    }
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
     }
 
     QCBORError err = QCBORDecode_Finish(&context);
-    return err;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
 }
 
 #ifdef TEEP_ENABLE_JSON

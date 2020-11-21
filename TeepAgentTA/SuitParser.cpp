@@ -36,12 +36,21 @@ teep_error_code_t TryProcessSuitCommon(QCBORDecodeContext* context, uint16_t map
 }
 
 // Parse a SUIT_Manifest out of a decode context and try to install it.
-teep_error_code_t TryProcessSuitManifest(QCBORDecodeContext* context, uint16_t mapEntryCount)
+teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded)
 {
+    QCBORDecodeContext context;
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
     QCBORItem item;
+    QCBORDecode_GetNext(&context, &item);
+    if (item.uDataType != QCBOR_TYPE_MAP) {
+        REPORT_TYPE_ERROR("SUIT_Manifest", QCBOR_TYPE_MAP, item);
+        return TEEP_ERR_ILLEGAL_PARAMETER;
+    }
+    int mapEntryCount = item.val.uCount;
+
     teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
     for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
-        QCBORDecode_GetNext(context, &item);
+        QCBORDecode_GetNext(&context, &item);
         if (errorCode != TEEP_ERR_SUCCESS) {
             continue;
         }
@@ -64,7 +73,7 @@ teep_error_code_t TryProcessSuitManifest(QCBORDecodeContext* context, uint16_t m
                 REPORT_TYPE_ERROR("suit-manifest-common", QCBOR_TYPE_MAP, item);
                 return TEEP_ERR_ILLEGAL_PARAMETER;
             }
-            errorCode = TryProcessSuitCommon(context, item.val.uCount);
+            errorCode = TryProcessSuitCommon(&context, item.val.uCount);
             break;
         case SUIT_MANIFEST_LABEL_REFERENCE_URI:
             errorCode = TEEP_ERR_INTERNAL_ERROR;
@@ -77,12 +86,22 @@ teep_error_code_t TryProcessSuitManifest(QCBORDecodeContext* context, uint16_t m
 }
 
 // Parse a SUIT_Envelope out of a decode context and try to install it.
-teep_error_code_t TryProcessSuitEnvelope(QCBORDecodeContext* context, size_t mapEntryCount)
+teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded)
 {
+    QCBORDecodeContext context;
+
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
     QCBORItem item;
+    QCBORDecode_GetNext(&context, &item);
+    if (item.uDataType != QCBOR_TYPE_MAP) {
+        REPORT_TYPE_ERROR("SUIT_Envelope", QCBOR_TYPE_MAP, item);
+        return TEEP_ERR_ILLEGAL_PARAMETER;
+    }
+    size_t mapEntryCount = item.val.uCount;
+
     teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
     for (size_t mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
-        QCBORDecode_GetNext(context, &item);
+        QCBORDecode_GetNext(&context, &item);
         if (errorCode != TEEP_ERR_SUCCESS) {
             continue;
         }
@@ -100,7 +119,7 @@ teep_error_code_t TryProcessSuitEnvelope(QCBORDecodeContext* context, size_t map
                 REPORT_TYPE_ERROR("suit-manifest", QCBOR_TYPE_BYTE_STRING, item);
                 return TEEP_ERR_ILLEGAL_PARAMETER;
             }
-            errorCode = TryProcessSuitManifest(context, item.val.uCount);
+            errorCode = TryProcessSuitManifest(item.val.string);
             break;
         default:
             errorCode = TEEP_ERR_ILLEGAL_PARAMETER;

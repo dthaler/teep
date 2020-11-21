@@ -143,8 +143,8 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
         // Parse the options map.
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_MAP) {
-            printf("Invalid options type %d\n", item.uDataType);
-            return 1; /* invalid message */
+            REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
+            return 1;
         }
 
         QCBOREncode_OpenMap(&context);
@@ -153,8 +153,8 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
             // TODO: only include this if the QueryRequest had one.
             QCBORDecode_GetNext(decodeContext, &item);
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                printf("Invalid token type %d\n", item.uDataType);
-                return 1; /* invalid message */
+                REPORT_TYPE_ERROR("token", QCBOR_TYPE_UINT64, item);
+                return 1;
             }
             QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, item.val.uint64);
 
@@ -210,8 +210,8 @@ int TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBuf
         // Parse the data-item-requested.
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_INT64) {
-            printf("Invalid data-item-requested type %d\n", item.uDataType);
-            return 1; /* invalid message */
+            REPORT_TYPE_ERROR("data-item-requested", QCBOR_TYPE_INT64, item);
+            return 1;
         }
     }
     QCBOREncode_CloseArray(&context);
@@ -409,8 +409,7 @@ int TeepHandleJsonInstall(void* sessionHandle, json_t* request)
 }
 #endif
 
-// Returns 0 on success, non-zero on error.
-int TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
+teep_error_code_t TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -418,7 +417,7 @@ int TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
-        return 1; /* Error */
+        return TEEP_ERR_INTERNAL_ERROR;
     }
     encoded->ptr = rawBuffer;
     encoded->len = maxBufferLength;
@@ -444,11 +443,10 @@ int TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    return err;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
 }
 
-// Returns 0 on success, non-zero on error.
-int TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulBufC* encoded)
+teep_error_code_t TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -456,7 +454,7 @@ int TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulB
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
-        return 1; /* Error */
+        return TEEP_ERR_INTERNAL_ERROR;
     }
     encoded->ptr = rawBuffer;
     encoded->len = maxBufferLength;
@@ -488,25 +486,22 @@ int TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulB
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    return err;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
 }
 
-// Returns 0 on success, non-zero on error.
-int TeepComposeCborSuccess(uint64_t token, UsefulBufC* reply)
+teep_error_code_t TeepComposeCborSuccess(uint64_t token, UsefulBufC* reply)
 {
     /* Compose a raw QueryResponse message to be signed. */
     return TeepComposeCborSuccessTBS(token, reply);
 }
 
-// Returns 0 on success, non-zero on error.
-int TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC* reply)
+teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC* reply)
 {
     /* Compose a raw QueryResponse message to be signed. */
     return TeepComposeCborErrorTBS(token, errorCode, reply);
 }
 
-// Returns 0 on success, non-zero on error.
-int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
+teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
 {
     printf("TeepHandleCborInstall\n");
 
@@ -530,8 +525,8 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
-        printf("Invalid options type %d\n", item.uDataType);
-        return 1; /* invalid message */
+        REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
+        return TEEP_ERR_ILLEGAL_PARAMETER;
     }
     teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
     uint16_t mapEntryCount = item.val.uCount;
@@ -543,8 +538,8 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
         {
             // Get token from request.
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                printf("Invalid token type %d\n", item.uDataType);
-                return 1; /* invalid message */
+                REPORT_TYPE_ERROR("token", QCBOR_TYPE_UINT64, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             token = item.val.uint64;
             break;
@@ -552,15 +547,15 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
         case TEEP_LABEL_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                printf("Invalid option type %d\n", item.uDataType);
-                return 1; /* invalid message */
+                REPORT_TYPE_ERROR("tc-list", QCBOR_TYPE_ARRAY, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    printf("Invalid component-id type %d\n", item.uDataType);
-                    return 1; /* invalid message */
+                    REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
+                    return TEEP_ERR_ILLEGAL_PARAMETER;
                 }
                 /* TODO: do a delete */
             }
@@ -569,15 +564,18 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
         case TEEP_LABEL_MANIFEST_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                printf("Invalid option type %d\n", item.uDataType);
-                return 1; /* invalid message */
+                REPORT_TYPE_ERROR("manifest-list", QCBOR_TYPE_ARRAY, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             uint16_t arrayEntryCount = item.val.uCount;
+#ifdef _DEBUG
+            printf("Parsing %d manifest-list entries...\n", item.val.uCount);
+#endif
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    printf("Invalid suit envelope type %d\n", item.uDataType);
-                    return 1; /* invalid message */
+                    REPORT_TYPE_ERROR("SUIT_Envelope", QCBOR_TYPE_BYTE_STRING, item);
+                    return TEEP_ERR_ILLEGAL_PARAMETER;
                 }
                 if (errorCode == TEEP_ERR_SUCCESS) {
                     // Try until we hit the first error.
@@ -588,32 +586,33 @@ int TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
         }
         default:
             printf("Unrecognized option label %d\n", label);
-            return 1; /* invalid message */
+            return TEEP_ERR_ILLEGAL_PARAMETER; /* invalid message */
             break;
         }
     }
 
     /* 3. Compose a success or error reply. */
     UsefulBufC reply;
-    //int err = TeepComposeCborError(token, errorCode, &reply);
-    int err = TeepComposeCborSuccess(token, &reply);
-    if (err != 0) {
+    //teep_error_code_t err = TeepComposeCborError(token, errorCode, &reply);
+    teep_error_code_t err = TeepComposeCborSuccess(token, &reply);
+    if (err != TEEP_ERR_SUCCESS) {
         return err;
     }
     if (reply.len == 0) {
-        return 1; /* Error */
+        return TEEP_ERR_INTERNAL_ERROR;
     }
 
     printf("Sending CBOR message: ");
     HexPrintBuffer(reply.ptr, reply.len);
 
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    int retval;
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&retval, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
     free((void*)reply.ptr);
-    if (result != OE_OK) {
-        return result;
+    if ((result != OE_OK) || (result != 0)) {
+        return TEEP_ERR_INTERNAL_ERROR;
     }
 
-    return err;
+    return TEEP_ERR_SUCCESS;
 }
 
 #ifdef TEEP_ENABLE_JSON
@@ -668,14 +667,14 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
-        printf("Invalid TYPE type %d\n", item.uDataType);
-        return 1; /* invalid message */
+        REPORT_TYPE_ERROR("message", QCBOR_TYPE_ARRAY, item);
+        return 1;
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
-        printf("Invalid TYPE type %d\n", item.uDataType);
-        return 1; /* invalid message */
+        REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_INT64, item);
+        return 1;
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
@@ -796,6 +795,9 @@ int ecall_RequestTA(
 #ifdef TEEP_ENABLE_JSON
         const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
 #else
+        if (!useCbor) {
+            return 1; /* Error */
+        }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
 #endif
         result = ocall_Connect(&err, tamUri, acceptMediaType);
@@ -858,6 +860,9 @@ int ecall_UnrequestTA(
 #ifdef TEEP_ENABLE_JSON
         const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
 #else
+        if (!useCbor) {
+            return 1; /* Error */
+        }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
 #endif
         result = ocall_Connect(&err, tamUri, acceptMediaType);

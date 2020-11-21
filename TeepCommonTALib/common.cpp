@@ -17,6 +17,27 @@ extern "C" {
 #include "openssl/x509.h"
 };
 
+#ifdef _DEBUG
+static const char* cbor_type_name[] = {
+    nullptr, nullptr , "int64", "uint64", "array", "map", "bstr", "tstr"
+};
+
+static const char* get_cbor_type_name(unsigned int type)
+{
+    if ((type >= OE_COUNTOF(cbor_type_name)) || cbor_type_name[type] == nullptr) {
+        static char buffer[80];
+        sprintf(buffer, "? (%d)", type);
+        return buffer;
+    }
+    return cbor_type_name[type];
+}
+
+void report_type_error(const char* id, int expected_type, int actual_type)
+{
+    printf("Invalid %s type %s, expected %s\n", id, get_cbor_type_name(actual_type), get_cbor_type_name(expected_type));
+}
+#endif
+
 #if 0
 #define ASSERT(x) if (!(x)) { printf("wrong\n"); }
 void TestJwLibs(void)

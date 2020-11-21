@@ -49,20 +49,20 @@ teep_error_code_t TryProcessSuitManifest(QCBORDecodeContext* context, uint16_t m
         switch (label) {
         case SUIT_MANIFEST_LABEL_VERSION:
             if (item.uDataType != QCBOR_TYPE_INT64 || item.val.int64 != SUIT_MANIFEST_VERSION_VALUE) {
-                printf("Invalid suit-manifest-version\n");
-                return TEEP_ERR_ILLEGAL_PARAMETER; /* invalid message */
+                REPORT_TYPE_ERROR("suit-manifest-version", QCBOR_TYPE_INT64, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             break;
         case SUIT_MANIFEST_LABEL_SEQUENCE_NUMBER:
             if (item.uDataType != QCBOR_TYPE_UINT64) {
-                printf("Invalid suit-manifest-sequence-number type %d\n", item.uDataType);
-                return TEEP_ERR_ILLEGAL_PARAMETER; /* invalid message */
+                REPORT_TYPE_ERROR("suit-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             break;
         case SUIT_MANIFEST_LABEL_COMMON:
             if (item.uDataType != QCBOR_TYPE_MAP) {
-                printf("Invalid suit-manifest-common type %d\n", item.uDataType);
-                return TEEP_ERR_ILLEGAL_PARAMETER; /* invalid message */
+                REPORT_TYPE_ERROR("suit-manifest-common", QCBOR_TYPE_MAP, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             errorCode = TryProcessSuitCommon(context, item.val.uCount);
             break;
@@ -89,12 +89,16 @@ teep_error_code_t TryProcessSuitEnvelope(QCBORDecodeContext* context, size_t map
         suit_envelope_label_t label = (suit_envelope_label_t)item.label.int64;
         switch (label) {
         case SUIT_ENVELOPE_LABEL_AUTHENTICATION_WRAPPER:
+            if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                REPORT_TYPE_ERROR("suit-authentication-wrapper", QCBOR_TYPE_BYTE_STRING, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
+            }
             // TODO: process authentication wrapper
             break;
         case SUIT_ENVELOPE_LABEL_MANIFEST:
-            if (item.uDataType != QCBOR_TYPE_MAP) {
-                printf("Invalid SUIT_Envelope type %d\n", item.uDataType);
-                return TEEP_ERR_ILLEGAL_PARAMETER; /* invalid message */
+            if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                REPORT_TYPE_ERROR("suit-manifest", QCBOR_TYPE_BYTE_STRING, item);
+                return TEEP_ERR_ILLEGAL_PARAMETER;
             }
             errorCode = TryProcessSuitManifest(context, item.val.uCount);
             break;

@@ -337,7 +337,7 @@ int TeepComposeCborUpdateTBS(
                         }
                     }
                     if (!found) {
-                        QCBOREncode_AddEncoded(&context, manifest->ManifestContents);
+                        QCBOREncode_AddBytes(&context, manifest->ManifestContents);
                         (*count)++;
                     }
                 }
@@ -350,7 +350,7 @@ int TeepComposeCborUpdateTBS(
                     }
 
                     // The component is allowed and optional, so ok to install on request.
-                    QCBOREncode_AddEncoded(&context, manifest->ManifestContents);
+                    QCBOREncode_AddBytes(&context, manifest->ManifestContents);
                     (*count)++;
                 }
             }
@@ -397,8 +397,8 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
-        printf("Invalid options type %d\n", item.uDataType);
-        return 1; // Invalid message.
+        REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
+        return 1;
     }
     RequestedComponentInfo currentComponentList(nullptr);
     RequestedComponentInfo requestedComponentList(nullptr);
@@ -410,8 +410,8 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         switch (label) {
         case TEEP_LABEL_TOKEN:
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                printf("Invalid token type %d\n", item.uDataType);
-                return 1; // Invalid message.
+                REPORT_TYPE_ERROR("options", QCBOR_TYPE_UINT64, item);
+                return 1;
             }
 
             /* As discussed above in comments in TeepComposeCborQueryRequestTBS(),
@@ -438,15 +438,15 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         case TEEP_LABEL_REQUESTED_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                printf("Invalid requested-tc-list type %d\n", item.uDataType);
-                return 1; // Invalid message.
+                REPORT_TYPE_ERROR("requested-tc-list", QCBOR_TYPE_ARRAY, item);
+                return 1;
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_MAP) {
-                    printf("Invalid requested-tc-info type %d\n", item.uDataType);
-                    return 1; // Invalid message.
+                    REPORT_TYPE_ERROR("requested-tc-info", QCBOR_TYPE_MAP, item);
+                    return 1;
                 }
                 uint16_t tcInfoParameterCount = item.val.uCount;
                 RequestedComponentInfo* currentRci = nullptr;
@@ -457,7 +457,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                     case TEEP_LABEL_COMPONENT_ID:
                     {
                         if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                            printf("Invalid component-id type %d\n", item.uDataType);
+                            REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
                             return 1;
                         }
                         if (currentRci != nullptr) {
@@ -471,7 +471,8 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                     }
                     case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
-                            return 1; /* invalid message */
+                            REPORT_TYPE_ERROR("tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
+                            return 1;
                         }
                         if (currentRci == nullptr) {
                             return 1;
@@ -480,7 +481,8 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                         break;
                     case TEEP_LABEL_HAVE_BINARY:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
-                            return 1; /* invalid message */
+                            REPORT_TYPE_ERROR("have-binary", QCBOR_TYPE_UINT64, item);
+                            return 1;
                         }
                         if (currentRci == nullptr) {
                             return 1;
@@ -498,14 +500,14 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         case TEEP_LABEL_UNNEEDED_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                printf("Invalid unneeded-tc-list type %d\n", item.uDataType);
-                return 1; // Invalid message.
+                REPORT_TYPE_ERROR("unneeded-tc-list", QCBOR_TYPE_ARRAY, item);
+                return 1;
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    printf("Invalid component-id type %d\n", item.uDataType);
+                    REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
                     return 1;
                 }
                 RequestedComponentInfo* currentUci = new RequestedComponentInfo(&item.val.string);
@@ -517,16 +519,16 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
         case TEEP_LABEL_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                printf("Invalid tc-list type %d\n", item.uDataType);
-                return 1; // Invalid message.
+                REPORT_TYPE_ERROR("tc-list", QCBOR_TYPE_ARRAY, item);
+                return 1;
             }
             RequestedComponentInfo* currentRci = nullptr;
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_MAP) {
-                    printf("Invalid tc-info type %d\n", item.uDataType);
-                    return 1; // Invalid message.
+                    REPORT_TYPE_ERROR("tc-list", QCBOR_TYPE_MAP, item);
+                    return 1;
                 }
                 uint16_t tcInfoParameterCount = item.val.uCount;
                 for (int tcInfoParameterIndex = 0; tcInfoParameterIndex < tcInfoParameterCount; tcInfoParameterIndex++) {
@@ -536,7 +538,7 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                     case TEEP_LABEL_COMPONENT_ID:
                     {
                         if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                            printf("Invalid component-id type %d\n", item.uDataType);
+                            REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
                             return 1;
                         }
                         if (currentRci != nullptr) {
@@ -550,7 +552,8 @@ int TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context
                     }
                     case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
-                            return 1; /* invalid message */
+                            REPORT_TYPE_ERROR("tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
+                            return 1;
                         }
                         if (currentRci == nullptr) {
                             return 1;
@@ -622,14 +625,14 @@ int TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
-        printf("Invalid TYPE type %d\n", item.uDataType);
-        return 1; // Invalid message.
+        REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_ARRAY, item);
+        return 1;
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
-        printf("Invalid TYPE type %d\n", item.uDataType);
-        return 1; // Invalid message.
+        REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_INT64, item);
+        return 1;
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;

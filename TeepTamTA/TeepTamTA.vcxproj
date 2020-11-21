@@ -78,6 +78,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="LegacyTeepJson.cpp" />
     <ClCompile Include="Manifest.cpp" />
     <ClCompile Include="OTrPTamEcallHandler.cpp" />
     <ClCompile Include="RequestedComponentInfo.cpp" />
@@ -87,6 +88,7 @@
   <ItemGroup>
     <ClInclude Include="Manifest.h" />
     <ClInclude Include="RequestedComponentInfo.h" />
+    <ClInclude Include="TeepTamEcallHandler.h" />
     <ClInclude Include="TeepTam_t.h" />
     <ClInclude Include="optee/user_ta_header_defines.h" />
   </ItemGroup>

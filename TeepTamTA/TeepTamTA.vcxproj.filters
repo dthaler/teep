@@ -33,6 +33,9 @@
     <ClCompile Include="RequestedComponentInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LegacyTeepJson.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="optee/user_ta_header_defines.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RequestedComponentInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TeepTamEcallHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1005,33 +1005,6 @@
     <ClCompile Include="$(OpensslDir)crypto\asn1\a_verify.c">
       <Filter>Source Files\asn1</Filter>
     </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_cbc.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_cfb.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_core.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ctr.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ecb.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ige.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_misc.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ofb.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_wrap.c">
-      <Filter>Source Files\asn1</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\asn1\ameth_lib.c">
       <Filter>Source Files\asn1</Filter>
     </ClCompile>
@@ -1781,6 +1754,33 @@
     </ClCompile>
     <ClCompile Include="optee\rand_optee.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_cbc.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_cfb.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_core.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ctr.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ecb.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ige.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_misc.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ofb.c">
+      <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\aes\aes_wrap.c">
+      <Filter>Source Files\aes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

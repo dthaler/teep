@@ -60,13 +60,32 @@ git clone --recurse-submodules https://github.com/dthaler/OTrP.git
 
 You must have the following installed to compile and debug:
 * [Visual Studio 2019](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
-* [Open Enclave Visual Studio Extension](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.12.32 or later
+* [Open Enclave Visual Studio Extension](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.14 or later
 and its [prerequisites](https://github.com/dthaler/openenclave/blob/master/docs/GettingStartedDocs/VisualStudioWindows.md)
 
 The TAM is currently written to run on Windows, due to the HTTP layer.
 However, the TeepAgentBrokerLib/HttpHelper.h API should already be
 platform-agnostic and one could replace the Windows HttpHelper.cpp with 
 a different implementation for other platforms.
+
+## Building
+
+The Open Enclave Visual Studio Extension v0.14 broke compilation.  If
+you have that extension version, you need to do the following workaround.
+Under the repository root directory, you will find "openssl" subdirectories
+for various build configurations:
+
+* packages\open-enclave-cross.0.14.0\build\native\linux\bionic\sgx\default\debug\include\openenclave\3rdparty\openssl
+* packages\open-enclave-cross.0.14.0\build\native\linux\bionic\sgx\default\release\include\openenclave\3rdparty\openssl
+* packages\open-enclave-cross.0.14.0\build\native\linux\xenial\sgx\default\debug\include\openenclave\3rdparty\openssl
+* packages\open-enclave-cross.0.14.0\build\native\linux\xenial\sgx\default\release\include\openenclave\3rdparty\openssl
+* packages\open-enclave-cross.0.14.0\build\native\win\sgx\default\debug\include\openenclave\3rdparty\openssl
+* packages\open-enclave-cross.0.14.0\build\native\win\sgx\default\debug\include\openenclave\3rdparty\openssl
+
+These interfere with the current project compilation, so must be removed
+or renamed.  For example, rename "openssl" to "no-openssl".
+
+You can then open the Teep.sln file in Visual Studio and build for x64.
 
 ## Running the code
 

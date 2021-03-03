@@ -115,6 +115,7 @@ const char* TeepComposeJsonQueryResponse(
 }
 #endif
 
+// Parse QueryRequest and compose QueryResponse.
 static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
@@ -123,7 +124,7 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
-        return TEEP_ERR_INTERNAL_ERROR;
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
     encoded->ptr = rawBuffer;
     encoded->len = maxBufferLength;
@@ -139,11 +140,11 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
 
         QCBORItem item;
 
-        // Parse the options map.
+        // Parse the QueryRequest options map.
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_MAP) {
             REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
-            return TEEP_ERR_ILLEGAL_PARAMETER;
+            return TEEP_ERR_PERMANENT_ERROR;
         }
 
         QCBOREncode_OpenMap(&context);
@@ -153,7 +154,7 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
             QCBORDecode_GetNext(decodeContext, &item);
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
                 REPORT_TYPE_ERROR("token", QCBOR_TYPE_UINT64, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, item.val.uint64);
 
@@ -166,6 +167,8 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
                 for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
                     QCBOREncode_OpenMap(&context);
                     {
+                        // TODO: convert all ta_ids to array's for
+                        // SUIT_Component_identifier
                         UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
                         QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_COMPONENT_ID, UsefulBuf_Const(ta_id));
                     }
@@ -210,13 +213,13 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_INT64) {
             REPORT_TYPE_ERROR("data-item-requested", QCBOR_TYPE_INT64, item);
-            return TEEP_ERR_ILLEGAL_PARAMETER;
+            return TEEP_ERR_PERMANENT_ERROR;
         }
     }
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
 static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* context, UsefulBufC* queryResponse)
@@ -229,20 +232,6 @@ static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDe
 {
     printf("TeepHandleCborQueryRequest\n");
 
-    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
-    /* ... TODO ... */
-
-    /* 2.  Validate that the request TAM certificate is chained to a trusted
-     *     CA that the TEE embeds as its trust anchor.
-     *
-     *     *  Cache the CA OCSP stapling data and certificate revocation
-     *        check status for other subsequent requests.
-     *
-     *     *  A TEE can use its own clock time for the OCSP stapling data
-     *        validation.
-     */
-     /* ... TODO ... */
-
     /* 3. Compose a response. */
     UsefulBufC queryResponse;
     teep_error_code_t err = TeepComposeCborQueryResponse(context, &queryResponse);
@@ -250,7 +239,7 @@ static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDe
         return err;
     }
     if (queryResponse.len == 0) {
-        return TEEP_ERR_ILLEGAL_PARAMETER;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
 
     printf("Sending CBOR message: ");
@@ -262,7 +251,7 @@ static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDe
     oe_result_t result = ocall_QueueOutboundTeepMessage(&retval, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
     free((void*)queryResponse.ptr);
     if (result != OE_OK) {
-        return TEEP_ERR_INTERNAL_ERROR;
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
 
     return err;
@@ -415,7 +404,7 @@ teep_error_code_t TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
-        return TEEP_ERR_INTERNAL_ERROR;
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
     encoded->ptr = rawBuffer;
     encoded->len = maxBufferLength;
@@ -441,7 +430,7 @@ teep_error_code_t TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
 teep_error_code_t TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulBufC* encoded)
@@ -452,7 +441,7 @@ teep_error_code_t TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t erro
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
-        return TEEP_ERR_INTERNAL_ERROR;
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
     encoded->ptr = rawBuffer;
     encoded->len = maxBufferLength;
@@ -472,9 +461,11 @@ teep_error_code_t TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t erro
             // TODO: only include this if the Install had one.
             QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
 
-            // TODO: Add ta-list.
-            // UsefulBufC ta_id;
-            // QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TC_LIST, ta_id);
+            // Add error message.
+            // TODO: Add err-msg.
+
+            // Add suit-reports if Update failed.
+            // TODO: Add suit-reports.
         }
         QCBOREncode_CloseMap(&context);
 
@@ -484,38 +475,38 @@ teep_error_code_t TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t erro
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
-    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
 teep_error_code_t TeepComposeCborSuccess(uint64_t token, UsefulBufC* reply)
 {
     /* Compose a raw QueryResponse message to be signed. */
-    return TeepComposeCborSuccessTBS(token, reply);
+    teep_error_code_t errorCode = TeepComposeCborSuccessTBS(token, reply);
+    if (errorCode != TEEP_ERR_SUCCESS) {
+        return errorCode;
+    }
+
+    /* TODO: sign the message */
+
+    return TEEP_ERR_SUCCESS;
 }
 
 teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC* reply)
 {
     /* Compose a raw QueryResponse message to be signed. */
-    return TeepComposeCborErrorTBS(token, errorCode, reply);
+    teep_error_code_t result = TeepComposeCborErrorTBS(token, errorCode, reply);
+    if (result != TEEP_ERR_SUCCESS) {
+        return result;
+    }
+
+    /* TODO: sign the message */
+
+    return TEEP_ERR_SUCCESS;
 }
 
 teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
 {
     printf("TeepHandleCborInstall\n");
-
-    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
-    /* ... TODO ... */
-
-    /* 2.  Validate that the request TAM certificate is chained to a trusted
-     *     CA that the TEE embeds as its trust anchor.
-     *
-     *     *  Cache the CA OCSP stapling data and certificate revocation
-     *        check status for other subsequent requests.
-     *
-     *     *  A TEE can use its own clock time for the OCSP stapling data
-     *        validation.
-     */
-     /* ... TODO ... */
 
     QCBORItem item;
     uint64_t token = 0;
@@ -524,7 +515,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
         REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
-        return TEEP_ERR_ILLEGAL_PARAMETER;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
     teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
     uint16_t mapEntryCount = item.val.uCount;
@@ -537,7 +528,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
             // Get token from request.
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
                 REPORT_TYPE_ERROR("token", QCBOR_TYPE_UINT64, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             token = item.val.uint64;
             break;
@@ -546,14 +537,14 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR("tc-list", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                     REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
-                    return TEEP_ERR_ILLEGAL_PARAMETER;
+                    return TEEP_ERR_PERMANENT_ERROR;
                 }
                 /* TODO: do a delete */
             }
@@ -563,7 +554,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR("manifest-list", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             uint16_t arrayEntryCount = item.val.uCount;
 #ifdef _DEBUG
@@ -573,7 +564,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                     REPORT_TYPE_ERROR("SUIT_Envelope", QCBOR_TYPE_BYTE_STRING, item);
-                    return TEEP_ERR_ILLEGAL_PARAMETER;
+                    return TEEP_ERR_PERMANENT_ERROR;
                 }
                 if (errorCode == TEEP_ERR_SUCCESS) {
                     // Try until we hit the first error.
@@ -584,7 +575,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         }
         default:
             printf("Unrecognized option label %d\n", label);
-            return TEEP_ERR_ILLEGAL_PARAMETER; /* invalid message */
+            return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
             break;
         }
     }
@@ -597,7 +588,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         return err;
     }
     if (reply.len == 0) {
-        return TEEP_ERR_INTERNAL_ERROR;
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
 
     printf("Sending CBOR message: ");
@@ -607,7 +598,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
     oe_result_t result = ocall_QueueOutboundTeepMessage(&retval, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
     free((void*)reply.ptr);
     if ((result != OE_OK) || (result != 0)) {
-        return TEEP_ERR_INTERNAL_ERROR;
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
 
     return TEEP_ERR_SUCCESS;
@@ -661,18 +652,32 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);
 
+    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
+    /* ... TODO ... */
+
+    /* 2.  Validate that the request TAM certificate is chained to a trusted
+     *     CA that the TEE embeds as its trust anchor.
+     *
+     *     *  Cache the CA OCSP stapling data and certificate revocation
+     *        check status for other subsequent requests.
+     *
+     *     *  A TEE can use its own clock time for the OCSP stapling data
+     *        validation.
+     */
+     /* ... TODO ... */
+
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
         REPORT_TYPE_ERROR("message", QCBOR_TYPE_ARRAY, item);
-        return TEEP_ERR_ILLEGAL_PARAMETER;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
         REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_INT64, item);
-        return TEEP_ERR_ILLEGAL_PARAMETER;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
@@ -685,7 +690,7 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
         teeperr = TeepHandleCborUpdate(sessionHandle, &context);
         break;
     default:
-        teeperr = TEEP_ERR_ILLEGAL_PARAMETER;
+        teeperr = TEEP_ERR_PERMANENT_ERROR;
         break;
     }
     if (teeperr != TEEP_ERR_SUCCESS) {
@@ -693,7 +698,7 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
     }
 
     QCBORError err = QCBORDecode_Finish(&context);
-    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_INTERNAL_ERROR;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
 #ifdef TEEP_ENABLE_JSON

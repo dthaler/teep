@@ -26,10 +26,10 @@ teep_error_code_t TryProcessSuitCommon(QCBORDecodeContext* context, uint16_t map
         case SUIT_COMMON_LABEL_COMPONENTS:
         case SUIT_COMMON_LABEL_SEQUENCE:
             // Not yet implemented.
-            errorCode = TEEP_ERR_INTERNAL_ERROR;
+            errorCode = TEEP_ERR_TEMPORARY_ERROR;
             break;
         default:
-            errorCode = TEEP_ERR_ILLEGAL_PARAMETER;
+            errorCode = TEEP_ERR_PERMANENT_ERROR;
         }
     }
     return errorCode;
@@ -44,7 +44,7 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded)
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
         REPORT_TYPE_ERROR("SUIT_Manifest", QCBOR_TYPE_MAP, item);
-        return TEEP_ERR_ILLEGAL_PARAMETER;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
     int mapEntryCount = item.val.uCount;
 
@@ -59,27 +59,27 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded)
         case SUIT_MANIFEST_LABEL_VERSION:
             if (item.uDataType != QCBOR_TYPE_INT64 || item.val.int64 != SUIT_MANIFEST_VERSION_VALUE) {
                 REPORT_TYPE_ERROR("suit-manifest-version", QCBOR_TYPE_INT64, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             break;
         case SUIT_MANIFEST_LABEL_SEQUENCE_NUMBER:
             if (item.uDataType != QCBOR_TYPE_UINT64) {
                 REPORT_TYPE_ERROR("suit-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             break;
         case SUIT_MANIFEST_LABEL_COMMON:
             if (item.uDataType != QCBOR_TYPE_MAP) {
                 REPORT_TYPE_ERROR("suit-manifest-common", QCBOR_TYPE_MAP, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             errorCode = TryProcessSuitCommon(&context, item.val.uCount);
             break;
         case SUIT_MANIFEST_LABEL_REFERENCE_URI:
-            errorCode = TEEP_ERR_INTERNAL_ERROR;
+            errorCode = TEEP_ERR_TEMPORARY_ERROR;
             break;
         default:
-            errorCode = TEEP_ERR_ILLEGAL_PARAMETER;
+            errorCode = TEEP_ERR_PERMANENT_ERROR;
         }
     }
     return errorCode;
@@ -95,7 +95,7 @@ teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded)
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
         REPORT_TYPE_ERROR("SUIT_Envelope", QCBOR_TYPE_MAP, item);
-        return TEEP_ERR_ILLEGAL_PARAMETER;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
     size_t mapEntryCount = item.val.uCount;
 
@@ -110,19 +110,19 @@ teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded)
         case SUIT_ENVELOPE_LABEL_AUTHENTICATION_WRAPPER:
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                 REPORT_TYPE_ERROR("suit-authentication-wrapper", QCBOR_TYPE_BYTE_STRING, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             // TODO: process authentication wrapper
             break;
         case SUIT_ENVELOPE_LABEL_MANIFEST:
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                 REPORT_TYPE_ERROR("suit-manifest", QCBOR_TYPE_BYTE_STRING, item);
-                return TEEP_ERR_ILLEGAL_PARAMETER;
+                return TEEP_ERR_PERMANENT_ERROR;
             }
             errorCode = TryProcessSuitManifest(item.val.string);
             break;
         default:
-            errorCode = TEEP_ERR_ILLEGAL_PARAMETER;
+            errorCode = TEEP_ERR_PERMANENT_ERROR;
             break;
         }
     }

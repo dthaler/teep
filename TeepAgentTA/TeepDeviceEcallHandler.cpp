@@ -126,7 +126,7 @@ static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* t
 }
 
 // Parse QueryRequest and compose QueryResponse.
-static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
+static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -232,10 +232,32 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* context, UsefulBufC* queryResponse)
+teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType, const char* buffer, size_t bufferlen)
 {
-    /* Compose a raw QueryResponse message to be signed. */
-    return TeepComposeCborQueryResponseTBS(context, queryResponse);
+    // From draft-ietf-teep-protocol section 4.1.1:
+    // 1.  Create a TEEP message according to the description below and
+    //     populate it with the respective content.  (done by caller)
+    // 2.  Create a COSE Header containing the desired set of Header
+    //     Parameters.  The COSE Header MUST be valid per the [RFC8152]
+    //     specification.
+    // ... TODO ...
+
+    // 3.  Create a COSE_Sign1 object using the TEEP message as the
+    //     COSE_Sign1 Payload; all steps specified in [RFC8152] for creating
+    //     a COSE_Sign1 object MUST be followed.
+    // ... TODO ...
+
+    // 4.  Prepend the COSE object with the TEEP CBOR tag to indicate that
+    //     the CBOR-encoded message is indeed a TEEP message.
+    // ... TODO ...
+
+    int err = 0;
+    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, mediaType, buffer, bufferlen);
+    if (result != OE_OK) {
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+
+    return TEEP_ERR_SUCCESS;
 }
 
 static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
@@ -257,13 +279,8 @@ static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDe
 
     printf("Sending QueryResponse...\n");
 
-    int retval;
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&retval, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
+    err = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
     free((void*)queryResponse.ptr);
-    if (result != OE_OK) {
-        return TEEP_ERR_TEMPORARY_ERROR;
-    }
-
     return err;
 }
 
@@ -406,7 +423,8 @@ int TeepHandleJsonInstall(void* sessionHandle, json_t* request)
 }
 #endif
 
-teep_error_code_t TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
+/* Compose a raw Success message to be signed. */
+teep_error_code_t TeepComposeCborSuccess(uint64_t token, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -443,7 +461,7 @@ teep_error_code_t TeepComposeCborSuccessTBS(uint64_t token, UsefulBufC* encoded)
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t errorCode, UsefulBufC* encoded)
+teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -486,32 +504,6 @@ teep_error_code_t TeepComposeCborErrorTBS(uint64_t token, teep_error_code_t erro
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
-}
-
-teep_error_code_t TeepComposeCborSuccess(uint64_t token, UsefulBufC* reply)
-{
-    /* Compose a raw QueryResponse message to be signed. */
-    teep_error_code_t errorCode = TeepComposeCborSuccessTBS(token, reply);
-    if (errorCode != TEEP_ERR_SUCCESS) {
-        return errorCode;
-    }
-
-    /* TODO: sign the message */
-
-    return TEEP_ERR_SUCCESS;
-}
-
-teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC* reply)
-{
-    /* Compose a raw QueryResponse message to be signed. */
-    teep_error_code_t result = TeepComposeCborErrorTBS(token, errorCode, reply);
-    if (result != TEEP_ERR_SUCCESS) {
-        return result;
-    }
-
-    /* TODO: sign the message */
-
-    return TEEP_ERR_SUCCESS;
 }
 
 teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
@@ -604,14 +596,9 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
     printf("Sending CBOR message: ");
     HexPrintBuffer(reply.ptr, reply.len);
 
-    int retval;
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&retval, sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    err = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
     free((void*)reply.ptr);
-    if ((result != OE_OK) || (result != 0)) {
-        return TEEP_ERR_TEMPORARY_ERROR;
-    }
-
-    return TEEP_ERR_SUCCESS;
+    return err;
 }
 
 #ifdef TEEP_ENABLE_JSON
@@ -659,13 +646,27 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
     encoded.ptr = message;
     encoded.len = messageLength;
 
-    printf("Received CBOR message: ");
-    HexPrintBuffer(encoded.ptr, encoded.len);
+    // From draft-ietf-teep-protocol section 4.1.2:
+    //  1.  Verify that the received message is a valid CBOR object.
+    //  2.  Remove the TEEP message CBOR tag and verify that one of the COSE
+    //      CBOR tags follows it.
+    // ... TODO ...
 
-    /* 1.  Validate COSE message signing.  If it doesn't pass, an error message is returned. */
-    /* ... TODO ... */
+    //  3.  Verify that the message contains a COSE_Sign1 structure.
+    // ... TODO ...
 
-    /* 2.  Validate that the request TAM certificate is chained to a trusted
+    //  4.  Verify that the resulting COSE Header includes only parameters
+    //      and values whose syntax and semantics are both understood and
+    //      supported or that are specified as being ignored when not
+    //      understood.
+    // ... TODO ...
+
+    //  5.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
+    //      Objects") for validating a COSE_Sign1 object.  The COSE_Sign1
+    //      payload is the content of the TEEP message.
+    // ... TODO ...
+
+    /*     Validate that the request TAM certificate is chained to a trusted
      *     CA that the TEE embeds as its trust anchor.
      *
      *     *  Cache the CA OCSP stapling data and certificate revocation
@@ -673,8 +674,13 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
      *
      *     *  A TEE can use its own clock time for the OCSP stapling data
      *        validation.
+     *  TODO: teep protocol spec is missing above statements, closest
+     *        thing is in ocsp-data description
      */
      /* ... TODO ... */
+
+    printf("Received CBOR message: ");
+    HexPrintBuffer(encoded.ptr, encoded.len);
 
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 

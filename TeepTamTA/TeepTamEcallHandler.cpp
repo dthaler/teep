@@ -270,8 +270,34 @@ teep_error_code_t TeepComposeCborUpdate(
     RequestedComponentInfo* unneededComponentList,
     int* count)
 {
-    /* Compose a raw Install message to be signed. */
+    /* Compose a raw Update message to be signed. */
     return TeepComposeCborUpdateTBS(install, currentComponentList, requestedComponentList, unneededComponentList, count);
+}
+
+teep_error_code_t ParseComponentId(QCBORDecodeContext* context, QCBORItem* item, RequestedComponentInfo** currentRci)
+{
+    if (item->uDataType != QCBOR_TYPE_ARRAY) {
+        REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_ARRAY, *item);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    // Get array size
+    uint16_t componentIdEntryCount = item->val.uCount;
+    if (componentIdEntryCount != 1) {
+        // TODO: support more general component ids.
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    // Read bstr from component id array.
+    QCBORDecode_GetNext(context, item);
+
+    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+        REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, *item);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    *currentRci = new RequestedComponentInfo(&item->val.string);
+    return TEEP_ERR_SUCCESS;
 }
 
 teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context)
@@ -313,9 +339,10 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
 
             /* As discussed above in comments in TeepComposeCborQueryRequestTBS(),
              * draft -03 requires us to validate that the token matches what was
-             * sent in the QueryRequest, but that causes performance problems and
-             * opens us to certain DOS attacks, without any obvious benefit. As such,
-             * we skip this check in the hopes that the spec will be updated to
+             * sent in the QueryRequest, but that causes performance problems
+             * and opens us to certain DOS attacks, without any obvious
+             * benefit. As such, we skip this check in the hopes that the spec
+             * will be updated to
              * remove the check.
              */
             break;
@@ -353,15 +380,14 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                     switch (label) {
                     case TEEP_LABEL_COMPONENT_ID:
                     {
-                        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                            REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
-                            return TEEP_ERR_PERMANENT_ERROR;
-                        }
                         if (currentRci != nullptr) {
                             // Duplicate.
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
-                        currentRci = new RequestedComponentInfo(&item.val.string);
+                        teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci);
+                        if (errorCode != TEEP_ERR_SUCCESS) {
+                            return errorCode;
+                        }
                         currentRci->Next = requestedComponentList.Next;
                         requestedComponentList.Next = currentRci;
                         break;
@@ -403,11 +429,12 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
-                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
-                    return TEEP_ERR_PERMANENT_ERROR;
+
+                RequestedComponentInfo* currentUci = nullptr;
+                teep_error_code_t errorCode = ParseComponentId(context, &item, &currentUci);
+                if (errorCode != TEEP_ERR_SUCCESS) {
+                    return errorCode;
                 }
-                RequestedComponentInfo* currentUci = new RequestedComponentInfo(&item.val.string);
                 currentUci->Next = unneededComponentList.Next;
                 unneededComponentList.Next = currentUci;
             }
@@ -434,15 +461,14 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                     switch (label) {
                     case TEEP_LABEL_COMPONENT_ID:
                     {
-                        if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                            REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
-                            return TEEP_ERR_PERMANENT_ERROR;
-                        }
                         if (currentRci != nullptr) {
                             // Duplicate.
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
-                        currentRci = new RequestedComponentInfo(&item.val.string);
+                        teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci);
+                        if (errorCode != TEEP_ERR_SUCCESS) {
+                            return errorCode;
+                        }
                         currentRci->Next = currentComponentList.Next;
                         currentComponentList.Next = currentRci;
                         break;

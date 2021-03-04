@@ -28,7 +28,7 @@ const unsigned char* GetDerCertificate(json_t* jwk, size_t *pCertificateSize);
 void report_type_error(const char* id, int expected_type, int actual_type);
 
 #define REPORT_TYPE_ERROR(id, expected_type, item) \
-    report_type_error(id, expected_type, item.uDataType);
+    report_type_error(id, expected_type, (item).uDataType);
 #else
 #define REPORT_TYPE_ERROR(id, expected_type, item)
 #endif

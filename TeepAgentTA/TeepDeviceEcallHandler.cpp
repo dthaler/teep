@@ -115,6 +115,16 @@ const char* TeepComposeJsonQueryResponse(
 }
 #endif
 
+static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* tc)
+{
+    QCBOREncode_OpenArrayInMapN(context, TEEP_LABEL_COMPONENT_ID);
+    {
+        UsefulBuf tc_id = UsefulBuf_FROM_BYTE_ARRAY(tc->ID.b);
+        QCBOREncode_AddBytes(context, UsefulBuf_Const(tc_id));
+    }
+    QCBOREncode_CloseArray(context);
+}
+
 // Parse QueryRequest and compose QueryResponse.
 static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
 {
@@ -167,10 +177,7 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
                 for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
                     QCBOREncode_OpenMap(&context);
                     {
-                        // TODO: convert all ta_ids to array's for
-                        // SUIT_Component_identifier
-                        UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
-                        QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_COMPONENT_ID, UsefulBuf_Const(ta_id));
+                        AddComponentIdToMap(&context, ta);
                     }
                     QCBOREncode_CloseMap(&context);
                 }
@@ -185,8 +192,7 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
                     for (TrustedComponent* ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
                         QCBOREncode_OpenMap(&context);
                         {
-                            UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
-                            QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_COMPONENT_ID, UsefulBuf_Const(ta_id));
+                            AddComponentIdToMap(&context, ta);
                         }
                         QCBOREncode_CloseMap(&context);
                     }
@@ -199,9 +205,13 @@ static teep_error_code_t TeepComposeCborQueryResponseTBS(QCBORDecodeContext* dec
                 // Add unneeded-tc-list.
                 QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_UNNEEDED_TC_LIST);
                 {
-                    for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
-                        UsefulBuf ta_id = UsefulBuf_FROM_BYTE_ARRAY(ta->ID.b);
-                        QCBOREncode_AddBytes(&context, UsefulBuf_Const(ta_id));
+                    for (TrustedComponent* tc = g_UnneededComponentList; tc != nullptr; tc = tc->Next) {
+                        QCBOREncode_OpenArray(&context);
+                        {
+                            UsefulBuf tc_id = UsefulBuf_FROM_BYTE_ARRAY(tc->ID.b);
+                            QCBOREncode_AddBytes(&context, UsefulBuf_Const(tc_id));
+                        }
+                        QCBOREncode_CloseArray(&context);
                     }
                 }
                 QCBOREncode_CloseArray(&context);
@@ -232,7 +242,7 @@ static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDe
 {
     printf("TeepHandleCborQueryRequest\n");
 
-    /* 3. Compose a response. */
+    /* 3. Compose a raw response. */
     UsefulBufC queryResponse;
     teep_error_code_t err = TeepComposeCborQueryResponse(context, &queryResponse);
     if (err != TEEP_ERR_SUCCESS) {
@@ -760,7 +770,7 @@ int ecall_RequestTA(
     int err = 0;
     oe_result_t result = OE_OK;
 
-    // TODO: See whether taid is already installed.
+    // TODO: See whether requestedTaid is already installed.
     // For now we skip this step and pretend it's not.
     bool isInstalled = false;
 
@@ -770,20 +780,20 @@ int ecall_RequestTA(
         return 0;
     }
 
-    // See whether taid has already been requested.
-    TrustedComponent* ta;
-    for (ta = g_RequestedComponentList; ta != nullptr; ta = ta->Next) {
-        if (memcmp(ta->ID.b, requestedTaid.b, OE_UUID_SIZE) == 0) {
+    // See whether requestedTaid has already been requested.
+    TrustedComponent* tc;
+    for (tc = g_RequestedComponentList; tc != nullptr; tc = tc->Next) {
+        if (memcmp(tc->ID.b, requestedTaid.b, OE_UUID_SIZE) == 0) {
             // Already requested, nothing to do.
             // This counts as "pass no data back" in the broker spec.
             return 0;
         }
     }
 
-    // Add taid to the request list.
-    ta = new TrustedComponent(requestedTaid);
-    ta->Next = g_RequestedComponentList;
-    g_RequestedComponentList = ta;
+    // Add requestedTaid to the request list.
+    tc = new TrustedComponent(requestedTaid);
+    tc->Next = g_RequestedComponentList;
+    g_RequestedComponentList = tc;
 
     // TODO: we may want to modify the TAM URI here.
 
@@ -825,7 +835,7 @@ int ecall_UnrequestTA(
     int err = 0;
     oe_result_t result = OE_OK;
 
-    // TODO: See whether taid is already installed.
+    // TODO: See whether unneededTaid is installed.
     // For now we skip this step and pretend it is.
     bool isInstalled = true;
 
@@ -835,20 +845,20 @@ int ecall_UnrequestTA(
         return 0;
     }
 
-    // See whether taid has already been notified to the TAM.
-    TrustedComponent* ta;
-    for (ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
-        if (memcmp(ta->ID.b, unneededTaid.b, OE_UUID_SIZE) == 0) {
+    // See whether unneededTaid has already been notified to the TAM.
+    TrustedComponent* tc;
+    for (tc = g_UnneededComponentList; tc != nullptr; tc = tc->Next) {
+        if (memcmp(tc->ID.b, unneededTaid.b, OE_UUID_SIZE) == 0) {
             // Already requested, nothing to do.
             // This counts as "pass no data back" in the broker spec.
             return 0;
         }
     }
 
-    // Add taid to the unneeded list.
-    ta = new TrustedComponent(unneededTaid);
-    ta->Next = g_UnneededComponentList;
-    g_UnneededComponentList = ta;
+    // Add unneededTaid to the unneeded list.
+    tc = new TrustedComponent(unneededTaid);
+    tc->Next = g_UnneededComponentList;
+    g_UnneededComponentList = tc;
 
     // TODO: we may want to modify the TAM URI here.
 

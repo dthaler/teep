@@ -1,5 +1,7 @@
 /* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
 #pragma once
+#include <iostream>
+#include <ostream>
 #include "teep_protocol.h"
 
 #ifdef ENABLE_OTRP
@@ -24,11 +26,14 @@ const unsigned char* GetDerCertificate(json_t* jwk, size_t *pCertificateSize);
 
 #define UUID_LENGTH 16 // Size in bytes of a UUID (RFC 4122)
 
-#ifdef _DEBUG
-void report_type_error(const char* id, int expected_type, int actual_type);
+void report_type_error(std::ostream& s, const char* id, int expected_type, int actual_type);
 
-#define REPORT_TYPE_ERROR(id, expected_type, item) \
-    report_type_error(id, expected_type, (item).uDataType);
+#ifdef _DEBUG
+#define REPORT_TYPE_ERROR(s, id, expected_type, item) { \
+    report_type_error(s, id, expected_type, (item).uDataType); \
+    report_type_error(std::cout, id, expected_type, (item).uDataType); \
+}
 #else
-#define REPORT_TYPE_ERROR(id, expected_type, item)
+#define REPORT_TYPE_ERROR(s, id, expected_type, item) \
+    report_type_error(s, id, expected_type, (item).uDataType);
 #endif

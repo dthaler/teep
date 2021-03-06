@@ -508,7 +508,7 @@ int RunHttpServer(int argc, const wchar_t** argv)
     //
     for (int i = 1; i < argc; i++)
     {
-        wprintf(L"listening for requests on the following url: %ls\n", argv[i]);
+        wprintf(L"Listening for requests on the following URL: %ls\n", argv[i]);
 
         retCode = HttpAddUrl(
             hReqQueue,    // Req Queue

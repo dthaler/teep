@@ -3,10 +3,10 @@
 #include <stdlib.h>
 extern "C" {
 #include "jansson.h"
-#include "../TeepCommonTALib/common.h"
 #include "../TeepCommonTALib/teep_protocol.h"
 #include "../TeepCommonTALib/suit_manifest.h"
 };
+#include "../TeepCommonTALib/common.h"
 #include "qcbor/qcbor_decode.h"
 #include "SuitParser.h"
 
@@ -36,14 +36,14 @@ teep_error_code_t TryProcessSuitCommon(QCBORDecodeContext* context, uint16_t map
 }
 
 // Parse a SUIT_Manifest out of a decode context and try to install it.
-teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded)
+teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded, std::ostream& errorMessage)
 {
     QCBORDecodeContext context;
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
     QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
-        REPORT_TYPE_ERROR("SUIT_Manifest", QCBOR_TYPE_MAP, item);
+        REPORT_TYPE_ERROR(errorMessage, "SUIT_Manifest", QCBOR_TYPE_MAP, item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
     int mapEntryCount = item.val.uCount;
@@ -58,19 +58,19 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded)
         switch (label) {
         case SUIT_MANIFEST_LABEL_VERSION:
             if (item.uDataType != QCBOR_TYPE_INT64 || item.val.int64 != SUIT_MANIFEST_VERSION_VALUE) {
-                REPORT_TYPE_ERROR("suit-manifest-version", QCBOR_TYPE_INT64, item);
+                REPORT_TYPE_ERROR(errorMessage, "suit-manifest-version", QCBOR_TYPE_INT64, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             break;
         case SUIT_MANIFEST_LABEL_SEQUENCE_NUMBER:
             if (item.uDataType != QCBOR_TYPE_UINT64) {
-                REPORT_TYPE_ERROR("suit-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
+                REPORT_TYPE_ERROR(errorMessage, "suit-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             break;
         case SUIT_MANIFEST_LABEL_COMMON:
             if (item.uDataType != QCBOR_TYPE_MAP) {
-                REPORT_TYPE_ERROR("suit-manifest-common", QCBOR_TYPE_MAP, item);
+                REPORT_TYPE_ERROR(errorMessage, "suit-manifest-common", QCBOR_TYPE_MAP, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             errorCode = TryProcessSuitCommon(&context, item.val.uCount);
@@ -86,7 +86,7 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded)
 }
 
 // Parse a SUIT_Envelope out of a decode context and try to install it.
-teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded)
+teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded, std::ostream& errorMessage)
 {
     QCBORDecodeContext context;
 
@@ -94,7 +94,7 @@ teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded)
     QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
-        REPORT_TYPE_ERROR("SUIT_Envelope", QCBOR_TYPE_MAP, item);
+        REPORT_TYPE_ERROR(errorMessage, "SUIT_Envelope", QCBOR_TYPE_MAP, item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
     size_t mapEntryCount = item.val.uCount;
@@ -109,17 +109,17 @@ teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded)
         switch (label) {
         case SUIT_ENVELOPE_LABEL_AUTHENTICATION_WRAPPER:
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                REPORT_TYPE_ERROR("suit-authentication-wrapper", QCBOR_TYPE_BYTE_STRING, item);
+                REPORT_TYPE_ERROR(errorMessage, "suit-authentication-wrapper", QCBOR_TYPE_BYTE_STRING, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             // TODO: process authentication wrapper
             break;
         case SUIT_ENVELOPE_LABEL_MANIFEST:
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                REPORT_TYPE_ERROR("suit-manifest", QCBOR_TYPE_BYTE_STRING, item);
+                REPORT_TYPE_ERROR(errorMessage, "suit-manifest", QCBOR_TYPE_BYTE_STRING, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
-            errorCode = TryProcessSuitManifest(item.val.string);
+            errorCode = TryProcessSuitManifest(item.val.string, errorMessage);
             break;
         default:
             errorCode = TEEP_ERR_PERMANENT_ERROR;

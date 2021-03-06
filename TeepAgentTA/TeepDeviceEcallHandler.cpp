@@ -6,7 +6,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <string>
 #include "TrustedComponent.h"
+#include "../TeepCommonTALib/common.h"
 extern "C" {
 #ifdef TEEP_ENABLE_JSON
 #include "jansson.h"
@@ -17,7 +19,6 @@ extern "C" {
 #include "jose/jws.h"
 #include "jose/openssl.h"
 #endif
-#include "../TeepCommonTALib/common.h"
 #include "../TeepCommonTALib/otrp.h"
 #include "../TeepCommonTALib/teep_protocol.h"
 };
@@ -31,6 +32,7 @@ extern "C" {
 #include "qcbor/qcbor_encode.h"
 #include "TeepDeviceEcallHandler.h"
 #include "SuitParser.h"
+#include <sstream>
 
 // List of requested Trusted Components.
 TrustedComponent* g_RequestedComponentList = nullptr;
@@ -126,7 +128,7 @@ static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* t
 }
 
 // Parse QueryRequest and compose QueryResponse.
-static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decodeContext, UsefulBufC* encoded)
+static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decodeContext, UsefulBufC* encoded, std::ostream& errorMessage)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -134,6 +136,7 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
+        errorMessage << "Out of memory";
         return TEEP_ERR_TEMPORARY_ERROR;
     }
     encoded->ptr = rawBuffer;
@@ -153,7 +156,7 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
         // Parse the QueryRequest options map.
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_MAP) {
-            REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
+            REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_MAP, item);
             return TEEP_ERR_PERMANENT_ERROR;
         }
 
@@ -163,7 +166,7 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
             // TODO: only include this if the QueryRequest had one.
             QCBORDecode_GetNext(decodeContext, &item);
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                REPORT_TYPE_ERROR("token", QCBOR_TYPE_UINT64, item);
+                REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_UINT64, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, item.val.uint64);
@@ -222,7 +225,7 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
         // Parse the data-item-requested.
         QCBORDecode_GetNext(decodeContext, &item);
         if (item.uDataType != QCBOR_TYPE_INT64) {
-            REPORT_TYPE_ERROR("data-item-requested", QCBOR_TYPE_INT64, item);
+            REPORT_TYPE_ERROR(errorMessage, "data-item-requested", QCBOR_TYPE_INT64, item);
             return TEEP_ERR_PERMANENT_ERROR;
         }
     }
@@ -266,8 +269,11 @@ static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDe
 
     /* 3. Compose a raw response. */
     UsefulBufC queryResponse;
-    teep_error_code_t err = TeepComposeCborQueryResponse(context, &queryResponse);
+    std::ostringstream errorMessage;
+    teep_error_code_t err = TeepComposeCborQueryResponse(context, &queryResponse, errorMessage);
     if (err != TEEP_ERR_SUCCESS) {
+        // TODO: see https://github.com/ietf-teep/teep-protocol/issues/129
+        // TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
         return err;
     }
     if (queryResponse.len == 0) {
@@ -461,7 +467,7 @@ teep_error_code_t TeepComposeCborSuccess(uint64_t token, UsefulBufC* encoded)
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, UsefulBufC* encoded)
+teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCode, const std::string& errorMessage, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -486,11 +492,13 @@ teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCo
         QCBOREncode_OpenMap(&context);
         {
             // Copy token from request.
-            // TODO: only include this if the Install had one.
+            // TODO: only include this if the request message had one.
             QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
 
             // Add error message.
-            // TODO: Add err-msg.
+            if (!errorMessage.empty()) {
+                QCBOREncode_AddSZStringToMapN(&context, TEEP_LABEL_ERR_MSG, errorMessage.c_str());
+            }
 
             // Add suit-reports if Update failed.
             // TODO: Add suit-reports.
@@ -506,18 +514,39 @@ teep_error_code_t TeepComposeCborError(uint64_t token, teep_error_code_t errorCo
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
+void TeepSendError(uint64_t token, void* sessionHandle, teep_error_code_t errorCode, const std::string& errorMessage)
+{
+    UsefulBufC reply;
+    if (TeepComposeCborError(token, errorCode, errorMessage, &reply) != TEEP_ERR_SUCCESS) {
+        return;
+    }
+    if (reply.len == 0) {
+        return;
+    }
+
+    printf("Sending CBOR message: ");
+    HexPrintBuffer(reply.ptr, reply.len);
+
+    (void)TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    free((void*)reply.ptr);
+}
+
 teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
 {
-    printf("TeepHandleCborInstall\n");
+    printf("TeepHandleCborUpdate\n");
 
+    std::ostringstream errorMessage;
     QCBORItem item;
     uint64_t token = 0;
+    teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
-        REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
-        return TEEP_ERR_PERMANENT_ERROR;
+        REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_MAP, item);
+        teeperr = TEEP_ERR_PERMANENT_ERROR;
+        TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+        return teeperr;
     }
     teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
     uint16_t mapEntryCount = item.val.uCount;
@@ -529,8 +558,10 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         {
             // Get token from request.
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                REPORT_TYPE_ERROR("token", QCBOR_TYPE_UINT64, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_UINT64, item);
+                teeperr = TEEP_ERR_PERMANENT_ERROR;
+                TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                return teeperr;
             }
             token = item.val.uint64;
             break;
@@ -538,15 +569,19 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         case TEEP_LABEL_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                REPORT_TYPE_ERROR("tc-list", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                REPORT_TYPE_ERROR(errorMessage, "tc-list", QCBOR_TYPE_ARRAY, item);
+                teeperr = TEEP_ERR_PERMANENT_ERROR;
+                TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                return teeperr;
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, item);
-                    return TEEP_ERR_PERMANENT_ERROR;
+                    REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, item);
+                    teeperr = TEEP_ERR_PERMANENT_ERROR;
+                    TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                    return teeperr;
                 }
                 /* TODO: do a delete */
             }
@@ -555,8 +590,10 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         case TEEP_LABEL_MANIFEST_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                REPORT_TYPE_ERROR("manifest-list", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                REPORT_TYPE_ERROR(errorMessage, "manifest-list", QCBOR_TYPE_ARRAY, item);
+                teeperr = TEEP_ERR_PERMANENT_ERROR;
+                TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                return teeperr;
             }
             uint16_t arrayEntryCount = item.val.uCount;
 #ifdef _DEBUG
@@ -565,29 +602,31 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    REPORT_TYPE_ERROR("SUIT_Envelope", QCBOR_TYPE_BYTE_STRING, item);
-                    return TEEP_ERR_PERMANENT_ERROR;
+                    REPORT_TYPE_ERROR(errorMessage, "SUIT_Envelope", QCBOR_TYPE_BYTE_STRING, item);
+                    teeperr = TEEP_ERR_PERMANENT_ERROR;
+                    TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                    return teeperr;
                 }
                 if (errorCode == TEEP_ERR_SUCCESS) {
                     // Try until we hit the first error.
-                    errorCode = TryProcessSuitEnvelope(item.val.string);
+                    errorCode = TryProcessSuitEnvelope(item.val.string, errorMessage);
                 }
             }
             break;
         }
         default:
-            printf("Unrecognized option label %d\n", label);
-            return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
-            break;
+            errorMessage << "Unrecognized option label " << label;
+            teeperr = TEEP_ERR_PERMANENT_ERROR;
+            TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+            return teeperr;
         }
     }
 
-    /* 3. Compose a success or error reply. */
+    /* 3. Compose a Success reply. */
     UsefulBufC reply;
-    //teep_error_code_t err = TeepComposeCborError(token, errorCode, &reply);
-    teep_error_code_t err = TeepComposeCborSuccess(token, &reply);
-    if (err != TEEP_ERR_SUCCESS) {
-        return err;
+    teeperr = TeepComposeCborSuccess(token, &reply);
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
     }
     if (reply.len == 0) {
         return TEEP_ERR_TEMPORARY_ERROR;
@@ -596,9 +635,9 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
     printf("Sending CBOR message: ");
     HexPrintBuffer(reply.ptr, reply.len);
 
-    err = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    teeperr = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
     free((void*)reply.ptr);
-    return err;
+    return teeperr;
 }
 
 #ifdef TEEP_ENABLE_JSON
@@ -640,6 +679,7 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
     teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
+    std::ostringstream errorMessage;
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
@@ -686,13 +726,13 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
-        REPORT_TYPE_ERROR("message", QCBOR_TYPE_ARRAY, item);
+        REPORT_TYPE_ERROR(errorMessage, "message", QCBOR_TYPE_ARRAY, item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
-        REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_INT64, item);
+        REPORT_TYPE_ERROR(errorMessage, "TYPE", QCBOR_TYPE_INT64, item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 

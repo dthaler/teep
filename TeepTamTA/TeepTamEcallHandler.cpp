@@ -6,8 +6,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-extern "C" {
 #include "../TeepCommonTALib/common.h"
+extern "C" {
 #include "../TeepCommonTALib/otrp.h"
 #include "../TeepCommonTALib/teep_protocol.h"
 };
@@ -18,6 +18,7 @@ extern "C" {
 #include "Manifest.h"
 #include "TeepTamEcallHandler.h"
 #include "RequestedComponentInfo.h"
+#include <sstream>
 
 const unsigned char* g_TamDerCertificate = nullptr;
 size_t g_TamDerCertificateSize = 0;
@@ -282,10 +283,10 @@ teep_error_code_t TeepComposeCborUpdate(
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t ParseComponentId(QCBORDecodeContext* context, QCBORItem* item, RequestedComponentInfo** currentRci)
+teep_error_code_t ParseComponentId(QCBORDecodeContext* context, QCBORItem* item, RequestedComponentInfo** currentRci, std::ostringstream& errorMessage)
 {
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
-        REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_ARRAY, *item);
+        REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_ARRAY, *item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
@@ -300,7 +301,7 @@ teep_error_code_t ParseComponentId(QCBORDecodeContext* context, QCBORItem* item,
     QCBORDecode_GetNext(context, item);
 
     if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-        REPORT_TYPE_ERROR("component-id", QCBOR_TYPE_BYTE_STRING, *item);
+        REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, *item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
@@ -316,11 +317,12 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
     printf("TeepHandleCborQueryResponse\n");
 
     QCBORItem item;
+    std::ostringstream errorMessage;
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
-        REPORT_TYPE_ERROR("options", QCBOR_TYPE_MAP, item);
+        REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_MAP, item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
     RequestedComponentInfo currentComponentList(nullptr);
@@ -333,7 +335,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
         switch (label) {
         case TEEP_LABEL_TOKEN:
             if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                REPORT_TYPE_ERROR("options", QCBOR_TYPE_UINT64, item);
+                REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_UINT64, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
 
@@ -362,14 +364,14 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
         case TEEP_LABEL_REQUESTED_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                REPORT_TYPE_ERROR("requested-tc-list", QCBOR_TYPE_ARRAY, item);
+                REPORT_TYPE_ERROR(errorMessage, "requested-tc-list", QCBOR_TYPE_ARRAY, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_MAP) {
-                    REPORT_TYPE_ERROR("requested-tc-info", QCBOR_TYPE_MAP, item);
+                    REPORT_TYPE_ERROR(errorMessage, "requested-tc-info", QCBOR_TYPE_MAP, item);
                     return TEEP_ERR_PERMANENT_ERROR;
                 }
                 uint16_t tcInfoParameterCount = item.val.uCount;
@@ -384,7 +386,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                             // Duplicate.
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
-                        teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci);
+                        teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci, errorMessage);
                         if (errorCode != TEEP_ERR_SUCCESS) {
                             return errorCode;
                         }
@@ -394,7 +396,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                     }
                     case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
-                            REPORT_TYPE_ERROR("tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
+                            REPORT_TYPE_ERROR(errorMessage, "tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
                         if (currentRci == nullptr) {
@@ -404,7 +406,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                         break;
                     case TEEP_LABEL_HAVE_BINARY:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
-                            REPORT_TYPE_ERROR("have-binary", QCBOR_TYPE_UINT64, item);
+                            REPORT_TYPE_ERROR(errorMessage, "have-binary", QCBOR_TYPE_UINT64, item);
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
                         if (currentRci == nullptr) {
@@ -423,7 +425,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
         case TEEP_LABEL_UNNEEDED_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                REPORT_TYPE_ERROR("unneeded-tc-list", QCBOR_TYPE_ARRAY, item);
+                REPORT_TYPE_ERROR(errorMessage, "unneeded-tc-list", QCBOR_TYPE_ARRAY, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             uint16_t arrayEntryCount = item.val.uCount;
@@ -431,7 +433,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                 QCBORDecode_GetNext(context, &item);
 
                 RequestedComponentInfo* currentUci = nullptr;
-                teep_error_code_t errorCode = ParseComponentId(context, &item, &currentUci);
+                teep_error_code_t errorCode = ParseComponentId(context, &item, &currentUci, errorMessage);
                 if (errorCode != TEEP_ERR_SUCCESS) {
                     return errorCode;
                 }
@@ -443,7 +445,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
         case TEEP_LABEL_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                REPORT_TYPE_ERROR("tc-list", QCBOR_TYPE_ARRAY, item);
+                REPORT_TYPE_ERROR(errorMessage, "tc-list", QCBOR_TYPE_ARRAY, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             RequestedComponentInfo* currentRci = nullptr;
@@ -451,7 +453,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_MAP) {
-                    REPORT_TYPE_ERROR("tc-list", QCBOR_TYPE_MAP, item);
+                    REPORT_TYPE_ERROR(errorMessage, "tc-list", QCBOR_TYPE_MAP, item);
                     return TEEP_ERR_PERMANENT_ERROR;
                 }
                 uint16_t tcInfoParameterCount = item.val.uCount;
@@ -465,7 +467,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                             // Duplicate.
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
-                        teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci);
+                        teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci, errorMessage);
                         if (errorCode != TEEP_ERR_SUCCESS) {
                             return errorCode;
                         }
@@ -475,7 +477,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                     }
                     case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
-                            REPORT_TYPE_ERROR("tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
+                            REPORT_TYPE_ERROR(errorMessage, "tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
                         if (currentRci == nullptr) {
@@ -539,6 +541,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
 /* Handle an incoming message from a TEEP Agent. */
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
+    std::ostringstream errorMessage;
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
@@ -572,13 +575,13 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
-        REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_ARRAY, item);
+        REPORT_TYPE_ERROR(errorMessage, "TYPE", QCBOR_TYPE_ARRAY, item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
-        REPORT_TYPE_ERROR("TYPE", QCBOR_TYPE_INT64, item);
+        REPORT_TYPE_ERROR(errorMessage, "TYPE", QCBOR_TYPE_INT64, item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 

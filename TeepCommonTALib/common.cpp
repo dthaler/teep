@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "JsonAuto.h"
+#include "common.h"
 extern "C" {
 #include "TeepCommonTALib_t.h"
 #include "../jose/joseinit.h"
-#include "common.h"
 #include "otrp.h"
 #include "teep_protocol.h"
 #include "jose/jwk.h"
@@ -17,7 +17,6 @@ extern "C" {
 #include "openssl/x509.h"
 };
 
-#ifdef _DEBUG
 static const char* cbor_type_name[] = {
     nullptr, nullptr , "int64", "uint64", "array", "map", "bstr", "tstr"
 };
@@ -32,11 +31,10 @@ static const char* get_cbor_type_name(unsigned int type)
     return cbor_type_name[type];
 }
 
-void report_type_error(const char* id, int expected_type, int actual_type)
+void report_type_error(std::ostream& s, const char* id, int expected_type, int actual_type)
 {
-    printf("Invalid %s type %s, expected %s\n", id, get_cbor_type_name(actual_type), get_cbor_type_name(expected_type));
+    s << "Invalid " << id << " type " << get_cbor_type_name(actual_type) << ", expected " << get_cbor_type_name(expected_type);
 }
-#endif
 
 #if 0
 #define ASSERT(x) if (!(x)) { printf("wrong\n"); }

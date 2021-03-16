@@ -80,7 +80,7 @@ for various build configurations:
 * packages\open-enclave-cross.0.14.0\build\native\linux\xenial\sgx\default\debug\include\openenclave\3rdparty\openssl
 * packages\open-enclave-cross.0.14.0\build\native\linux\xenial\sgx\default\release\include\openenclave\3rdparty\openssl
 * packages\open-enclave-cross.0.14.0\build\native\win\sgx\default\debug\include\openenclave\3rdparty\openssl
-* packages\open-enclave-cross.0.14.0\build\native\win\sgx\default\debug\include\openenclave\3rdparty\openssl
+* packages\open-enclave-cross.0.14.0\build\native\win\sgx\default\release\include\openenclave\3rdparty\openssl
 
 These interfere with the current project compilation, so must be removed
 or renamed.  For example, rename "openssl" to "no-openssl".

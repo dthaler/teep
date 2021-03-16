@@ -165,16 +165,10 @@
     <ClCompile Include="thread.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="time.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\asn1\d2i_pr.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\asn1\d2i_pu.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\asn1\evp_asn1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\asn1\f_enum.c">
@@ -333,9 +327,6 @@
     <ClCompile Include="$(OpensslDir)crypto\comp\comp_lib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\comp\c_rle.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\comp\c_zlib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -426,24 +417,6 @@
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecdsatest.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_asn1.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_err.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_lib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_ossl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_sign.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_vrf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ec\ectest.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -499,30 +472,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\evp\encode.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_acnf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_cnf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_enc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_err.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_key.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_lib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_pbe.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\evp\evp_pkey.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\evp\names.c">
@@ -681,70 +630,7 @@
     <ClCompile Include="$(OpensslDir)crypto\pem\pvkfmt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_add.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_asn.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_attr.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_crpt.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_crt.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_decr.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_init.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_key.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_kiss.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_mutl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_npas.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_p8d.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_p8e.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_utl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\pkcs12\pk12err.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_asn1.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_attr.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_dgst.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_doit.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_lib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_mime.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_smime.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\pkcs7\pkcs7err.c">
@@ -867,67 +753,7 @@
     <ClCompile Include="$(OpensslDir)crypto\x509\by_file.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509cset.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509name.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509rset.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509spki.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509type.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_att.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_cmp.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_d2.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_def.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_err.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_ext.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_lu.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_obj.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_r2x.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_req.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_set.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_trs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_txt.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\x509\x509_v3.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_vfy.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\x509\x509_vpm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\x509\x_all.c">
@@ -1781,6 +1607,177 @@
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_wrap.c">
       <Filter>Source Files\aes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_att.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_cmp.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_d2.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_def.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_err.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_ext.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_lu.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_obj.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_r2x.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_req.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_set.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_trs.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_txt.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_acnf.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\asn1\evp_asn1.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_cnf.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_enc.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_err.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_key.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_lib.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_pbe.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\evp\evp_pkey.c">
+      <Filter>Source Files\evp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_smime.c">
+      <Filter>Source Files\pkcs7</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_mime.c">
+      <Filter>Source Files\pkcs7</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_lib.c">
+      <Filter>Source Files\pkcs7</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_doit.c">
+      <Filter>Source Files\pkcs7</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_dgst.c">
+      <Filter>Source Files\pkcs7</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_attr.c">
+      <Filter>Source Files\pkcs7</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs7\pk7_asn1.c">
+      <Filter>Source Files\pkcs7</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_add.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_asn.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_attr.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_crpt.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_crt.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_decr.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_init.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_key.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_kiss.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_mutl.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_npas.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_p8d.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_p8e.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\pkcs12\p12_utl.c">
+      <Filter>Source Files\pkcs12</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509type.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509spki.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509rset.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509name.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509cset.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_vpm.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\x509\x509_vfy.c">
+      <Filter>Source Files\x509</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\comp\c_rle.c">
+      <Filter>Source Files\comp</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_vrf.c">
+      <Filter>Source Files\ecdsa</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_sign.c">
+      <Filter>Source Files\ecdsa</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_ossl.c">
+      <Filter>Source Files\ecdsa</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_lib.c">
+      <Filter>Source Files\ecdsa</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_err.c">
+      <Filter>Source Files\ecdsa</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_asn1.c">
+      <Filter>Source Files\ecdsa</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

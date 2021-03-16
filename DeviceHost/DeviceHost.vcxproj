@@ -100,9 +100,6 @@
       <Project>{0d5ac8ae-35d9-4f5c-b74c-f0ff75f03497}</Project>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
-    <ProjectReference Include="..\UntrustedTime\host\UntrustedTimeLib.vcxproj">
-      <Project>{4d10caf1-ddeb-4d8d-8e7a-3947b1f836f5}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

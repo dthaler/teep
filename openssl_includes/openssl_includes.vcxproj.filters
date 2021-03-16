@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\external\openssl\crypto\crypto.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\opensslv.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\stack\safestack.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\stack\stack.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\e_os2.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ossl_typ.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\symhacks.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\bio\bio.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\buffer\buffer.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\err\err.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\lhash\lhash.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\asn1\asn1.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\asn1\asn1t.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\bn\bn.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\evp\evp.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ec\ec.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\rsa\rsa.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\x509\x509.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\dh\dh.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\x509\x509_vfy.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\engine\engine.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\pkcs7\pkcs7.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\rand\rand.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ui\ui.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\x509v3\x509v3.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\conf\conf.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\asn1\asn1_mac.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\dso\dso.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\comp\comp.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\cms\cms.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\objects\objects.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\objects\obj_mac.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\des\des.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\des\des_old.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ui\ui_compat.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ecdh\ecdh.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ecdsa\ecdsa.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ts\ts.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\pkcs12\pkcs12.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\ocsp\ocsp.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\idea\idea.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\rc2\rc2.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\hmac\hmac.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\pem\pem.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\sha\sha.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\pem\pem2.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\srp\srp.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\txt_db\txt_db.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\external\openssl\crypto\dsa\dsa.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+</Project>

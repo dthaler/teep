@@ -100,9 +100,6 @@
     <ProjectReference Include="..\TeepTamBrokerLib\TeepTamBrokerLib.vcxproj">
       <Project>{b1903274-432e-483e-9689-87086c80db54}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\UntrustedTime\host\UntrustedTimeLib.vcxproj">
-      <Project>{4d10caf1-ddeb-4d8d-8e7a-3947b1f836f5}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

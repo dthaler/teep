@@ -51,13 +51,13 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)external/qcbor/inc;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>jansson;jose;jose_openssl;LibEay32_t;qcbor;TeepCommonTALib;UntrustedTimeTALib</AdditionalDependencies>
+      <AdditionalDependencies>jansson;jose;jose_openssl;LibEay32_t;qcbor;TeepCommonTALib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -120,10 +120,6 @@
     </ProjectReference>
     <ProjectReference Include="..\TeepCommonTALib\TeepCommonTALib.vcxproj">
       <Project>{213acb9d-9134-4bc8-aa44-b01e13df0c88}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
-    <ProjectReference Include="..\UntrustedTime\enc\UntrustedTimeTALib.vcxproj">
-      <Project>{a4fdd39f-06ac-4f96-8ad7-65364532692f}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
   </ItemGroup>

@@ -570,7 +570,6 @@
     <ClCompile Include="sgx\rand_winsgx.c">
     </ClCompile>
     <ClCompile Include="thread.c" />
-    <ClCompile Include="time.c" />
     <ClCompile Include="ui_openssl.c" />
   </ItemGroup>
   <ItemGroup>
@@ -676,6 +675,11 @@
     <None Include="$(OpensslDir)crypto\evp\Makefile" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\openssl_includes\openssl_includes.vcxproj">
+      <Project>{60c98602-65d4-4859-b88d-d94398dce313}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{275FAC8B-B49C-4C91-B708-5ABFB9E24215}</ProjectGuid>
     <RootNamespace>openssl</RootNamespace>
@@ -718,7 +722,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libcxx;$(OEIncludePath)\openenclave\3rdparty\libc;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(SolutionDir)openssl\include;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libc;$(SolutionDir)openssl\include;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OE_USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>

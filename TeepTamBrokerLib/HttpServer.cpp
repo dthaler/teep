@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif

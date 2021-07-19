@@ -1,4 +1,7 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
+#pragma once
+
 extern "C" {
 #include "jansson.h"
 };

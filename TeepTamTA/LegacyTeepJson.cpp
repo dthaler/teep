@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 
 /* This file is now obsolete.  It will be deleted once we add COSE support. */
 

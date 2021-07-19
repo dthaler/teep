@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #include <Windows.h>
 #include <wininet.h>
 #include <assert.h>

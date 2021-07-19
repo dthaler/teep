@@ -1,5 +1,5 @@
-// HttpHelper.cpp : implementation file
-//
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #include <windows.h>
 #include <stdio.h>
 #include <WinInet.h>

@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #include <openenclave/host.h>
 #include "TeepAgent_u.h"
 

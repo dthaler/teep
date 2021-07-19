@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #ifdef ENABLE_OTRP
 #include <openenclave/enclave.h>
 #include "TeepTam_t.h"

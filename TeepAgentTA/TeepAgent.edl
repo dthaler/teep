@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 enclave {
     from "..\TeepCommonTALib\TeepCommonTALib.edl" import *;
     from "openenclave/edl/syscall.edl" import *;

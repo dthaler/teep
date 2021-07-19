@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #pragma once
 
 int OTrPHandleMessage(void* sessionHandle, const char* message, unsigned int messageLength);

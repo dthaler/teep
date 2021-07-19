@@ -55,7 +55,7 @@ Sample:
 You must git clone this repository recursively:
 
 ```
-git clone --recurse-submodules https://github.com/dthaler/OTrP.git
+git clone --recurse-submodules https://github.com/dthaler/teep.git
 ```
 
 You must have the following installed to compile and debug:

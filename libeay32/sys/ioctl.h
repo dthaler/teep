@@ -1,7 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
-#ifndef _TRUSTED_HELPER_IOCTL_H_
-#define _TRUSTED_HELPER_IOCTL_H_
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
+#pragma once
 
 /* Empty header required by openssl */
-
-#endif /* #ifndef _TRUSTED_HELPER_IOCTL_H_ */

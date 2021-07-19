@@ -683,7 +683,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{275FAC8B-B49C-4C91-B708-5ABFB9E24215}</ProjectGuid>
     <RootNamespace>openssl</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>LibEay32</ProjectName>
     <OpensslDir>..\external\openssl\</OpensslDir>
     <OEType>Enclave</OEType>
@@ -745,12 +745,12 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\open-enclave-cross.0.14.0\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.14.0\build\native\open-enclave-cross.targets')" />
+    <Import Project="..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\open-enclave-cross.0.14.0\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave-cross.0.14.0\build\native\open-enclave-cross.targets'))" />
+    <Error Condition="!Exists('..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets'))" />
   </Target>
 </Project>

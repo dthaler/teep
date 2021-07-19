@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #include <openssl/ui.h>
 #include <openssl/ossl_typ.h>
 #include "crypto/ui/ui_locl.h"

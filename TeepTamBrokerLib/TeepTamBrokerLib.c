@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #include <string.h>
 #include "TeepTamBrokerLib.h"
 #include "TeepTam_u.h"

@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #include <windows.h> // for Sleep()
 #include <openenclave/host.h>
 #include "TeepAgentBrokerLib.h"

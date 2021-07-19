@@ -1,4 +1,5 @@
-/* Copyright Microsoft Corporation */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 
 #include <stddef.h>
 #include <stdlib.h>

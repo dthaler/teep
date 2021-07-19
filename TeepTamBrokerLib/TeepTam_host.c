@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #define _CRT_SECURE_NO_WARNINGS
 #include <openenclave/host.h>
 #ifdef _WIN32

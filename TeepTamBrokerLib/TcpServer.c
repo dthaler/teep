@@ -1,4 +1,5 @@
-/* Copyright (c) Microsoft Corporation.  All Rights Reserved. */
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #ifdef USE_TCP
 #include <winsock2.h>
 #include <ws2tcpip.h>

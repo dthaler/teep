@@ -34,7 +34,7 @@ static const char* get_cbor_type_name(unsigned int type)
 
 void report_type_error(std::ostream& s, const char* id, int expected_type, int actual_type)
 {
-    s << "Invalid " << id << " type " << get_cbor_type_name(actual_type) << ", expected " << get_cbor_type_name(expected_type);
+    s << "Invalid " << id << " type " << get_cbor_type_name(actual_type) << ", expected " << get_cbor_type_name(expected_type) << std::endl;
 }
 
 #if 0

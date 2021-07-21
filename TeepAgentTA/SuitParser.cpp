@@ -12,28 +12,36 @@ extern "C" {
 #include "SuitParser.h"
 
 // Parse a SUIT_Common out of a decode context and try to install it.
-teep_error_code_t TryProcessSuitCommon(QCBORDecodeContext* context, uint16_t mapEntryCount)
+teep_error_code_t TryProcessSuitCommon(UsefulBufC encoded, std::ostream& errorMessage)
 {
+    QCBORDecodeContext context;
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
+
     QCBORItem item;
-    teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
+    QCBORDecode_GetNext(&context, &item);
+    if (item.uDataType != QCBOR_TYPE_MAP) {
+        REPORT_TYPE_ERROR(errorMessage, "SUIT_Common", QCBOR_TYPE_MAP, item);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    uint16_t mapEntryCount = item.val.uCount;
+
     for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
-        QCBORDecode_GetNext(context, &item);
-        if (errorCode != TEEP_ERR_SUCCESS) {
-            continue;
-        }
+        QCBORDecode_GetNext(&context, &item);
         suit_common_label_t label = (suit_common_label_t)item.label.int64;
         switch (label) {
         case SUIT_COMMON_LABEL_DEPENDENCIES:
         case SUIT_COMMON_LABEL_COMPONENTS:
         case SUIT_COMMON_LABEL_SEQUENCE:
             // Not yet implemented.
-            errorCode = TEEP_ERR_TEMPORARY_ERROR;
+            return TEEP_ERR_TEMPORARY_ERROR;
             break;
         default:
-            errorCode = TEEP_ERR_PERMANENT_ERROR;
+            return TEEP_ERR_PERMANENT_ERROR;
         }
     }
-    return errorCode;
+
+    QCBORError err = QCBORDecode_Finish(&context);
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
 // Parse a SUIT_Manifest out of a decode context and try to install it.
@@ -64,17 +72,17 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded, std::ostream& error
             }
             break;
         case SUIT_MANIFEST_LABEL_SEQUENCE_NUMBER:
-            if (item.uDataType != QCBOR_TYPE_UINT64) {
+            if (item.uDataType != QCBOR_TYPE_INT64 && item.uDataType != QCBOR_TYPE_UINT64) {
                 REPORT_TYPE_ERROR(errorMessage, "suit-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             break;
         case SUIT_MANIFEST_LABEL_COMMON:
-            if (item.uDataType != QCBOR_TYPE_MAP) {
-                REPORT_TYPE_ERROR(errorMessage, "suit-manifest-common", QCBOR_TYPE_MAP, item);
+            if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                REPORT_TYPE_ERROR(errorMessage, "suit-common", QCBOR_TYPE_BYTE_STRING, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
-            errorCode = TryProcessSuitCommon(&context, item.val.uCount);
+            errorCode = TryProcessSuitCommon(item.val.string, errorMessage);
             break;
         case SUIT_MANIFEST_LABEL_REFERENCE_URI:
             errorCode = TEEP_ERR_TEMPORARY_ERROR;

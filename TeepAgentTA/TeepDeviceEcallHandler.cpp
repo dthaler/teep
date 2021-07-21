@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <string.h>
 #include <string>
 #include "TrustedComponent.h"
 #include "../TeepCommonTALib/common.h"
@@ -163,14 +164,58 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
 
         QCBOREncode_OpenMap(&context);
         {
-            // Copy token from request.
-            // TODO: only include this if the QueryRequest had one.
-            QCBORDecode_GetNext(decodeContext, &item);
-            if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_UINT64, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+            uint16_t mapEntryCount = item.val.uCount;
+            for (uint16_t mapIndex = 0; mapIndex < mapEntryCount; mapIndex++) {
+                QCBORDecode_GetNext(decodeContext, &item);
+                if (item.uLabelType != QCBOR_TYPE_INT64) {
+                    return TEEP_ERR_PERMANENT_ERROR;
+                }
+                switch (item.label.int64) {
+                case TEEP_LABEL_TOKEN:
+                    // Copy token from QueryRequest into QueryResponse.
+                    if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
+                        REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_UINT64, item);
+                        return TEEP_ERR_PERMANENT_ERROR;
+                    }
+                    QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, item.val.uint64);
+                    break;
+                case TEEP_LABEL_SUPPORTED_CIPHER_SUITES:
+                    if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                        REPORT_TYPE_ERROR(errorMessage, "supported-cipher-suites", QCBOR_TYPE_ARRAY, item);
+                        return TEEP_ERR_PERMANENT_ERROR;
+                    }
+                    printf("TODO: read supported cipher suites\n");
+                    break;
+                case TEEP_LABEL_SUPPORTED_FRESHNESS_MECHANISMS:
+                {
+                    if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                        REPORT_TYPE_ERROR(errorMessage, "supported-freshness-mechanisms", QCBOR_TYPE_ARRAY, item);
+                        return TEEP_ERR_PERMANENT_ERROR;
+                    }
+                    uint16_t arrayEntryCount = item.val.uCount;
+                    for (uint16_t arrayIndex = 0; arrayIndex < arrayEntryCount; arrayIndex++) {
+                        QCBORDecode_GetNext(decodeContext, &item);
+                        if (item.uDataType != QCBOR_TYPE_INT64) {
+                            REPORT_TYPE_ERROR(errorMessage, "freshness-mechanism", QCBOR_TYPE_INT64, item);
+                            return TEEP_ERR_PERMANENT_ERROR;
+                        }
+                        // TODO: handle freshness mechanism
+                        printf("Found freshness mechanism %d\n", item.val.int64);
+                    }
+
+                    break;
+                }
+                case TEEP_LABEL_CHALLENGE:
+                    printf("TODO: read challenge\n");
+                    break;
+                case TEEP_LABEL_VERSIONS:
+                    printf("TODO: read versions\n");
+                    break;
+                case TEEP_LABEL_OCSP_DATA:
+                    printf("TODO: read OCSP data\n");
+                    break;
+                }
             }
-            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, item.val.uint64);
 
             // Add tc-list.  Currently we populate this from the list of
             // "unneeded" components since most TEEs (like SGX) can't enumerate

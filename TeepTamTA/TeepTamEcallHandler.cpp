@@ -55,25 +55,34 @@ int TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_QUERY_REQUEST);
 
-        // Create a random 64-bit token.
-        uint64_t token;
-        oe_result_t result = oe_random(&token, sizeof(token));
-        if (result != OE_OK) {
-            return result;
-        }
-
-        // Draft -03 implies we have to store the token for validation
-        // upon receiving a QueryResponse, but that adversely affects
-        // scalability, opens the protocol to DOS attacks similar to SYN attacks,
-        // and forces the extra round trip.  See
-        // https://github.com/ietf-teep/teep-protocol/issues/40 for discussion.
-        // As such, we currently don't implement such a check in the hopes
-        // that the draft will remove the check in the future.  But we have
-        // to include a token anyway for interoperability.
-
         QCBOREncode_OpenMap(&context);
         {
+#if 0
+            // Create a random 64-bit token only if the attestation bit will be clear,
+            // but we always set the attestation bit so we never add a token.
+            uint64_t token;
+            oe_result_t result = oe_random(&token, sizeof(token));
+            if (result != OE_OK) {
+                return result;
+            }
+
             QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
+#endif
+
+            // Add supported cipher suites (defaults to both).
+
+            // Add supported freshness mechanisms (defaults to nonce only).
+            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_SUPPORTED_FRESHNESS_MECHANISMS);
+            {
+                QCBOREncode_AddInt64(&context, TEEP_FRESHNESS_MECHANISM_NONCE);
+            }
+            QCBOREncode_CloseArray(&context);
+
+            // Add challenge if needed.
+
+            // Add versions if needed.
+
+            // Add ocsp-data if needed.
         }
         QCBOREncode_CloseMap(&context);
 

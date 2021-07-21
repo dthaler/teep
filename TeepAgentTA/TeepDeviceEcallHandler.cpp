@@ -193,14 +193,21 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
                         return TEEP_ERR_PERMANENT_ERROR;
                     }
                     uint16_t arrayEntryCount = item.val.uCount;
+                    bool isNonceSupported = false;
                     for (uint16_t arrayIndex = 0; arrayIndex < arrayEntryCount; arrayIndex++) {
                         QCBORDecode_GetNext(decodeContext, &item);
                         if (item.uDataType != QCBOR_TYPE_INT64) {
                             REPORT_TYPE_ERROR(errorMessage, "freshness-mechanism", QCBOR_TYPE_INT64, item);
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
-                        // TODO: handle freshness mechanism
-                        printf("Found freshness mechanism %d\n", item.val.int64);
+                        if (item.val.int64 == TEEP_FRESHNESS_MECHANISM_NONCE) {
+                            isNonceSupported = true;
+                            printf("Choosing Nonce freshness mechanism\n");
+                        }
+                    }
+                    if (!isNonceSupported) {
+                        errorMessage << "No freshness mechanism in common, TEEP Agent only supports Nonce" << std::endl;
+                        return TEEP_ERR_UNSUPPORTED_FRESHNESS_MECHANISM;
                     }
 
                     break;

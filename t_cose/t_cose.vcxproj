@@ -66,7 +66,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\src;$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -78,7 +79,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\src;$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -90,7 +92,8 @@
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\src;$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -100,6 +103,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\external\t_cose\crypto_adapters\t_cose_openssl_crypto.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_parameters.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_sign1_sign.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_sign1_verify.c" />

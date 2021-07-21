@@ -17,6 +17,9 @@ extern "C" {
 #include "openssl/x509.h"
 #include "openssl/evp.h"
 #include "Manifest.h"
+#include "q_useful_buf.h"
+#include "t_cose_common.h"
+#include "t_cose_sign1_sign.h"
 #include "TeepTamEcallHandler.h"
 #include "RequestedComponentInfo.h"
 #include <sstream>
@@ -95,7 +98,144 @@ int TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
     return err;
 }
 
-teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType, const char* buffer, size_t bufferlen)
+#ifdef TEEP_USE_COSE
+// Some temporarily hard coded keys.
+// TODO: remove hard coded keys.
+#define PUBLIC_KEY_prime256v1 \
+"0437ab65955fae0466673c3a2934a3" \
+"4f2f0ec2b3eec224198557998fc04b" \
+"f4b2b495d9798f2539c90d7d102b3b" \
+"bbda7fcbdb0e9b58d4e1ad2e61508d" \
+"a75f84a67b"
+
+#define PRIVATE_KEY_prime256v1 \
+"f1b7142343402f3b5de7315ea894f9" \
+"da5cf503ff7938a37ca14eb0328698" \
+"8450"
+
+/**
+ * \brief Make an EC key pair in OpenSSL library form.
+ *
+ * \param[in] cose_algorithm_id  The algorithm to sign with, for example
+ *                               \ref T_COSE_ALGORITHM_ES256.
+ * \param[out] key_pair          The key pair. This must be freed.
+ *
+ * The key made here is fixed and just useful for testing.
+ */
+enum t_cose_err_t make_ossl_ecdsa_key_pair(
+    int32_t            cose_algorithm_id,
+    struct t_cose_key* key_pair)
+{
+    EC_GROUP* ossl_ec_group = NULL;
+    enum t_cose_err_t  return_value;
+    BIGNUM* ossl_private_key_bn = NULL;
+    EC_KEY* ossl_ec_key = NULL;
+    int                ossl_result;
+    EC_POINT* ossl_pub_key_point = NULL;
+    int                nid;
+    const char* public_key;
+    const char* private_key;
+
+    switch (cose_algorithm_id) {
+    case T_COSE_ALGORITHM_ES256:
+        nid = NID_X9_62_prime256v1;
+        public_key = PUBLIC_KEY_prime256v1;
+        private_key = PRIVATE_KEY_prime256v1;
+        break;
+
+    default:
+        return T_COSE_ERR_UNSUPPORTED_SIGNING_ALG;
+    }
+
+    /* Make a group for the particular EC algorithm */
+    ossl_ec_group = EC_GROUP_new_by_curve_name(nid);
+    if (ossl_ec_group == NULL) {
+        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
+        goto Done;
+    }
+
+    /* Make an empty EC key object */
+    ossl_ec_key = EC_KEY_new();
+    if (ossl_ec_key == NULL) {
+        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
+        goto Done;
+    }
+
+    /* Associate group with key object */
+    ossl_result = EC_KEY_set_group(ossl_ec_key, ossl_ec_group);
+    if (!ossl_result) {
+        return_value = T_COSE_ERR_SIG_FAIL;
+        goto Done;
+    }
+
+    /* Make an instance of a big number to store the private key */
+    ossl_private_key_bn = BN_new();
+    if (ossl_private_key_bn == NULL) {
+        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
+        goto Done;
+    }
+    BN_zero(ossl_private_key_bn);
+
+    /* Stuff the specific private key into the big num */
+    ossl_result = BN_hex2bn(&ossl_private_key_bn, private_key);
+    if (ossl_private_key_bn == 0) {
+        return_value = T_COSE_ERR_SIG_FAIL;
+        goto Done;
+    }
+
+    /* Now associate the big num with the key object so we finally
+     * have a key set up and ready for signing */
+    ossl_result = EC_KEY_set_private_key(ossl_ec_key, ossl_private_key_bn);
+    if (!ossl_result) {
+        return_value = T_COSE_ERR_SIG_FAIL;
+        goto Done;
+    }
+
+
+    /* Make an empty EC point into which the public key gets loaded */
+    ossl_pub_key_point = EC_POINT_new(ossl_ec_group);
+    if (ossl_pub_key_point == NULL) {
+        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
+        goto Done;
+    }
+
+    /* Turn the serialized public key into an EC point */
+    ossl_pub_key_point = EC_POINT_hex2point(ossl_ec_group,
+        public_key,
+        ossl_pub_key_point,
+        NULL);
+    if (ossl_pub_key_point == NULL) {
+        return_value = T_COSE_ERR_SIG_FAIL;
+        goto Done;
+    }
+
+    /* Associate the EC point with key object */
+    /* The key object has both the public and private keys in it */
+    ossl_result = EC_KEY_set_public_key(ossl_ec_key, ossl_pub_key_point);
+    if (ossl_result == 0) {
+        return_value = T_COSE_ERR_SIG_FAIL;
+        goto Done;
+    }
+
+    key_pair->k.key_ptr = ossl_ec_key;
+    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
+    return_value = T_COSE_SUCCESS;
+
+Done:
+    return return_value;
+}
+
+static teep_error_code_t get_signing_key_pair(struct t_cose_key* key_pair)
+{
+    enum t_cose_err_t return_value = make_ossl_ecdsa_key_pair(T_COSE_ALGORITHM_ES256, key_pair);
+    if (return_value != T_COSE_SUCCESS) {
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+    return TEEP_ERR_SUCCESS;
+}
+#endif
+
+teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType, const UsefulBufC* buffer)
 {
     // From draft-ietf-teep-protocol section 4.1.1:
     // 1.  Create a TEEP message according to the description below and
@@ -103,19 +243,57 @@ teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType
     // 2.  Create a COSE Header containing the desired set of Header
     //     Parameters.  The COSE Header MUST be valid per the [RFC8152]
     //     specification.
-    // ... TODO ...
-
     // 3.  Create a COSE_Sign1 object using the TEEP message as the
     //     COSE_Sign1 Payload; all steps specified in [RFC8152] for creating
     //     a COSE_Sign1 object MUST be followed.
-    // ... TODO ...
+
+    teep_error_code_t err = TEEP_ERR_SUCCESS;
+#ifdef TEEP_USE_COSE
+    struct t_cose_key key_pair;
+    err = get_signing_key_pair(&key_pair);
+    if (err != TEEP_ERR_SUCCESS) {
+        return err;
+    }
+
+    // Initialize for signing.
+    struct t_cose_sign1_sign_ctx sign_ctx;
+    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
+    t_cose_sign1_set_signing_key(&sign_ctx, key_pair, NULL_Q_USEFUL_BUF_C);
+
+    // Sign.
+    Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
+    struct q_useful_buf_c signed_cose;
+    enum t_cose_err_t return_value = t_cose_sign1_sign(
+        &sign_ctx,
+        *buffer,
+        /* Non-const pointer and length of the
+         * buffer where the completed output is
+         * written to. The length here is that
+         * of the whole buffer.
+         */
+        signed_cose_buffer,
+        /* Const pointer and actual length of
+         * the completed, signed and encoded
+         * COSE_Sign1 message. This points
+         * into the output buffer and has the
+         * lifetime of the output buffer.
+         */
+        &signed_cose);
+    if (return_value != T_COSE_SUCCESS) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    const char* output_buffer = (const char*)signed_cose.ptr;
+    size_t output_buffer_length = signed_cose.len;
+#else
+    const char* output_buffer = (const char*)buffer->ptr;
+    size_t output_buffer_length = buffer->len;
+#endif
 
     // 4.  Prepend the COSE object with the TEEP CBOR tag to indicate that
     //     the CBOR-encoded message is indeed a TEEP message.
     // ... TODO ...
 
-    int err = 0;
-    oe_result_t result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, mediaType, buffer, bufferlen);
+    oe_result_t result = ocall_QueueOutboundTeepMessage((int*)&err, sessionHandle, mediaType, output_buffer, output_buffer_length);
     if (result != OE_OK) {
         return TEEP_ERR_TEMPORARY_ERROR;
     }
@@ -163,7 +341,7 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
     }
 
     printf("Sending QueryRequest...\n");
-    err = TeepSendCborMessage(sessionHandle, mediaType, (const char*)encoded.ptr, encoded.len);
+    err = TeepSendCborMessage(sessionHandle, mediaType, &encoded);
     free((void*)encoded.ptr);
     return err;
 }
@@ -537,7 +715,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
 
             printf("Sending Update message...\n");
 
-            err = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)update.ptr, update.len);
+            err = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update);
             free((void*)update.ptr);
             if (err != TEEP_ERR_SUCCESS) {
                 return err;

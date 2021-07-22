@@ -1,7 +1,7 @@
 # TEEP
 
-C Implementation of [draft-ietf-teep-protocol](https://tools.ietf.org/html/draft-ietf-teep-protocol/),
-[draft-ietf-teep-otrp-over-http](https://tools.ietf.org/html/draft-ietf-teep-otrp-over-http), and the (now obsolete) draft-ietf-teep-opentrustprotocol.
+C Implementation of [draft-ietf-teep-protocol](https://tools.ietf.org/html/draft-ietf-teep-protocol/) and
+[draft-ietf-teep-otrp-over-http](https://tools.ietf.org/html/draft-ietf-teep-otrp-over-http).
 
 The directories are organized as follows.
 
@@ -110,8 +110,8 @@ and change Properties -> Debugging -> Working Directory and change the
 value to $(OutDir) instead of $(ProjectDir).  This is because the apps
 will attempt to load the enclaves from the current directory.
 
-Partial OTrP support, and partial support for the obsolete use of JSON
-in TEEP, are both still in the code but not defined by default.
+Partial [OTrP](https://globalplatform.org/specs-library/tee-management-framework-open-trust-protocol/) support, and partial support for the obsolete use of JSON
+in TEEP, are both still in the code but not defined by default, and are slated for removal.
 OTrP support is gated by `ENABLE_OTRP` and TEEP JSON support is gated by
 `TEEP_ENABLE_JSON` so if you have a need to experiment with those, define
 those symbols globally in Visual Studio, but expect that TEEP JSON support

@@ -54,6 +54,7 @@
     <LibraryPath>$(NoInherit)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
+    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">
     <GenerateManifest>false</GenerateManifest>
@@ -70,6 +71,7 @@
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <TargetName>5c0ca658-2ed0-4b81-b919-651c39a2b0a0</TargetName>
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
+    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <GenerateManifest>false</GenerateManifest>
@@ -78,6 +80,7 @@
     <LibraryPath>$(NoInherit)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
+    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -105,6 +108,12 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CustomBuildStep>
+      <Command>copy $(SolutionDir)external\t_cose\inc\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Outputs>$(SolutionDir)obj\x64\t_cose\t_cose_common.h</Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">
     <ClCompile>
@@ -117,6 +126,10 @@
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CustomBuildStep>
+      <Command>copy $(SolutionDir)external\t_cose\inc\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
+      <Outputs>$(SolutionDir)obj\x64\t_cose\t_cose_common.h</Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -132,6 +145,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
+    <CustomBuildStep>
+      <Command>copy $(SolutionDir)external\t_cose\inc\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
+      <Outputs>$(SolutionDir)obj\x64\t_cose\t_cose_common.h</Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\external\t_cose\crypto_adapters\t_cose_openssl_crypto.c" />
@@ -142,6 +159,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\external\t_cose\inc\q_useful_buf.h" />
+    <ClInclude Include="..\external\t_cose\inc\t_cose_common.h" />
+    <ClInclude Include="..\external\t_cose\inc\t_cose_sign1_sign.h" />
+    <ClInclude Include="..\external\t_cose\inc\t_cose_sign1_verify.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

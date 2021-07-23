@@ -60,17 +60,8 @@ int TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
 
         QCBOREncode_OpenMap(&context);
         {
-#if 0
-            // Create a random 64-bit token only if the attestation bit will be clear,
+            // Create a random token only if the attestation bit will be clear,
             // but we always set the attestation bit so we never add a token.
-            uint64_t token;
-            oe_result_t result = oe_random(&token, sizeof(token));
-            if (result != OE_OK) {
-                return result;
-            }
-
-            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
-#endif
 
             // Add supported cipher suites (defaults to both).
 
@@ -393,16 +384,17 @@ teep_error_code_t TeepComposeCborUpdate(
         // Add TYPE.
         QCBOREncode_AddInt64(&context, TEEP_MESSAGE_UPDATE);
 
-        /* Create a random 64-bit token. */
-        uint64_t token;
-        oe_result_t result = oe_random(&token, sizeof(token));
-        if (result != OE_OK) {
-            return TEEP_ERR_TEMPORARY_ERROR;
-        }
+
 
         QCBOREncode_OpenMap(&context);
         {
-            QCBOREncode_AddUInt64ToMapN(&context, TEEP_LABEL_TOKEN, token);
+            /* Create a random token. */
+            UsefulBuf_MAKE_STACK_UB(token, 8);
+            oe_result_t result = oe_random(token.ptr, token.len);
+            if (result != OE_OK) {
+                return TEEP_ERR_TEMPORARY_ERROR;
+            }
+            QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TOKEN, UsefulBuf_Const(token));
 
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
             {
@@ -522,8 +514,8 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
         teep_label_t label = (teep_label_t)item.label.int64;
         switch (label) {
         case TEEP_LABEL_TOKEN:
-            if (item.uDataType != QCBOR_TYPE_UINT64 && item.uDataType != QCBOR_TYPE_INT64) {
-                REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_UINT64, item);
+            if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_BYTE_STRING, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
 
@@ -725,6 +717,18 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
     return TEEP_ERR_SUCCESS;
 }
 
+teep_error_code_t TeepHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* context)
+{
+    printf("Received Success message...\n");
+    return TEEP_ERR_SUCCESS;
+}
+
+teep_error_code_t TeepHandleCborError(void* sessionHandle, QCBORDecodeContext* context)
+{
+    printf("Received Error message...\n");
+    return TEEP_ERR_SUCCESS;
+}
+
 /* Handle an incoming message from a TEEP Agent. */
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, unsigned int messageLength)
 {
@@ -779,8 +783,12 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
     case TEEP_MESSAGE_QUERY_RESPONSE:
         teeperr = TeepHandleCborQueryResponse(sessionHandle, &context);
         break;
-    case TEEP_MESSAGE_SUCCESS: /* TODO */
-    case TEEP_MESSAGE_ERROR: /* TODO */
+    case TEEP_MESSAGE_SUCCESS:
+        teeperr = TeepHandleCborSuccess(sessionHandle, &context);
+        break;
+    case TEEP_MESSAGE_ERROR:
+        teeperr = TeepHandleCborError(sessionHandle, &context);
+        break;
     default:
         teeperr = TEEP_ERR_PERMANENT_ERROR;
         break;

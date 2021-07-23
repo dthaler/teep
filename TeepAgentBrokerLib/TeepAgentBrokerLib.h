@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#ifdef TEEP_USE_TEE
+typedef oe_uuid_t teep_uuid_t;
+#define TEEP_UUID_SIZE OE_UUID_SIZE
+#else
+#include <rpc.h>
+typedef uuid_t teep_uuid_t;
+#define TEEP_UUID_SIZE sizeof(teep_uuid_t)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,12 +25,12 @@ extern "C" {
 
     int AgentBrokerRequestTA(
         int useCbor,
-        oe_uuid_t unneededTaid,
+        teep_uuid_t unneededTaid,
         _In_z_ const char* tamUri);
 
     int AgentBrokerUnrequestTA(
         int useCbor,
-        oe_uuid_t unneededTaid,
+        teep_uuid_t unneededTaid,
         _In_z_ const char* tamUri);
 
 #ifdef __cplusplus

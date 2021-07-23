@@ -291,7 +291,7 @@ teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType
 
     // 4.  Prepend the COSE object with the TEEP CBOR tag to indicate that
     //     the CBOR-encoded message is indeed a TEEP message.
-    // ... TODO ...
+    // TODO: See https://github.com/ietf-teep/teep-protocol/issues/147
 
     oe_result_t result = ocall_QueueOutboundTeepMessage((int*)&err, sessionHandle, mediaType, output_buffer, output_buffer_length);
     if (result != OE_OK) {
@@ -527,21 +527,19 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                 return TEEP_ERR_PERMANENT_ERROR;
             }
 
-            /* As discussed above in comments in TeepComposeCborQueryRequest(),
-             * draft -03 requires us to validate that the token matches what was
-             * sent in the QueryRequest, but that causes performance problems
-             * and opens us to certain DOS attacks, without any obvious
-             * benefit. As such, we skip this check in the hopes that the spec
-             * will be updated to
-             * remove the check.
-             */
-            break;
+            // Since we always send QueryRequest with the attestation bit set,
+            // and don't include a token in the QueryRequest, we should never
+            // get a token in response.  If we do, it indicates a bug in the
+            // TEEP Agent that sent the QueryResponse.
+            return TEEP_ERR_PERMANENT_ERROR;
+
         case TEEP_LABEL_SELECTED_VERSION:
             if (item.val.uint64 != 0) {
                 printf("Unrecognized protocol version %lld\n", item.val.uint64);
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
             }
             break;
+
         case TEEP_LABEL_SELECTED_CIPHER_SUITE:
             if ((item.val.uint64 != TEEP_CIPHERSUITE_ES256) &&
                 (item.val.uint64 != TEEP_CIPHERSUITE_EDDSA)) {
@@ -549,6 +547,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid ciphersuite */
             }
             break;
+
         case TEEP_LABEL_REQUESTED_TC_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
@@ -740,21 +739,21 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
     //  1.  Verify that the received message is a valid CBOR object.
     //  2.  Remove the TEEP message CBOR tag and verify that one of the COSE
     //      CBOR tags follows it.
-    // ... TODO ...
+    // TODO: See https://github.com/ietf-teep/teep-protocol/issues/147
 
     //  3.  Verify that the message contains a COSE_Sign1 structure.
-    // ... TODO ...
+    // ... TODO(issue #8) ...
 
     //  4.  Verify that the resulting COSE Header includes only parameters
     //      and values whose syntax and semantics are both understood and
     //      supported or that are specified as being ignored when not
     //      understood.
-    // ... TODO ...
+    // ... TODO(issue #8) ...
 
     //  5.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
     //      Objects") for validating a COSE_Sign1 object.  The COSE_Sign1
     //      payload is the content of the TEEP message.
-    // ... TODO ...
+    // ... TODO(issue #8) ...
 
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);

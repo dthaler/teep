@@ -2,6 +2,7 @@ openssl/
 bin/
 obj/
 Debug/
+DebugStandalone/
 OPTEE-Simulation-Debug/
 packages/
 

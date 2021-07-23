@@ -1,0 +1,16 @@
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
+enclave {
+	from "..\TeepCommonTALib\TeepCommonTALib.edl" import *;
+    from "openenclave/edl/syscall.edl" import *;
+    from "platform.edl" import *;
+
+    trusted {
+        /* define ECALLs here. */
+        public int ecall_ProcessTeepConnect([user_check] void* sessionHandle, [in, string] const char* acceptMediaType);
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+    };
+};

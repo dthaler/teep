@@ -5,37 +5,50 @@ C Implementation of [draft-ietf-teep-protocol](https://tools.ietf.org/html/draft
 
 The directories are organized as follows.
 
-External:
+Directories to make external libraries compile into static libs usable in a TA (actual files under
+the directories of the same names under the external/ directory):
 
-* qcbor: Static lib implementation of CBOR, ported to run in a TA.
+* ctoken: EAT implementation.
 
-* t\_cose: Static lib implementation of COSE, ported to run in a TA.
+* jansson: JSON implementation.
 
-* jansson: Static lib implementation of JSON, ported to run in a TA.
+* jose: JOSE implementation.
 
-* jose: Static lib implementation of JOSE, ported to run in a TA.
+* jose\_openssl: JOSE's use of OpenSSL's crypto library.
 
-* jose\_openssl: Static lib implementation of JOSE's use of OpenSSL crypto library, ported to run in a TA.
+* LibEay32: OpenSSL's crypto library.
 
-* LibEay32: Static lib implementation of OpenSSL crypto library, ported to run in a TA.
+* openssl_includes: Copies OpenSSL includes into the openssl directory where other libs can find them.
 
-Time:
+* qcbor: CBOR implementation.
 
-* UntrustedTime/host: Static lib untrusted app-side support for calling untrusted absolute time APIs from a TA.
+* t\_cose: COSE implementation.
 
-* UntrustedTime/enc: Static lib TA-side support for calling untrusted absolute time APIs from a TA.
+Protocol:
 
-TEEP:
+* protocol/TeepAgentBrokerLib: TEEP Agent Broker in a static lib.
 
-* TeepAgentBrokerLib: TEEP Agent Broker in a static lib.
+* protocol/TeepAgentLib: TEEP Agent in a static lib.
 
-* TeepAgentTA: TEEP Agent in a TA.
+* protocol/TeepCommonLib: TEEP common static lib used by TeepAgentLib and TeepTamLib.
 
-* TeepTamBrokerLib: TEEP TAM Broker in a static lib.
+* protocol/TeepTamBrokerLib: TEEP TAM Broker in a static lib.
 
-* TeepTamTA: TEEP TAM in a TA.
+* protocol/TeepTamLib: TEEP TAM in a static lib.
 
-* TeepCommonTALib: TEEP trusted code that is needed by both an Agent and a TAM.
+TAs:
+
+* TeepAgentTABrokerLib: Static lib containing a TEEP Agent Broker for communicating with TeepAgentTA.
+
+* TeepAgentTA: TA containing a TEEP Agent.
+
+* TeepCommonTALib: Static lib with TEEP trusted code that is needed by both TeepAgentTA and TeepTamTA.
+
+* TeepTamTABrokerLib: Static lib containing a TEEP TAM Broker for communicating with TeepTamTA.
+
+* TeepTamTA: TA containing a TEEP TAM.
+
+Configuration:
 
 * manifests: Repository of SUIT manifest files for Trusted Components. This
   directory is read by the TeepTamBrokerLib and used to populate the TAM's
@@ -44,7 +57,7 @@ TEEP:
   The project at https://github.com/ARMmbed/suit-manifest-generator
   can be used to generate SUIT manifest files.
 
-Sample:
+Apps:
 
 * DeviceHost: Sample host app to run a TEEP Agent Broker.
 
@@ -101,8 +114,11 @@ Currently the <TAM URI> must end in /TEEP
 
 The following configurations should work:
 
-* Debug | x64 - use this to test/run on an SGX-capable machine
+* Debug | x64 - Use this to test/run on an SGX-capable machine
                 or with the `-s` option to run on a non-SGX-capable machine
+                but simulating run inside SGX.
+* DebugStandalone | x64 - Use this to test/run as a normal application
+                outside any TEE, for development and debugging purposes.
 
 To run and debug inside Visual Studio, change the debugger Working Directory
 to $(OutDir).  To do this, right click on the project,

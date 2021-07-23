@@ -7,7 +7,13 @@ extern "C" {
 
 /* OpenSSL was configured with the following options: */
 #define OE_NO_SAL 1
+#ifdef TEEP_USE_TEE
 #include <openenclave/enclave.h>
+#else
+#undef OCSP_REQUEST
+#undef OCSP_RESPONSE
+#undef X509_NAME
+#endif
 #ifdef OE_USE_SGX
 #include "TrustedOpenssl.h"
 #else /* !OE_USE_SGX */

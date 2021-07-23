@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: MIT
 #include <stdio.h>
 #include <string.h>
+#ifdef TEEP_USE_TEE
 #include <openenclave/host.h>
-#include "../TeepAgentBrokerLib/TeepAgentBrokerLib.h"
+#endif
+#include "../protocol/TeepAgentBrokerLib/TeepAgentBrokerLib.h"
 
 //#define DEFAULT_TAM_URI "http://127.0.0.1:12345/TEEP"
 //#define DEFAULT_TAM_URI "http://localhost:54321/TEEP"
@@ -13,12 +15,12 @@
 #define DEFAULT_TA_ID "38b08738-227d-4f6a-b1f0-b208bc02a781" // TODO: default to none
 
 // Returns 0 on success, error on failure.
-int ConvertStringToUUID(oe_uuid_t* uuid, const char* idString)
+int ConvertStringToUUID(teep_uuid_t* uuid, const char* idString)
 {
     const char* p = idString;
     int length = 0;
     int value;
-    while (length < OE_UUID_SIZE) {
+    while (length < TEEP_UUID_SIZE) {
         if (*p == '-') {
             p++;
             continue;
@@ -89,7 +91,7 @@ int main(int argc, char** argv)
     }
 
     if (unneededTa != NULL) {
-        oe_uuid_t unneededTaid;
+        teep_uuid_t unneededTaid;
         err = ConvertStringToUUID(&unneededTaid, unneededTa);
         if (err != 0) {
             printf("Invalid TA ID: %s\n", unneededTa);
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
     }
 
     if (requestedTa != NULL) {
-        oe_uuid_t requestedTaid;
+        teep_uuid_t requestedTaid;
         err = ConvertStringToUUID(&requestedTaid, requestedTa);
         if (err != 0) {
             printf("Invalid TA ID: %s\n", requestedTa);

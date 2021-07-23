@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include <stdio.h>
 #include <string.h>
-#include "../TeepTamBrokerLib/TeepTamBrokerLib.h"
+#include "../protocol/TeepTamBrokerLib/TeepTamBrokerLib.h"
 
 #define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"
 

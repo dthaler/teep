@@ -1,0 +1,24 @@
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
+
+enclave {
+    trusted {
+        /* define ECALLs here. */
+        public void ecall_Initialize();
+
+        public int ecall_ProcessTeepMessage(
+            [user_check] void* sessionHandle,
+            [in, string] const char* mediaType,
+            [in, size=messageLength] const char* message, 
+            size_t messageLength);
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        int ocall_QueueOutboundTeepMessage(
+            [user_check] void* sessionHandle,
+            [in, string] const char* mediaType,
+            [in, size=messageLength] const char* message,
+            size_t messageLength);
+    };
+};

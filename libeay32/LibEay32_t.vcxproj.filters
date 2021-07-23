@@ -450,15 +450,6 @@
     <ClCompile Include="$(OpensslDir)crypto\engine\tb_rsa.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\err\err.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\err\err_all.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\err\err_prn.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\evp\c_all.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1778,6 +1769,15 @@
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_asn1.c">
       <Filter>Source Files\ecdsa</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\err\err.c">
+      <Filter>Source Files\err</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\err\err_all.c">
+      <Filter>Source Files\err</Filter>
+    </ClCompile>
+    <ClCompile Include="$(OpensslDir)crypto\err\err_prn.c">
+      <Filter>Source Files\err</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

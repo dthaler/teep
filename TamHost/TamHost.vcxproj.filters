@@ -18,9 +18,6 @@
     <ClInclude Include="HttpServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TcpServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TamHost.c">

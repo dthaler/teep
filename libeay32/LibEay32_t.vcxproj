@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugStandalone|x64">
+      <Configuration>DebugStandalone</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -232,6 +236,7 @@
     <ClCompile Include="$(OpensslDir)crypto\dso\dso_win32.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ecdhtest.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ech_err.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ech_kdf.c" />
@@ -240,6 +245,7 @@
     <ClCompile Include="$(OpensslDir)crypto\ecdh\ech_ossl.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecdsatest.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_asn1.c" />
     <ClCompile Include="$(OpensslDir)crypto\ecdsa\ecs_err.c" />
@@ -259,16 +265,19 @@
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_nistputil.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_nistz256.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_nistz256_table.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_oct.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ecp_smpl.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ectest.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\ec\ec_ameth.c" />
     <ClCompile Include="$(OpensslDir)crypto\ec\ec_asn1.c" />
@@ -406,6 +415,7 @@
     <ClCompile Include="$(OpensslDir)crypto\ocsp\ocsp_vfy.c" />
     <ClCompile Include="$(OpensslDir)crypto\o_dir.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\o_init.c" />
     <ClCompile Include="$(OpensslDir)crypto\o_time.c" />
@@ -449,6 +459,7 @@
     <ClCompile Include="$(OpensslDir)crypto\rand\rand_lib.c" />
     <ClCompile Include="$(OpensslDir)crypto\rand\rand_win.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\rc2\rc2cfb64.c" />
@@ -565,9 +576,11 @@
     <ClCompile Include="$(OpensslDir)crypto\x509\x_all.c" />
     <ClCompile Include="optee\rand_optee.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="sgx\rand_winsgx.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="thread.c" />
     <ClCompile Include="ui_openssl.c" />
@@ -686,23 +699,35 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>LibEay32</ProjectName>
     <OpensslDir>..\external\openssl\</OpensslDir>
-    <OEType>Enclave</OEType>
     <OETADevKitPath>/mnt/c/git/tcps/OTrP/packages/open-enclave-cross.0.8.1-c3b6262c-2/lib/native/gcc6/optee/v3.3.0/vexpress-qemu_armv8a/devkit</OETADevKitPath>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>Open Enclave (v142)</PlatformToolset>
+    <OEType>Enclave</OEType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
+    <OEType>Enclave</OEType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(NoInherit)</IncludePath>
+    <LibraryPath>$(NoInherit)</LibraryPath>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
+    <TargetName>LibEay32_t</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">
     <IncludePath>$(NoInherit)</IncludePath>
     <LibraryPath>$(NoInherit)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
@@ -724,6 +749,19 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libc;$(SolutionDir)openssl\include;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TRUSTED_CODE;OE_SECURE_POSIX_FILE_API;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OE_USE_SGX;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Lib>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">
+    <ClCompile>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)LibEay32;$(SolutionDir)openssl\include;$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libc;$(SolutionDir)openssl\include;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TRUSTED_CODE;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>

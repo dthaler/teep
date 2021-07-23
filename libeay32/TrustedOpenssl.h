@@ -9,7 +9,9 @@
 
 #include <stdio.h>
 #define OE_NO_SAL 1
+#ifdef TEEP_USE_TEE
 #include <openenclave/enclave.h>
+#endif
 #define GETPID_IS_MEANINGLESS
 
 #include <string.h>

@@ -77,8 +77,12 @@
 #define json_auto_t json_t
 #endif
 
-#ifndef _OE_HOST_H
+#if !defined(_OE_HOST_H) && defined(TEEP_USE_TEE)
 #include <openenclave/enclave.h>
+#endif
+#ifndef TEEP_USE_TEE
+#undef min
+#define strcasecmp _stricmp
 #endif
 
 #endif

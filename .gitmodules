@@ -9,7 +9,7 @@
 	url = https://github.com/openssl/openssl.git
 [submodule "external/qcbor"]
 	path = external/qcbor
-	url = https://github.com/laurencelundblade/QCBOR.git
+	url = https://github.com/dthaler/QCBOR.git
 [submodule "external/t_cose"]
 	path = external/t_cose
 	url = https://github.com/laurencelundblade/t_cose.git

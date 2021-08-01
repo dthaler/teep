@@ -1,0 +1,48 @@
+# For documentation on the github environment, see
+# https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+#
+# For documentation on the syntax of this file, see
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+name: MSBuild
+
+on: pull_request
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        configurations: [DebugStandalone]
+    runs-on: windows-latest
+    env:
+      # Path to the solution file relative to the root of the project.
+      SOLUTION_FILE_PATH: teep.sln
+
+      # Configuration type to build.
+      # You can convert this to a build matrix if you need coverage of multiple configuration types.
+      # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+      BUILD_CONFIGURATION: ${{matrix.configurations}}
+
+      BUILD_PLATFORM: x64
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1
+
+        #- name: Install Open Enclave VSIX
+        #run:  |
+        #curl -fsSL -o OE.vsix https://marketplace.visualstudio.com/_apis/public/gallery/publishers/MS-TCPS/vsextensions/OpenEnclaveSDK-VSIX/0.17.37/vspackage
+        #VSIXInstaller.exe /q /a "OE.vsix"
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=${{env.BUILD_PLATFORM}} /p:Analysis='True' ${{env.SOLUTION_FILE_PATH}}

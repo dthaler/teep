@@ -35,7 +35,6 @@ typedef enum {
     TEEP_ATTESTATION = 1,
     TEEP_TRUSTED_COMPONENTS = 2,
     TEEP_EXTENSIONS = 4,
-    TEEP_SUIT_COMMANDS = 8
 } teep_data_items_t;
 
 typedef enum {

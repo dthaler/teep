@@ -263,10 +263,6 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
                 }
                 QCBOREncode_CloseArray(&context);
             }
-            if (item.val.int64 & TEEP_SUIT_COMMANDS) {
-                // TODO: handle SUIT commands requested.
-                // See https://github.com/ietf-teep/teep-protocol/issues/145
-            }
 
             if (g_RequestedComponentList != nullptr)
             {

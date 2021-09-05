@@ -208,7 +208,7 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
                     }
                     if (!isNonceSupported) {
                         errorMessage << "No freshness mechanism in common, TEEP Agent only supports Nonce" << std::endl;
-                        return TEEP_ERR_UNSUPPORTED_FRESHNESS_MECHANISM;
+                        return TEEP_ERR_UNSUPPORTED_FRESHNESS_MECHANISMS;
                     }
                     break;
                 }

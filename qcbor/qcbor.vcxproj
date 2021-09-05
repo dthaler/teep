@@ -139,6 +139,15 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\external\qcbor\inc\qcbor\qcbor_common.h" />
+    <ClInclude Include="..\external\qcbor\inc\qcbor\qcbor_decode.h" />
+    <ClInclude Include="..\external\qcbor\inc\qcbor\qcbor_encode.h" />
+    <ClInclude Include="..\external\qcbor\inc\qcbor\qcbor_private.h" />
+    <ClInclude Include="..\external\qcbor\inc\qcbor\qcbor_spiffy_decode.h" />
+    <ClInclude Include="..\external\qcbor\inc\qcbor\UsefulBuf.h" />
+    <ClInclude Include="..\external\qcbor\inc\UsefulBuf.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets" Condition="Exists('..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets')" />

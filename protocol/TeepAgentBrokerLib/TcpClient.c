@@ -101,7 +101,7 @@ int HandleTcpMessage(void)
         return FALSE;
     }
 
-    err = ProcessTeepMessage(message, messageLength);
+    err = TeepAgentProcessTeepMessage(message, messageLength);
 
     free(message);
 

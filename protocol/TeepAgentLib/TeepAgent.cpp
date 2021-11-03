@@ -77,7 +77,7 @@ int ecall_RequestPolicyCheck(void)
 
 #ifdef TEEP_ENABLE_JSON
 /* Compose a TEEP QueryResponse message. */
-const char* TeepComposeJsonQueryResponse(
+const char* TeepAgentComposeJsonQueryResponse(
     const json_t* request)    // Request we're responding to.
 {
     JsonAuto response(json_object(), true);
@@ -128,7 +128,7 @@ static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* t
 }
 
 // Parse QueryRequest and compose QueryResponse.
-static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decodeContext, UsefulBufC* encoded, std::ostream& errorMessage)
+static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* decodeContext, UsefulBufC* encoded, std::ostream& errorMessage)
 {
     UsefulBufC challenge = NULLUsefulBufC;
     encoded->ptr = nullptr;
@@ -305,7 +305,7 @@ static teep_error_code_t TeepComposeCborQueryResponse(QCBORDecodeContext* decode
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType, const char* buffer, size_t bufferlen)
+teep_error_code_t TeepAgentSendCborMessage(void* sessionHandle, const char* mediaType, const char* buffer, size_t bufferlen)
 {
     // From draft-ietf-teep-protocol section 4.1.1:
     // 1.  Create a TEEP message according to the description below and
@@ -324,17 +324,17 @@ teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType
     //     the CBOR-encoded message is indeed a TEEP message.
     // TODO: see https://github.com/ietf-teep/teep-protocol/issues/147
 
-    return QueueOutboundTeepMessage(sessionHandle, mediaType, buffer, bufferlen);
+    return TeepAgentQueueOutboundTeepMessage(sessionHandle, mediaType, buffer, bufferlen);
 }
 
-static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
     printf("TeepHandleCborQueryRequest\n");
 
     /* 3. Compose a raw response. */
     UsefulBufC queryResponse;
     std::ostringstream errorMessage;
-    teep_error_code_t err = TeepComposeCborQueryResponse(context, &queryResponse, errorMessage);
+    teep_error_code_t err = TeepAgentComposeCborQueryResponse(context, &queryResponse, errorMessage);
     if (err != TEEP_ERR_SUCCESS) {
         // TODO: see https://github.com/ietf-teep/teep-protocol/issues/129
         // TeepSendError(token, sessionHandle, err, errorMessage.str());
@@ -349,14 +349,14 @@ static teep_error_code_t TeepHandleCborQueryRequest(void* sessionHandle, QCBORDe
 
     printf("Sending QueryResponse...\n");
 
-    err = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
+    err = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
     free((void*)queryResponse.ptr);
     return err;
 }
 
 #ifdef TEEP_ENABLE_JSON
 // Returns 0 on success, non-zero on error.
-int TeepHandleJsonQueryRequest(void* sessionHandle, json_t* object)
+int TeepAgentHandleJsonQueryRequest(void* sessionHandle, json_t* object)
 {
     int err = 1;
     oe_result_t result;
@@ -394,7 +394,7 @@ int TeepHandleJsonQueryRequest(void* sessionHandle, json_t* object)
 }
 
 /* Compose a TEEP Success message. */
-const char* TeepComposeJsonSuccess(
+const char* TeepAgentComposeJsonSuccess(
     const json_t* request)    // Request we're responding to.
 {
     JsonAuto response(json_object(), true);
@@ -420,7 +420,7 @@ const char* TeepComposeJsonSuccess(
 }
 
 /* Compose a TEEP Error message. */
-const char* TeepComposeJsonError(
+const char* TeepAgentComposeJsonError(
     const json_t* request,    // Request we're responding to.
     int errorCode)
 {
@@ -451,7 +451,7 @@ const char* TeepComposeJsonError(
 }
 
 // Returns 0 on success, non-zero on error.
-int TeepHandleJsonInstall(void* sessionHandle, json_t* request)
+int TeepAgentHandleJsonInstall(void* sessionHandle, json_t* request)
 {
     printf("TeepHandleJsonInstall\n");
 
@@ -494,7 +494,7 @@ int TeepHandleJsonInstall(void* sessionHandle, json_t* request)
 #endif
 
 /* Compose a raw Success message to be signed. */
-teep_error_code_t TeepComposeCborSuccess(UsefulBufC token, UsefulBufC* encoded)
+teep_error_code_t TeepAgentComposeCborSuccess(UsefulBufC token, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -532,7 +532,7 @@ teep_error_code_t TeepComposeCborSuccess(UsefulBufC token, UsefulBufC* encoded)
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t TeepComposeCborError(UsefulBufC token, teep_error_code_t errorCode, const std::string& errorMessage, UsefulBufC* encoded)
+teep_error_code_t TeepAgentComposeCborError(UsefulBufC token, teep_error_code_t errorCode, const std::string& errorMessage, UsefulBufC* encoded)
 {
     encoded->ptr = nullptr;
     encoded->len = 0;
@@ -580,10 +580,10 @@ teep_error_code_t TeepComposeCborError(UsefulBufC token, teep_error_code_t error
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-void TeepSendError(UsefulBufC token, void* sessionHandle, teep_error_code_t errorCode, const std::string& errorMessage)
+void TeepAgentSendError(UsefulBufC token, void* sessionHandle, teep_error_code_t errorCode, const std::string& errorMessage)
 {
     UsefulBufC reply;
-    if (TeepComposeCborError(token, errorCode, errorMessage, &reply) != TEEP_ERR_SUCCESS) {
+    if (TeepAgentComposeCborError(token, errorCode, errorMessage, &reply) != TEEP_ERR_SUCCESS) {
         return;
     }
     if (reply.len == 0) {
@@ -593,11 +593,11 @@ void TeepSendError(UsefulBufC token, void* sessionHandle, teep_error_code_t erro
     printf("Sending CBOR message: ");
     HexPrintBuffer(reply.ptr, reply.len);
 
-    (void)TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    (void)TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
     free((void*)reply.ptr);
 }
 
-teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
+teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
 {
     printf("TeepHandleCborUpdate\n");
 
@@ -611,7 +611,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
     if (item.uDataType != QCBOR_TYPE_MAP) {
         REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_MAP, item);
         teeperr = TEEP_ERR_PERMANENT_ERROR;
-        TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+        TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
         return teeperr;
     }
     teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
@@ -626,7 +626,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                 REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_BYTE_STRING, item);
                 teeperr = TEEP_ERR_PERMANENT_ERROR;
-                TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
                 return teeperr;
             }
             token = item.val.string;
@@ -637,7 +637,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR(errorMessage, "tc-list", QCBOR_TYPE_ARRAY, item);
                 teeperr = TEEP_ERR_PERMANENT_ERROR;
-                TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
                 return teeperr;
             }
             uint16_t arrayEntryCount = item.val.uCount;
@@ -646,7 +646,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                     REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, item);
                     teeperr = TEEP_ERR_PERMANENT_ERROR;
-                    TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                    TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
                     return teeperr;
                 }
                 /* TODO: do a delete */
@@ -658,7 +658,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR(errorMessage, "manifest-list", QCBOR_TYPE_ARRAY, item);
                 teeperr = TEEP_ERR_PERMANENT_ERROR;
-                TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
                 return teeperr;
             }
             uint16_t arrayEntryCount = item.val.uCount;
@@ -670,7 +670,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                     REPORT_TYPE_ERROR(errorMessage, "SUIT_Envelope", QCBOR_TYPE_BYTE_STRING, item);
                     teeperr = TEEP_ERR_PERMANENT_ERROR;
-                    TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+                    TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
                     return teeperr;
                 }
                 if (errorCode == TEEP_ERR_SUCCESS) {
@@ -683,14 +683,14 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
         default:
             errorMessage << "Unrecognized option label " << label;
             teeperr = TEEP_ERR_PERMANENT_ERROR;
-            TeepSendError(token, sessionHandle, teeperr, errorMessage.str());
+            TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
             return teeperr;
         }
     }
 
     /* 3. Compose a Success reply. */
     UsefulBufC reply;
-    teeperr = TeepComposeCborSuccess(token, &reply);
+    teeperr = TeepAgentComposeCborSuccess(token, &reply);
     if (teeperr != TEEP_ERR_SUCCESS) {
         return teeperr;
     }
@@ -701,7 +701,7 @@ teep_error_code_t TeepHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* 
     printf("Sending CBOR message: ");
     HexPrintBuffer(reply.ptr, reply.len);
 
-    teeperr = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    teeperr = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
     free((void*)reply.ptr);
     return teeperr;
 }
@@ -742,7 +742,7 @@ int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
 #endif
 
 /* Handle an incoming message from a TEEP Agent. */
-teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength)
+teep_error_code_t TeepAgentHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength)
 {
     teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
     std::ostringstream errorMessage;
@@ -806,10 +806,10 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
     printf("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_REQUEST:
-        teeperr = TeepHandleCborQueryRequest(sessionHandle, &context);
+        teeperr = TeepAgentHandleCborQueryRequest(sessionHandle, &context);
         break;
     case TEEP_MESSAGE_UPDATE:
-        teeperr = TeepHandleCborUpdate(sessionHandle, &context);
+        teeperr = TeepAgentHandleCborUpdate(sessionHandle, &context);
         break;
     default:
         teeperr = TEEP_ERR_PERMANENT_ERROR;
@@ -873,6 +873,41 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
     }
 }
 #endif
+
+int TeepAgentProcessTeepMessage(
+    _In_ void* sessionHandle,
+    _In_z_ const char* mediaType,
+    _In_reads_(messageLength) const char* message,
+    size_t messageLength)
+{
+    teep_error_code_t err = TEEP_ERR_SUCCESS;
+
+    printf("Received contentType='%s' messageLength=%zd\n", mediaType, messageLength);
+
+    if (messageLength < 1) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+#ifdef ENABLE_OTRP
+    if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
+        err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
+    }
+    else
+#endif
+        if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
+            err = TeepAgentHandleCborMessage(sessionHandle, message, messageLength);
+#ifdef TEEP_ENABLE_JSON
+        }
+        else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
+            err = TeepAgentHandleJsonMessage(sessionHandle, message, messageLength);
+#endif
+        }
+        else {
+            return TEEP_ERR_PERMANENT_ERROR;
+        }
+
+    return (int)err;
+}
 
 int RequestTA(
     int useCbor,

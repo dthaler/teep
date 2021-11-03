@@ -4,20 +4,28 @@
 // This file contains trusted code in common between the TAM and TEEP Agent.
 #include <stdio.h>
 #include <string.h>
+#ifdef TEEP_ENABLE_JSON
 #include "JsonAuto.h"
+#endif
 #include "common.h"
 extern "C" {
 #ifdef OE_BUILD_ENCLAVE
 #define _countof(x) OE_COUNTOF(x)
 #define sprintf_s(dest, len, ...) sprintf(dest, __VA_ARGS__)
 #endif
+#ifdef TEEP_ENABLE_JSON
 #include "../jose/joseinit.h"
+#endif
+#ifdef ENABLE_OTRP
 #include "otrp.h"
+#endif
 #include "teep_protocol.h"
+#ifdef TEEP_ENABLE_JSON
 #include "jose/jwk.h"
 #include "jose/jws.h"
 #include "jose/b64.h"
 #include "jose/openssl.h"
+#endif
 #include "openssl/rsa.h"
 #include "openssl/evp.h"
 #include "openssl/x509.h"
@@ -138,7 +146,9 @@ void TestJwLibs(void)
 
 int TeepInitialize(void)
 {
+#ifdef TEEP_ENABLE_JSON
     jose_init();
+#endif
 
 #if 0
     TestJwLibs();
@@ -146,6 +156,7 @@ int TeepInitialize(void)
     return 0;
 }
 
+#ifdef TEEP_ENABLE_JSON
 json_t* CreateNewJwk(const char* alg)
 {
     JsonAuto jwk(json_pack("{s:s}", "alg", alg), true);
@@ -283,38 +294,7 @@ char *DecodeJWS(const json_t *jws, const json_t *jwk)
     str[len] = 0;
     return str;
 }
-
-int ProcessTeepMessage(
-    _In_ void* sessionHandle,
-    _In_z_ const char* mediaType,
-    _In_reads_(messageLength) const char* message,
-    size_t messageLength)
-{
-    teep_error_code_t err = TEEP_ERR_SUCCESS;
-
-    printf("Received contentType='%s' messageLength=%zd\n", mediaType, messageLength);
-
-    if (messageLength < 1) {
-        return TEEP_ERR_PERMANENT_ERROR;
-    }
-
-#ifdef ENABLE_OTRP
-    if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
-        err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
-    } else
 #endif
-    if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
-        err = TeepHandleCborMessage(sessionHandle, message, messageLength);
-#ifdef TEEP_ENABLE_JSON
-    } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
-        err = TeepHandleJsonMessage(sessionHandle, message, messageLength);
-#endif
-    } else {
-        return TEEP_ERR_PERMANENT_ERROR;
-    }
-
-    return (int)err;
-}
 
 void HexPrintBuffer(const void* buffer, size_t length)
 {
@@ -329,7 +309,7 @@ void HexPrintBuffer(const void* buffer, size_t length)
 #ifndef TEEP_USE_TEE
 #include <random>
 teep_error_code_t teep_random(
-    void* buffer,
+    _Out_writes_(length) void* buffer,
     size_t length)
 {
     std::random_device rd;  // non-deterministic generator

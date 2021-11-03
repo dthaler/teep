@@ -74,22 +74,10 @@ extern "C" {
 
     int TeepInitialize();
 
-    int ProcessTeepMessage(
-        _In_ void* sessionHandle,
-        _In_z_ const char* mediaType,
-        _In_reads_(messageLength) const char* message,
-        size_t messageLength);
-
     // Calls down to broker.
 
-    teep_error_code_t QueueOutboundTeepMessage(
-        _In_ void* sessionHandle,
-        _In_z_ const char* mediaType,
-        _In_reads_(messageLength) const char* message,
-        size_t messageLength);
-
     teep_error_code_t teep_random(
-        void* buffer,
+        _Out_writes_(length) void* buffer,
         size_t length);
 
 #ifdef __cplusplus

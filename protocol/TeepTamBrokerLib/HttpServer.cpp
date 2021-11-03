@@ -23,7 +23,7 @@ typedef struct {
 
 TeepSession g_Session = { NULL, 0 };
 
-teep_error_code_t QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
+teep_error_code_t TamQueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
 {
     TeepSession* session = (TeepSession*)sessionHandle;
 
@@ -232,7 +232,7 @@ DWORD HandleHttpPost(
         mediaType[mediaTypeLength] = 0;
     }
 
-    if (ProcessTeepMessage(session, mediaType, inputBuffer, totalBytesRead) != 0) {
+    if (TamProcessTeepMessage(session, mediaType, inputBuffer, totalBytesRead) != 0) {
         result = SendHttpResponse(
             hReqQueue,
             pRequest,

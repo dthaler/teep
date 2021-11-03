@@ -277,15 +277,11 @@ teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType,
     size_t output_buffer_length = buffer->len;
 #endif
 
-    // 4.  Prepend the COSE object with the TEEP CBOR tag to indicate that
-    //     the CBOR-encoded message is indeed a TEEP message.
-    // TODO: See https://github.com/ietf-teep/teep-protocol/issues/147
-
     return TamQueueOutboundTeepMessage(sessionHandle, mediaType, output_buffer, output_buffer_length);
 }
 
 /* Handle a new incoming connection from a device. */
-int TamProcessConnect(void* sessionHandle, const char* mediaType)
+int TamProcessTeepConnect(void* sessionHandle, const char* mediaType)
 {
     printf("Received client connection\n");
 
@@ -329,7 +325,7 @@ int TamProcessConnect(void* sessionHandle, const char* mediaType)
     return err;
 }
 
-int ProcessConnect(void* sessionHandle, const char* acceptMediaType)
+int TamProcessConnect(void* sessionHandle, const char* acceptMediaType)
 {
 #ifdef ENABLE_OTRP
     if (strncmp(acceptMediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
@@ -341,7 +337,7 @@ int ProcessConnect(void* sessionHandle, const char* acceptMediaType)
             || (strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0)
 #endif
         ) {
-        return TamProcessConnect(sessionHandle, acceptMediaType);
+        return TamProcessTeepConnect(sessionHandle, acceptMediaType);
     } else {
         return 1;
     }
@@ -741,20 +737,17 @@ teep_error_code_t TamHandleCborMessage(void* sessionHandle, const char* message,
 
     // From draft-ietf-teep-protocol section 4.1.2:
     //  1.  Verify that the received message is a valid CBOR object.
-    //  2.  Remove the TEEP message CBOR tag and verify that one of the COSE
-    //      CBOR tags follows it.
-    // TODO: See https://github.com/ietf-teep/teep-protocol/issues/147
 
-    //  3.  Verify that the message contains a COSE_Sign1 structure.
+    //  2.  Verify that the message contains a COSE_Sign1 structure.
     // ... TODO(issue #8) ...
 
-    //  4.  Verify that the resulting COSE Header includes only parameters
+    //  3.  Verify that the resulting COSE Header includes only parameters
     //      and values whose syntax and semantics are both understood and
     //      supported or that are specified as being ignored when not
     //      understood.
     // ... TODO(issue #8) ...
 
-    //  5.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
+    //  4.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
     //      Objects") for validating a COSE_Sign1 object.  The COSE_Sign1
     //      payload is the content of the TEEP message.
     // ... TODO(issue #8) ...

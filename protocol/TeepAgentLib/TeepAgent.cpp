@@ -958,7 +958,7 @@ int RequestTA(
         }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
 #endif
-        int error = Connect(tamUri, acceptMediaType);
+        int error = TeepAgentConnect(tamUri, acceptMediaType);
         if (error != 0) {
             return error;
         }
@@ -1019,7 +1019,7 @@ int UnrequestTA(
         }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
 #endif
-        int error = Connect(tamUri, acceptMediaType);
+        int error = TeepAgentConnect(tamUri, acceptMediaType);
         if (error != 0) {
             return error;
         }

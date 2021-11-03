@@ -30,9 +30,9 @@ MakeHttpCall(
 }
 
 // Send an empty POST to the indicated URI.
-int Connect(const char* tamUri, const char* acceptMediaType)
+int TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaType)
 {
-    return ProcessConnect(&g_Session, acceptMediaType);
+    return TamProcessConnect(&g_Session, acceptMediaType);
 }
 
 teep_error_code_t TeepAgentQueueOutboundTeepMessage(
@@ -49,7 +49,7 @@ teep_error_code_t TeepAgentQueueOutboundTeepMessage(
 }
 
 // The caller is responsible for freeing the returned buffer if non-null.
-const char* SendTeepMessage(TeepAgentSession* session, char** pResponseMediaType, int* pResponseLength)
+const char* TeepAgentSendMessage(TeepAgentSession* session, char** pResponseMediaType, int* pResponseLength)
 {
     return nullptr;
 }

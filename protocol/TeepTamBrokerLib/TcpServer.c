@@ -131,7 +131,7 @@ int HandleTcpMessage(void)
         return TRUE;
     }
 
-    err = ProcessTeepMessage(message, messageLength);
+    err = TamProcessTeepMessage(message, messageLength);
     free(message);
     return err;
 }

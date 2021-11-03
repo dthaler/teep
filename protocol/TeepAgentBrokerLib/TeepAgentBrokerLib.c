@@ -34,7 +34,7 @@ static int HandleMessages(void)
         }
 
         if (g_Session.InboundMessage != NULL) {
-            int err = ProcessTeepMessage(
+            int err = TeepAgentProcessTeepMessage(
                 &g_Session,
                 g_Session.InboundMediaType,
                 g_Session.InboundMessage,

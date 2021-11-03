@@ -68,7 +68,7 @@ int Connect(const char* tamUri, const char* acceptMediaType)
     return 0;
 }
 
-teep_error_code_t QueueOutboundTeepMessage(
+teep_error_code_t TeepAgentQueueOutboundTeepMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
     _In_reads_(messageLength) const char* message,

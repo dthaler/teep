@@ -45,7 +45,7 @@ const unsigned char* GetTamDerCertificate(size_t *pCertLen)
 }
 
 /* Compose a raw QueryRequest message to be signed. */
-int TeepComposeCborQueryRequest(UsefulBufC* bufferToSend)
+int TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
 {
     QCBOREncodeContext context;
     UsefulBuf buffer = UsefulBuf_Unconst(*bufferToSend);
@@ -224,7 +224,7 @@ static teep_error_code_t get_signing_key_pair(struct t_cose_key* key_pair)
 }
 #endif
 
-teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType, const UsefulBufC* buffer)
+teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType, const UsefulBufC* buffer)
 {
     // From draft-ietf-teep-protocol section 4.1.1:
     // 1.  Create a TEEP message according to the description below and
@@ -281,11 +281,11 @@ teep_error_code_t TeepSendCborMessage(void* sessionHandle, const char* mediaType
     //     the CBOR-encoded message is indeed a TEEP message.
     // TODO: See https://github.com/ietf-teep/teep-protocol/issues/147
 
-    return QueueOutboundTeepMessage(sessionHandle, mediaType, output_buffer, output_buffer_length);
+    return TamQueueOutboundTeepMessage(sessionHandle, mediaType, output_buffer, output_buffer_length);
 }
 
 /* Handle a new incoming connection from a device. */
-int TeepProcessConnect(void* sessionHandle, const char* mediaType)
+int TamProcessConnect(void* sessionHandle, const char* mediaType)
 {
     printf("Received client connection\n");
 
@@ -310,7 +310,7 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
         encoded.ptr = buffer;
         encoded.len = maxBufferLength;
 
-        err = TeepComposeCborQueryRequest(&encoded);
+        err = TamComposeCborQueryRequest(&encoded);
         if (err != 0) {
             return err;
         }
@@ -324,7 +324,7 @@ int TeepProcessConnect(void* sessionHandle, const char* mediaType)
     }
 
     printf("Sending QueryRequest...\n");
-    err = TeepSendCborMessage(sessionHandle, mediaType, &encoded);
+    err = TamSendCborMessage(sessionHandle, mediaType, &encoded);
     free((void*)encoded.ptr);
     return err;
 }
@@ -341,14 +341,14 @@ int ProcessConnect(void* sessionHandle, const char* acceptMediaType)
             || (strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0)
 #endif
         ) {
-        return TeepProcessConnect(sessionHandle, acceptMediaType);
+        return TamProcessConnect(sessionHandle, acceptMediaType);
     } else {
         return 1;
     }
 }
 
 /* Compose a raw Update message to be signed. */
-teep_error_code_t TeepComposeCborUpdate(
+teep_error_code_t TamComposeCborUpdate(
     UsefulBufC* encoded,
     RequestedComponentInfo* currentComponentList,
     RequestedComponentInfo* requestedComponentList,
@@ -479,12 +479,12 @@ teep_error_code_t ParseComponentId(QCBORDecodeContext* context, QCBORItem* item,
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context)
+teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context)
 {
     (void)sessionHandle;
     (void)context;
 
-    printf("TeepHandleCborQueryResponse\n");
+    printf("TamHandleCborQueryResponse\n");
 
     QCBORItem item;
     std::ostringstream errorMessage;
@@ -682,7 +682,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
         // 3. Compose an Update message.
         UsefulBufC update;
         int count;
-        teep_error_code_t err = TeepComposeCborUpdate(&update, currentComponentList.Next, requestedComponentList.Next, unneededComponentList.Next, &count);
+        teep_error_code_t err = TamComposeCborUpdate(&update, currentComponentList.Next, requestedComponentList.Next, unneededComponentList.Next, &count);
         if (err != 0) {
             return err;
         }
@@ -696,7 +696,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
 
             printf("Sending Update message...\n");
 
-            err = TeepSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update);
+            err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update);
             free((void*)update.ptr);
             if (err != TEEP_ERR_SUCCESS) {
                 return err;
@@ -707,7 +707,7 @@ teep_error_code_t TeepHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCo
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TeepHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* context)
+teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* context)
 {
     (void)sessionHandle;
     (void)context;
@@ -716,7 +716,7 @@ teep_error_code_t TeepHandleCborSuccess(void* sessionHandle, QCBORDecodeContext*
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TeepHandleCborError(void* sessionHandle, QCBORDecodeContext* context)
+teep_error_code_t TamHandleCborError(void* sessionHandle, QCBORDecodeContext* context)
 {
     (void)sessionHandle;
     (void)context;
@@ -726,7 +726,7 @@ teep_error_code_t TeepHandleCborError(void* sessionHandle, QCBORDecodeContext* c
 }
 
 /* Handle an incoming message from a TEEP Agent. */
-teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength)
+teep_error_code_t TamHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength)
 {
     std::ostringstream errorMessage;
     QCBORDecodeContext context;
@@ -777,13 +777,13 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
     teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_RESPONSE:
-        teeperr = TeepHandleCborQueryResponse(sessionHandle, &context);
+        teeperr = TamHandleCborQueryResponse(sessionHandle, &context);
         break;
     case TEEP_MESSAGE_SUCCESS:
-        teeperr = TeepHandleCborSuccess(sessionHandle, &context);
+        teeperr = TamHandleCborSuccess(sessionHandle, &context);
         break;
     case TEEP_MESSAGE_ERROR:
-        teeperr = TeepHandleCborError(sessionHandle, &context);
+        teeperr = TamHandleCborError(sessionHandle, &context);
         break;
     default:
         teeperr = TEEP_ERR_PERMANENT_ERROR;
@@ -795,4 +795,39 @@ teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message
 
     QCBORError err = QCBORDecode_Finish(&context);
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
+}
+
+int TamProcessTeepMessage(
+    _In_ void* sessionHandle,
+    _In_z_ const char* mediaType,
+    _In_reads_(messageLength) const char* message,
+    size_t messageLength)
+{
+    teep_error_code_t err = TEEP_ERR_SUCCESS;
+
+    printf("Received contentType='%s' messageLength=%zd\n", mediaType, messageLength);
+
+    if (messageLength < 1) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+#ifdef ENABLE_OTRP
+    if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
+        err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
+    }
+    else
+#endif
+        if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
+            err = TamHandleCborMessage(sessionHandle, message, messageLength);
+#ifdef TEEP_ENABLE_JSON
+        }
+        else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
+            err = TamHandleJsonMessage(sessionHandle, message, messageLength);
+#endif
+        }
+        else {
+            return TEEP_ERR_PERMANENT_ERROR;
+        }
+
+    return (int)err;
 }

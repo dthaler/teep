@@ -11,8 +11,18 @@ extern "C" {
     int Connect(
         const char* tamUri,
         const char* acceptMediaType);
+    teep_error_code_t TeepAgentQueueOutboundTeepMessage(
+        _In_ void* sessionHandle,
+        _In_z_ const char* mediaType,
+        _In_reads_(messageLength) const char* message,
+        size_t messageLength);
 
     // Calls up from broker.
+    int TeepAgentProcessTeepMessage(
+        _In_ void* sessionHandle,
+        _In_z_ const char* mediaType,
+        _In_reads_(messageLength) const char* message,
+        size_t messageLength);
     int TeepHandleConnect(void);
 
     int RequestTA(

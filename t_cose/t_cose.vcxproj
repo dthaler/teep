@@ -83,7 +83,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\src;$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -96,7 +96,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\src;$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -110,7 +110,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\src;$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -123,7 +123,7 @@
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\src;$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
     </ClCompile>
     <Link>

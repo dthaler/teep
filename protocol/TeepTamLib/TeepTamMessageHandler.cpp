@@ -374,6 +374,9 @@ teep_error_code_t TamComposeCborUpdate(
 
         QCBOREncode_OpenMap(&context);
         {
+            // Spec issue #166: we assume it's optional whether
+            // to include a token, so we don't.
+#if 0
             /* Create a random token. */
             UsefulBuf_MAKE_STACK_UB(token, 8);
             teep_error_code_t result = teep_random(token.ptr, token.len);
@@ -381,6 +384,7 @@ teep_error_code_t TamComposeCborUpdate(
                 return result;
             }
             QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TOKEN, UsefulBuf_Const(token));
+#endif
 
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
             {
@@ -713,6 +717,66 @@ teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* 
     (void)context;
 
     printf("Received Success message...\n");
+
+    QCBORItem item;
+    std::ostringstream errorMessage;
+
+    // Parse the options map.
+    QCBORDecode_GetNext(context, &item);
+    if (item.uDataType != QCBOR_TYPE_MAP) {
+        REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_MAP, item);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    uint16_t mapEntryCount = item.val.uCount;
+    for (int mapEntryIndex = 0; mapEntryIndex < mapEntryCount; mapEntryIndex++) {
+        QCBORDecode_GetNext(context, &item);
+        teep_label_t label = (teep_label_t)item.label.int64;
+        switch (label) {
+        case TEEP_LABEL_TOKEN:
+            if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_BYTE_STRING, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+
+            // Since we never send a token in an Update message, we should never
+            // get a token in response.  If we do, it indicates a bug in the
+            // TEEP Agent that sent the Success message.
+            return TEEP_ERR_PERMANENT_ERROR;
+
+        case TEEP_LABEL_MSG:
+            if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
+                printf("Wrong msg data type %d\n", item.uDataType);
+                return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
+            }
+            printf("MSG: %hs\n", item.val.string.ptr);
+            break;
+
+        case TEEP_LABEL_SUIT_REPORTS:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                REPORT_TYPE_ERROR(errorMessage, "suit-reports", QCBOR_TYPE_ARRAY, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+
+            uint16_t arrayEntryCount = item.val.uCount;
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                if (item.uDataType != QCBOR_TYPE_MAP) {
+                    REPORT_TYPE_ERROR(errorMessage, "suit-report", QCBOR_TYPE_MAP, item);
+                    return TEEP_ERR_PERMANENT_ERROR;
+                }
+            }
+            break;
+        }
+        default:
+#ifdef _DEBUG
+            printf("Unrecognized option label %d\n", label);
+#endif
+            return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
+        }
+    }
+
     return TEEP_ERR_SUCCESS;
 }
 
@@ -821,8 +885,7 @@ int TamProcessTeepMessage(
         else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
             err = TamHandleJsonMessage(sessionHandle, message, messageLength);
 #endif
-        }
-        else {
+        } else {
             return TEEP_ERR_PERMANENT_ERROR;
         }
 

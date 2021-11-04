@@ -891,8 +891,7 @@ int TeepAgentProcessTeepMessage(
 #ifdef ENABLE_OTRP
     if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
         err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
-    }
-    else
+    } else
 #endif
         if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
             err = TeepAgentHandleCborMessage(sessionHandle, message, messageLength);
@@ -901,8 +900,7 @@ int TeepAgentProcessTeepMessage(
         else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
             err = TeepAgentHandleJsonMessage(sessionHandle, message, messageLength);
 #endif
-        }
-        else {
+        } else {
             return TEEP_ERR_PERMANENT_ERROR;
         }
 

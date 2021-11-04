@@ -21,9 +21,6 @@
     <ClInclude Include="Manifest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OTrPTamEcallHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RequestedComponentInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -42,9 +39,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Manifest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OTrPTamEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RequestedComponentInfo.cpp">

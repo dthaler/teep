@@ -6,7 +6,6 @@
 #include <string.h>
 #include "common.h"
 extern "C" {
-#include "otrp.h"
 #include "teep_protocol.h"
 };
 #include "qcbor/qcbor_decode.h"
@@ -327,11 +326,6 @@ int TamProcessTeepConnect(void* sessionHandle, const char* mediaType)
 
 int TamProcessConnect(void* sessionHandle, const char* acceptMediaType)
 {
-#ifdef ENABLE_OTRP
-    if (strncmp(acceptMediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
-        return OTrPProcessConnect(sessionHandle);
-    } else
-#endif
     if ((strncmp(acceptMediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0)
 #ifdef TEEP_ENABLE_JSON
             || (strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0)
@@ -872,22 +866,15 @@ int TamProcessTeepMessage(
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
-#ifdef ENABLE_OTRP
-    if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
-        err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
-    }
-    else
-#endif
-        if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
-            err = TamHandleCborMessage(sessionHandle, message, messageLength);
+    if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
+        err = TamHandleCborMessage(sessionHandle, message, messageLength);
 #ifdef TEEP_ENABLE_JSON
-        }
-        else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
-            err = TamHandleJsonMessage(sessionHandle, message, messageLength);
+    } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
+        err = TamHandleJsonMessage(sessionHandle, message, messageLength);
 #endif
-        } else {
-            return TEEP_ERR_PERMANENT_ERROR;
-        }
+    } else {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
 
     return (int)err;
 }

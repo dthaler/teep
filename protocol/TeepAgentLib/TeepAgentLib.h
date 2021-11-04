@@ -34,8 +34,6 @@ extern "C" {
         teep_uuid_t unneededTaid,
         const char* tamUri);
     
-    int OTrPHandleMessage(_In_ void* sessionHandle, _In_z_ const char* mediaType, _In_reads_(messageLength) const char* message, int messageLength);
-
     // TODO: move these out of this file.
     int StartAgentBroker(int simulated_tee);
     void StopAgentBroker(void);

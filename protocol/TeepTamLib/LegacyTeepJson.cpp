@@ -3,7 +3,7 @@
 
 /* This file is now obsolete.  It will be deleted once we add COSE support. */
 
-#if defined(TEEP_ENABLE_JSON) || defined(ENABLE_OTRP)
+#if defined(TEEP_ENABLE_JSON)
 #include <openenclave/enclave.h>
 #include "TeepTam_t.h"
 
@@ -22,7 +22,6 @@ extern "C" {
 #include "jose/openssl.h"
 };
 #include "../jansson/JsonAuto.h"
-#include "OTrPTamEcallHandler.h"
 
 json_t* GetNewGloballyUniqueID(void);
 

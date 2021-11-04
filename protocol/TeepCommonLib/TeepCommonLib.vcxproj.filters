@@ -26,9 +26,6 @@
     <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="otrp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="suit_manifest.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -16,9 +16,6 @@ extern "C" {
 #ifdef TEEP_ENABLE_JSON
 #include "../jose/joseinit.h"
 #endif
-#ifdef ENABLE_OTRP
-#include "otrp.h"
-#endif
 #include "teep_protocol.h"
 #ifdef TEEP_ENABLE_JSON
 #include "jose/jwk.h"

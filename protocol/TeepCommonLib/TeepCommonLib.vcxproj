@@ -109,7 +109,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
-    <ClInclude Include="otrp.h" />
     <ClInclude Include="suit_manifest.h" />
     <ClInclude Include="teep_protocol.h" />
   </ItemGroup>

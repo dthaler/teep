@@ -10,6 +10,14 @@
 
 TeepAgentSession g_Session = { 0 };
 
+// If this hits zero, send a ProcessError notification to the agent.
+static int g_TransportErrorSchedule = INT_MAX;
+
+void ScheduleTransportError(int count)
+{
+    g_TransportErrorSchedule = count;
+}
+
 // The caller is responsible for freeing the buffer if one is returned.
 _Success_(return == NO_ERROR)
 int
@@ -30,8 +38,14 @@ MakeHttpCall(
 }
 
 // Send an empty POST to the indicated URI.
-int TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaType)
+teep_error_code_t TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaType)
 {
+    // Check for error injection.
+    g_TransportErrorSchedule--;
+    if (g_TransportErrorSchedule == 0) {
+        return TeepAgentProcessError(&g_Session);
+    }
+
     return TamProcessConnect(&g_Session, acceptMediaType);
 }
 
@@ -41,7 +55,13 @@ teep_error_code_t TeepAgentQueueOutboundTeepMessage(
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
 {
-    return (teep_error_code_t)TamProcessTeepMessage(
+    // Check for error injection.
+    g_TransportErrorSchedule--;
+    if (g_TransportErrorSchedule == 0) {
+        return TeepAgentProcessError(&g_Session);
+    }
+
+    return TamProcessTeepMessage(
         sessionHandle,
         mediaType,
         message,
@@ -61,5 +81,11 @@ int RunHttpServer(int argc, const wchar_t** argv)
 
 teep_error_code_t TamQueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
 {
-    return (teep_error_code_t)TeepAgentProcessTeepMessage(sessionHandle, mediaType, message, messageLength);
+    // Check for error injection.
+    g_TransportErrorSchedule--;
+    if (g_TransportErrorSchedule == 0) {
+        return TeepAgentProcessError(&g_Session);
+    }
+
+    return TeepAgentProcessTeepMessage(sessionHandle, mediaType, message, messageLength);
 }

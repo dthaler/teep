@@ -62,17 +62,38 @@ const unsigned char* GetAgentDerCertificate(size_t* pCertLen)
     return g_AgentDerCertificate;
 }
 
-int ecall_ProcessError(void* sessionHandle)
+// Process a transport error.
+teep_error_code_t TeepAgentProcessError(void* sessionHandle)
 {
     (void)sessionHandle;
-    // TODO: process transport error
-    return 0;
+
+    return TEEP_ERR_TEMPORARY_ERROR;
 }
 
-int ecall_RequestPolicyCheck(void)
+teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri)
 {
-    // TODO: request policy check
-    return 0;
+    teep_error_code_t err = TEEP_ERR_SUCCESS;
+
+    // TODO: we may want to modify the TAM URI here.
+
+    // TODO: see whether we already have a TAM cert we trust.
+    // For now we skip this step and say we don't.
+    bool haveTrustedTamCert = false;
+
+    if (!haveTrustedTamCert) {
+        // Pass back a TAM URI with no buffer.
+        printf("Sending an empty message...\n");
+        const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
+        teep_error_code_t error = TeepAgentConnect(tamUri, acceptMediaType);
+        if (error != TEEP_ERR_SUCCESS) {
+            return error;
+        }
+    } else {
+        // TODO: implement going on to the next message.
+        TEEP_ASSERT(false);
+    }
+
+    return err;
 }
 
 #ifdef TEEP_ENABLE_JSON
@@ -874,7 +895,7 @@ int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int
 }
 #endif
 
-int TeepAgentProcessTeepMessage(
+teep_error_code_t TeepAgentProcessTeepMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
     _In_reads_(messageLength) const char* message,
@@ -904,13 +925,13 @@ int TeepAgentProcessTeepMessage(
             return TEEP_ERR_PERMANENT_ERROR;
         }
 
-    return (int)err;
+    return err;
 }
 
-int RequestTA(
+int TeepAgentRequestTA(
     int useCbor,
     teep_uuid_t requestedTaid,
-    const char* tamUri)
+    _In_z_ const char* tamUri)
 {
     teep_error_code_t err = TEEP_ERR_SUCCESS;
 
@@ -968,10 +989,10 @@ int RequestTA(
     return err;
 }
 
-int UnrequestTA(
+int TeepAgentUnrequestTA(
     int useCbor,
     teep_uuid_t unneededTaid,
-    const char* tamUri)
+    _In_z_ const char* tamUri)
 {
     teep_error_code_t err = TEEP_ERR_SUCCESS;
 

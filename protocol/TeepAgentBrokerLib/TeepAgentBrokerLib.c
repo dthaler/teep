@@ -61,7 +61,7 @@ int AgentBrokerRequestTA(
     int err;
 
     // Invoke a "RequestTA" API in the agent.
-    err = RequestTA(useCbor, requestedTaid, tamUri);
+    err = TeepAgentRequestTA(useCbor, requestedTaid, tamUri);
     if (err != 0) {
         return err;
     }
@@ -77,7 +77,7 @@ int AgentBrokerUnrequestTA(
     int err;
 
     // Invoke an "UnrequestTA" API in the agent.
-    err = UnrequestTA(useCbor, unneededTaid, tamUri);
+    err = TeepAgentUnrequestTA(useCbor, unneededTaid, tamUri);
     if (err != 0) {
         return err;
     }

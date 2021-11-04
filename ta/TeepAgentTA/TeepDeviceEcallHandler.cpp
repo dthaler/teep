@@ -9,12 +9,22 @@
 
 int ecall_RequestTA(int useCbor, oe_uuid_t requestedTaid, const char* tamUri)
 {
-    return RequestTA(useCbor, requestedTaid, tamUri);
+    return TeepAgentRequestTA(useCbor, requestedTaid, tamUri);
 }
 
 int ecall_UnrequestTA(int useCbor, oe_uuid_t unneededTaid, const char* tamUri)
 {
-    return UnrequestTA(useCbor, unneededTaid, tamUri);
+    return TeepAgentUnrequestTA(useCbor, unneededTaid, tamUri);
+}
+
+int ecall_ProcessError(void* sessionHandle)
+{
+    return TeepAgentProcessError(sessionHandle);
+}
+
+int ecall_RequestPolicyCheck(const char* tamUri)
+{
+    return TeepAgentRequestPolicyCheck(tamUri);
 }
 
 int Connect(

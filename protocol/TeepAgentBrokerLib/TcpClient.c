@@ -21,7 +21,7 @@ int ConnectToTcpServer(const char* serverName)
         return err;
     }
 
-    err = getaddrinfo(serverName, OTRP_TCP_PORT, NULL, &ai);
+    err = getaddrinfo(serverName, TEEP_TCP_PORT, NULL, &ai);
     if (err != 0) {
         WSACleanup();
         return err;

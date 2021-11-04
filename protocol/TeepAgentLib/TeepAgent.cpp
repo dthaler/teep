@@ -19,7 +19,6 @@ extern "C" {
 #include "jose/openssl.h"
 #endif
 };
-#include "otrp.h"
 #include "teep_protocol.h"
 #include "TeepAgentLib.h"
 #ifdef TEEP_ENABLE_JSON
@@ -505,7 +504,7 @@ int TeepAgentHandleJsonInstall(void* sessionHandle, json_t* request)
     printf("Sending Error: %s\n\n", message);
 #endif
 
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, OTRP_JSON_MEDIA_TYPE, message, strlen(message));
+    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_JSON_MEDIA_TYPE, message, strlen(message));
     free((void*)message);
     if (result != OE_OK) {
         return result;
@@ -909,21 +908,15 @@ teep_error_code_t TeepAgentProcessTeepMessage(
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
-#ifdef ENABLE_OTRP
-    if (strncmp(mediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
-        err = OTrPHandleJsonMessage(sessionHandle, message, messageLength);
-    } else
-#endif
-        if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
-            err = TeepAgentHandleCborMessage(sessionHandle, message, messageLength);
+    if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
+        err = TeepAgentHandleCborMessage(sessionHandle, message, messageLength);
 #ifdef TEEP_ENABLE_JSON
-        }
-        else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
-            err = TeepAgentHandleJsonMessage(sessionHandle, message, messageLength);
+    } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
+        err = TeepAgentHandleJsonMessage(sessionHandle, message, messageLength);
 #endif
-        } else {
-            return TEEP_ERR_PERMANENT_ERROR;
-        }
+    } else {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
 
     return err;
 }

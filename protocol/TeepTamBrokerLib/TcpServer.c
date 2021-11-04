@@ -20,7 +20,7 @@ int StartTcpServer(void)
         return err;
     }
 
-    err = getaddrinfo(NULL, OTRP_TCP_PORT, NULL, &ai);
+    err = getaddrinfo(NULL, TEEP_TCP_PORT, NULL, &ai);
     if (err != 0) {
         WSACleanup();
         return err;

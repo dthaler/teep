@@ -28,16 +28,13 @@ typedef struct _teep_uuid_t
 #define TEEP_ASSERT(x) assert(x)
 #endif
 
-#ifdef ENABLE_OTRP
-int OTrPHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength);
-#endif
 #ifdef TEEP_ENABLE_JSON
 int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength);
 #endif
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength);
 void HexPrintBuffer(const void* buffer, size_t length);
 
-#if defined(ENABLE_OTRP) || defined(TEEP_ENABLE_JSON)
+#if defined(TEEP_ENABLE_JSON)
 char *DecodeJWS(const json_t *jws, const json_t *jwk);
 
 json_t* CreateNewJwkRS256(void);

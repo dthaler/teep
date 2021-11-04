@@ -14,7 +14,7 @@ extern "C" {
 TeepAgentSession g_Session = { 0 };
 
 // Send an empty POST to the indicated URI.
-int TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaType)
+teep_error_code_t TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaType)
 {
     char authority[266];
     char hostName[256];
@@ -30,7 +30,7 @@ int TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaTy
     components.dwUrlPathLength = 255;
     components.lpszUrlPath = path;
     if (!InternetCrackUrlA(tamUri, 0, 0, &components)) {
-        return GetLastError();
+        return TEEP_ERR_PERMANENT_ERROR;
     }
     sprintf_s(authority, sizeof(authority), "%s:%d", components.lpszHostName, components.nPort);
 
@@ -52,10 +52,13 @@ int TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaTy
         &responseBuffer,
         &responseMediaTypeBuffer);
     if (err != 0) {
-        return err;
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+    if (statusCode >= 500) {
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
     if (statusCode != 200) {
-        return statusCode;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
 
     assert(session->InboundMessage == nullptr);
@@ -65,7 +68,7 @@ int TeepAgentConnect(_In_z_ const char* tamUri, _In_z_ const char* acceptMediaTy
         strcpy_s(session->InboundMediaType, sizeof(session->InboundMediaType), responseMediaTypeBuffer);
     }
 
-    return 0;
+    return TEEP_ERR_SUCCESS;
 }
 
 teep_error_code_t TeepAgentQueueOutboundTeepMessage(

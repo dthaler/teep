@@ -7,12 +7,12 @@
 extern "C" {
 #endif
 
-    int TamProcessTeepMessage(
+    teep_error_code_t TamProcessTeepMessage(
         _In_ void* sessionHandle,
         _In_z_ const char* mediaType,
         _In_reads_(messageLength) const char* message,
         size_t messageLength);
-    int TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType);
+    teep_error_code_t TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType);
 
     teep_error_code_t TamQueueOutboundTeepMessage(
         _In_ void* sessionHandle,

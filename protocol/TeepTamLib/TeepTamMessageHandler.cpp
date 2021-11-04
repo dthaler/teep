@@ -45,7 +45,7 @@ const unsigned char* GetTamDerCertificate(size_t *pCertLen)
 }
 
 /* Compose a raw QueryRequest message to be signed. */
-int TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
+teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
 {
     QCBOREncodeContext context;
     UsefulBuf buffer = UsefulBuf_Unconst(*bufferToSend);
@@ -84,7 +84,7 @@ int TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, bufferToSend);
-    return err;
+    return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_PERMANENT_ERROR;
 }
 
 #ifdef TEEP_USE_COSE
@@ -281,11 +281,11 @@ teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType,
 }
 
 /* Handle a new incoming connection from a device. */
-int TamProcessTeepConnect(void* sessionHandle, const char* mediaType)
+teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaType)
 {
     printf("Received client connection\n");
 
-    int err = 0;
+    teep_error_code_t err = TEEP_ERR_SUCCESS;
     UsefulBufC encoded;
 #ifdef TEEP_ENABLE_JSON
     if (strcmp(mediaType, TEEP_JSON_MEDIA_TYPE) == 0) {
@@ -301,18 +301,18 @@ int TamProcessTeepConnect(void* sessionHandle, const char* mediaType)
         int maxBufferLength = 4096;
         char* buffer = (char*)malloc(maxBufferLength);
         if (buffer == nullptr) {
-            return 1; /* Error */
+            return TEEP_ERR_TEMPORARY_ERROR;
         }
         encoded.ptr = buffer;
         encoded.len = maxBufferLength;
 
         err = TamComposeCborQueryRequest(&encoded);
-        if (err != 0) {
+        if (err != TEEP_ERR_SUCCESS) {
             return err;
         }
 
         if (encoded.len == 0) {
-            return 1; /* Error */
+            return TEEP_ERR_PERMANENT_ERROR;
         }
 
         printf("Sending CBOR message: ");
@@ -325,7 +325,7 @@ int TamProcessTeepConnect(void* sessionHandle, const char* mediaType)
     return err;
 }
 
-int TamProcessConnect(void* sessionHandle, const char* acceptMediaType)
+teep_error_code_t TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType)
 {
 #ifdef ENABLE_OTRP
     if (strncmp(acceptMediaType, OTRP_JSON_MEDIA_TYPE, strlen(OTRP_JSON_MEDIA_TYPE)) == 0) {
@@ -339,7 +339,7 @@ int TamProcessConnect(void* sessionHandle, const char* acceptMediaType)
         ) {
         return TamProcessTeepConnect(sessionHandle, acceptMediaType);
     } else {
-        return 1;
+        return TEEP_ERR_PERMANENT_ERROR;
     }
 }
 
@@ -858,7 +858,7 @@ teep_error_code_t TamHandleCborMessage(void* sessionHandle, const char* message,
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-int TamProcessTeepMessage(
+teep_error_code_t TamProcessTeepMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
     _In_reads_(messageLength) const char* message,
@@ -889,5 +889,5 @@ int TamProcessTeepMessage(
             return TEEP_ERR_PERMANENT_ERROR;
         }
 
-    return (int)err;
+    return err;
 }

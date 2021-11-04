@@ -13,7 +13,7 @@
 
 oe_enclave_t* g_ta_eid = NULL;
 
-int RequestTA(
+int TeepAgentRequestTA(
     int useCbor,
     teep_uuid_t requestedTaid,
     _In_z_ const char* tamUri)
@@ -27,7 +27,7 @@ int RequestTA(
     return err;
 }
 
-int UnrequestTA(
+int TeepAgentUnrequestTA(
     int useCbor,
     teep_uuid_t unneededTaid,
     _In_z_ const char* tamUri)

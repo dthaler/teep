@@ -45,3 +45,18 @@ TEST_CASE("UnrequestTA", "[protocol]") {
     StopAgentBroker();
     StopTamBroker();
 }
+
+TEST_CASE("RequestTA", "[protocol]") {
+    REQUIRE(StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TRUE) == 0);
+
+    const int useCbor = 1;
+    teep_uuid_t requestedTaid;
+    int err = ConvertStringToUUID(&requestedTaid, DEFAULT_TA_ID);
+    REQUIRE(err == 0);
+    err = RequestTA(useCbor, requestedTaid, DEFAULT_TAM_URI);
+    REQUIRE(err == 0);
+
+    StopAgentBroker();
+    StopTamBroker();
+}

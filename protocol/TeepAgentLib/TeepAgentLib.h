@@ -8,9 +8,9 @@ extern "C" {
 #endif
 
     // Calls down to broker.
-    int Connect(
-        const char* tamUri,
-        const char* acceptMediaType);
+    int TeepAgentConnect(
+        _In_z_ const char* tamUri,
+        _In_z_ const char* acceptMediaType);
     teep_error_code_t TeepAgentQueueOutboundTeepMessage(
         _In_ void* sessionHandle,
         _In_z_ const char* mediaType,

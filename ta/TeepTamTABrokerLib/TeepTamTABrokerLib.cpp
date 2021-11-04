@@ -25,7 +25,7 @@ int ProcessTeepMessage(
     return err;
 }
 
-int ProcessConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType)
+int TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType)
 {
     int err = 0;
     oe_result_t result = ecall_ProcessTeepConnect(g_ta_eid, &err, sessionHandle, acceptMediaType);

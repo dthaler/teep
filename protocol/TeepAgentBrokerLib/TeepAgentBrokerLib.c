@@ -18,7 +18,7 @@ static int HandleMessages(void)
             // Send outbound message and get the response.
             char* inboundMediaType;
             int inboundMessageLength;
-            const char* inboundMessage = SendTeepMessage(&g_Session, &inboundMediaType, &inboundMessageLength);
+            const char* inboundMessage = TeepAgentSendMessage(&g_Session, &inboundMediaType, &inboundMessageLength);
             if (inboundMessage != NULL) {
                 if (inboundMessage[0] == 0) {
                     // Empty buffer, meaning the TAM is done.

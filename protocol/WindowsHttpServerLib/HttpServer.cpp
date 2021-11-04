@@ -193,7 +193,7 @@ DWORD HandleHttpPost(
             mediaType[mediaTypeLength] = 0;
         }
 
-        int connectResult = ProcessConnect(session, mediaType);
+        int connectResult = TamProcessConnect(session, mediaType);
         delete mediaType;
         if (connectResult != 0) {
             return SendHttpResponse(
@@ -336,7 +336,7 @@ DWORD DoReceiveRequests(
                         mediaType[mediaTypeLength] = 0;
                     }
 
-                    int connectResult = ProcessConnect(session, mediaType);
+                    int connectResult = TamProcessConnect(session, mediaType);
                     delete mediaType;
                     if (connectResult != 0) {
                         break;

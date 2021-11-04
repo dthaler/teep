@@ -24,7 +24,10 @@
     <ClCompile Include="TamTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EndToEndTests.cpp">
+    <ClCompile Include="ProtocolTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MockHttpTransport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

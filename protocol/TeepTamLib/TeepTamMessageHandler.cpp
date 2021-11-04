@@ -665,9 +665,13 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
             break;
         }
         case TEEP_LABEL_EVIDENCE_FORMAT:
+#ifdef _DEBUG
+            printf("Ignoring unimplemented option TEEP_LABEL_EVIDENCE_FORMAT\n");
+#endif
+            break;
         case TEEP_LABEL_EVIDENCE:
 #ifdef _DEBUG
-            printf("Ignoring unimplemented option label %d\n", label);
+            printf("Ignoring unimplemented option label TEEP_LABEL_EVIDENCE\n");
 #endif
             break;
         default:

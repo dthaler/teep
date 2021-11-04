@@ -27,7 +27,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HttpServer.cpp" />
     <ClCompile Include="TeepTamBrokerLib.c" />
   </ItemGroup>
   <ItemGroup>

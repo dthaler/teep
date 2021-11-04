@@ -31,7 +31,7 @@ int ConvertStringToUUID(teep_uuid_t* uuid, const char* idString)
     return 0;
 }
 
-TEST_CASE("UnrequestTA", "[end-to-end]") {
+TEST_CASE("UnrequestTA", "[protocol]") {
     REQUIRE(StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TRUE) == 0);
 

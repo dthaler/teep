@@ -13,8 +13,8 @@
 static int HandleMessages(void)
 {
     // Handle messages until we have no outstanding HTTP responses.
-    while (g_Session.InboundMessage != NULL || g_Session.OutboundMessage != NULL) {
-        if (g_Session.OutboundMessage != NULL) {
+    while (g_Session.InboundMessage != NULL || g_Session.Basic.OutboundMessage != NULL) {
+        if (g_Session.Basic.OutboundMessage != NULL) {
             // Send outbound message and get the response.
             char* inboundMediaType;
             int inboundMessageLength;

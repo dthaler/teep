@@ -16,16 +16,16 @@
 #define ASSERT(x) if (!(x)) { DebugBreak(); }
 
 typedef struct {
-    char MediaType[80];
+    char OutboundMediaType[80];
     const char* OutboundMessage;
     size_t OutboundMessageLength;
-} TeepSession;
+} TeepBasicSession;
 
-TeepSession g_Session = { NULL, 0 };
+TeepBasicSession g_Session = { NULL, 0 };
 
 teep_error_code_t TamQueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
 {
-    TeepSession* session = (TeepSession*)sessionHandle;
+    TeepBasicSession* session = (TeepBasicSession*)sessionHandle;
 
     assert(session->OutboundMessage == nullptr);
 
@@ -39,7 +39,7 @@ teep_error_code_t TamQueueOutboundTeepMessage(void* sessionHandle, const char* m
     session->OutboundMessageLength = messageLength;
     printf("Sending %zd bytes...\n", messageLength);
 
-    strcpy_s(session->MediaType, sizeof(session->MediaType), mediaType);
+    strcpy_s(session->OutboundMediaType, sizeof(session->OutboundMediaType), mediaType);
     return TEEP_ERR_SUCCESS;
 }
 
@@ -146,7 +146,7 @@ DWORD HandleHttpPost(
     _In_ HANDLE        hReqQueue,
     _In_ HTTP_REQUEST* pRequest)
 {
-    TeepSession* session = &g_Session;
+    TeepBasicSession* session = &g_Session;
     int result = 0;
 
     // Allocate a buffer for the content.
@@ -211,7 +211,7 @@ DWORD HandleHttpPost(
                 pRequest,
                 200,
                 "OK",
-                session->MediaType,
+                session->OutboundMediaType,
                 session->OutboundMessage,
                 session->OutboundMessageLength);
 
@@ -247,7 +247,7 @@ DWORD HandleHttpPost(
             pRequest,
             200,
             "OK",
-            session->MediaType,
+            session->OutboundMediaType,
             session->OutboundMessage,
             session->OutboundMessageLength);
     }
@@ -314,7 +314,7 @@ DWORD DoReceiveRequests(
 
         if (NO_ERROR == result)
         {
-            TeepSession* session = &g_Session;
+            TeepBasicSession* session = &g_Session;
 
             //
             // Worked!
@@ -347,7 +347,7 @@ DWORD DoReceiveRequests(
                         pRequest,
                         200,
                         "OK",
-                        session->MediaType,
+                        session->OutboundMediaType,
                         session->OutboundMessage,
                         session->OutboundMessageLength);
 
@@ -361,7 +361,7 @@ DWORD DoReceiveRequests(
                         pRequest,
                         200,
                         "OK",
-                        session->MediaType,
+                        session->OutboundMediaType,
                         pResponseString,
                         strlen(pResponseString));
                 }

@@ -137,6 +137,9 @@
     <ProjectReference Include="..\protocol\TeepAgentBrokerLib\TeepAgentBrokerLib.vcxproj">
       <Project>{3797bbe5-950a-4b59-b055-b5061bf230bb}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\protocol\WindowsHttpClientLib\WindowsHttpClientLib.vcxproj">
+      <Project>{a4e023f8-8d30-49dc-893f-72259bdd08d1}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

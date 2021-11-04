@@ -23,7 +23,6 @@ extern "C" {
         _In_z_ const char* mediaType,
         _In_reads_(messageLength) const char* message,
         size_t messageLength);
-    int TeepHandleConnect(void);
 
     int RequestTA(
         int useCbor,

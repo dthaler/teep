@@ -18,12 +18,6 @@
     <ClCompile Include="TeepAgentBrokerLib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HttpClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HttpHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TcpClient.c">
       <Filter>Source Files</Filter>
     </ClCompile>

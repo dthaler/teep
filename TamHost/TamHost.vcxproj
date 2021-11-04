@@ -144,6 +144,9 @@
     <ProjectReference Include="..\protocol\TeepTamBrokerLib\TeepTamBrokerLib.vcxproj">
       <Project>{9b04daee-7a21-4037-8c89-62a6776e0dbb}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\protocol\WindowsHttpServerLib\WindowsHttpServerLib.vcxproj">
+      <Project>{dc59ee20-bd7b-465a-813c-ec3a61585329}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

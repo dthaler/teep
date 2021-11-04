@@ -11,7 +11,7 @@ extern "C" {
 };
 #include "TeepAgentBrokerLib.h"
 
-TeepSession g_Session = { 0 };
+TeepAgentSession g_Session = { 0 };
 
 // Send an empty POST to the indicated URI.
 int Connect(const char* tamUri, const char* acceptMediaType)
@@ -22,20 +22,20 @@ int Connect(const char* tamUri, const char* acceptMediaType)
     int statusCode;
     char* responseBuffer;
     char* responseMediaTypeBuffer;
-    URL_COMPONENTS components = { sizeof(components) };
+    URL_COMPONENTSA components = { sizeof(components) };
 
     // Get authority and path from URI.
     components.dwHostNameLength = 255;
     components.lpszHostName = hostName;
     components.dwUrlPathLength = 255;
     components.lpszUrlPath = path;
-    if (!InternetCrackUrl(tamUri, 0, 0, &components)) {
+    if (!InternetCrackUrlA(tamUri, 0, 0, &components)) {
         return GetLastError();
     }
     sprintf_s(authority, sizeof(authority), "%s:%d", components.lpszHostName, components.nPort);
 
     // Create session state.
-    TeepSession* session = &g_Session;
+    TeepAgentSession* session = &g_Session;
     strcpy_s(session->TamUri, tamUri);
 
     int responseLength;
@@ -74,7 +74,7 @@ teep_error_code_t TeepAgentQueueOutboundTeepMessage(
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
 {
-    TeepSession* session = (TeepSession*)sessionHandle;
+    TeepBasicSession* session = (TeepBasicSession*)sessionHandle;
 
     assert(session->OutboundMessage == nullptr);
 
@@ -93,14 +93,14 @@ teep_error_code_t TeepAgentQueueOutboundTeepMessage(
 }
 
 // The caller is responsible for freeing the returned buffer if non-null.
-const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType, int* pResponseLength)
+const char* SendTeepMessage(TeepAgentSession* session, char** pResponseMediaType, int* pResponseLength)
 {
     char authority[266];
     char hostName[256];
     char path[256];
     int statusCode;
     char* responseBuffer;
-    URL_COMPONENTS components = { sizeof(components) };
+    URL_COMPONENTSA components = { sizeof(components) };
     char extraHeaders[256];
 
     // Get authority and path from URI.
@@ -108,30 +108,30 @@ const char* SendTeepMessage(TeepSession* session, char** pResponseMediaType, int
     components.lpszHostName = hostName;
     components.dwUrlPathLength = 255;
     components.lpszUrlPath = path;
-    if (!InternetCrackUrl(session->TamUri, 0, 0, &components)) {
+    if (!InternetCrackUrlA(session->TamUri, 0, 0, &components)) {
         return nullptr;
     }
     sprintf_s(authority, sizeof(authority), "%s:%d", components.lpszHostName, components.nPort);
     sprintf_s(extraHeaders, sizeof(extraHeaders),
         "Content-type: %s\r\n",
-        session->OutboundMediaType);
+        session->Basic.OutboundMediaType);
 
     int err = MakeHttpCall(
         "POST",
         authority,
         path,
         extraHeaders,
-        session->OutboundMessage,
-        session->OutboundMessageLength,
-        session->OutboundMediaType,
+        session->Basic.OutboundMessage,
+        session->Basic.OutboundMessageLength,
+        session->Basic.OutboundMediaType,
         &statusCode,
         pResponseLength,
         &responseBuffer,
         pResponseMediaType);
 
-    if (session->OutboundMessage != nullptr) {
-        free((char*)session->OutboundMessage);
-        session->OutboundMessage = nullptr;
+    if (session->Basic.OutboundMessage != nullptr) {
+        free((char*)session->Basic.OutboundMessage);
+        session->Basic.OutboundMessage = nullptr;
     }
 
     if (err != 0) {

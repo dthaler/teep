@@ -5,16 +5,16 @@ C Implementation of [draft-ietf-teep-protocol](https://tools.ietf.org/html/draft
 
 The directories are organized as follows.
 
-Directories to make external libraries compile into static libs usable in a TA (actual files under
-the directories of the same names under the external/ directory):
+Directories to make external libraries compile into static libs usable in a Trusted Application (TA),
+with actual files under the directories of the same names under the external/ directory:
 
 * ctoken: EAT implementation.
 
-* jansson: JSON implementation.
+* jansson: JSON implementation.  This dependency will eventually be removed.
 
-* jose: JOSE implementation.
+* jose: JOSE implementation.  This dependency will eventually be removed.
 
-* jose\_openssl: JOSE's use of OpenSSL's crypto library.
+* jose\_openssl: JOSE's use of OpenSSL's crypto library.  This dependency will eventually be removed.
 
 * LibEay32: OpenSSL's crypto library.
 
@@ -126,9 +126,9 @@ and change Properties -> Debugging -> Working Directory and change the
 value to $(OutDir) instead of $(ProjectDir).  This is because the apps
 will attempt to load the enclaves from the current directory.
 
-Partial [OTrP](https://globalplatform.org/specs-library/tee-management-framework-open-trust-protocol/) support, and partial support for the obsolete use of JSON
+Partial support for the obsolete use of JSON
 in TEEP, are both still in the code but not defined by default, and are slated for removal.
-OTrP support is gated by `ENABLE_OTRP` and TEEP JSON support is gated by
-`TEEP_ENABLE_JSON` so if you have a need to experiment with those, define
+TEEP JSON support is gated by
+`TEEP_ENABLE_JSON` so if you have a need to experiment with it, define
 those symbols globally in Visual Studio, but expect that TEEP JSON support
 will be deleted in the near future.

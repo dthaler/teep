@@ -241,9 +241,6 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                     // TODO: read supported versions and potentially
                     // add selected-version to the QueryResponse.
                     break;
-                case TEEP_LABEL_OCSP_DATA:
-                    printf("TODO: read OCSP data\n");
-                    break;
                 }
             }
 
@@ -257,7 +254,7 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                 // Add evidence.
                 // TODO(issue #9): get actual evidence via ctoken library or OE.
                 UsefulBufC evidence = UsefulBuf_FROM_SZ_LITERAL("dummy value");
-                QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_EVIDENCE, evidence);
+                QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_ATTESTATION_PAYLOAD, evidence);
             }
             if (item.val.int64 & TEEP_TRUSTED_COMPONENTS) {
                 // Add tc-list.  Currently we populate this from the list of

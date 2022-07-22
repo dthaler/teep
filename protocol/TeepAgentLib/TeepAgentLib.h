@@ -36,10 +36,6 @@ extern "C" {
 
     teep_error_code_t TeepAgentProcessError(void* sessionHandle);
     teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri);
-    
-    // TODO: move these out of this file.
-    int StartAgentBroker(int simulated_tee);
-    void StopAgentBroker(void);
 
 #ifdef __cplusplus
 };

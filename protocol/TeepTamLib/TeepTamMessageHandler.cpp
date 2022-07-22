@@ -738,13 +738,14 @@ teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* 
             // TEEP Agent that sent the Success message.
             return TEEP_ERR_PERMANENT_ERROR;
 
-        case TEEP_LABEL_MSG:
+        case TEEP_LABEL_MSG: {
             if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
                 printf("Wrong msg data type %d\n", item.uDataType);
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
             }
-            printf("MSG: %hs\n", item.val.string.ptr);
+            printf("MSG: %hs\n", std::string((const char*)item.val.string.ptr, item.val.string.len).c_str());
             break;
+        }
 
         case TEEP_LABEL_SUIT_REPORTS:
         {

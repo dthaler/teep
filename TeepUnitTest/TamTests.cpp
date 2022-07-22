@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
 #include "catch.hpp"
-#include "TeepTamLib.h"
+#include "TeepTamBrokerLib.h"
 #define TRUE 1
 #define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"
 

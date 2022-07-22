@@ -50,7 +50,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)obj/$(Platform);$(SolutionDir)external/ctoken/inc;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)obj/$(Platform);$(SolutionDir)external/ctoken/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/t_cose/inc/t_cose</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -63,7 +63,7 @@
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>$(SolutionDir)obj/$(Platform);$(SolutionDir)external/ctoken/inc;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)obj/$(Platform);$(SolutionDir)external/ctoken/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/t_cose/inc/t_cose</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

@@ -109,7 +109,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <CustomBuildStep>
-      <Command>copy $(SolutionDir)external\t_cose\inc\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
+      <Command>copy $(SolutionDir)external\t_cose\inc\t_cose\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
     </CustomBuildStep>
     <CustomBuildStep>
       <Outputs>$(SolutionDir)obj\x64\t_cose\t_cose_common.h</Outputs>

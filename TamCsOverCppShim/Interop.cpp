@@ -106,3 +106,8 @@ bool ManagedType::ConvertGedcomFile(
     return ok;
 }
 #endif
+
+teep_error_code_t TamQueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
+{
+    return TEEP_ERR_SUCCESS;
+}

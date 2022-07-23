@@ -88,7 +88,7 @@
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>jansson;jose;jose_openssl;t_cose;LibEay32_t;qcbor;TeepCommonTALib;TeepAgentLib</AdditionalDependencies>
+      <AdditionalDependencies>ctoken;jansson;jose;jose_openssl;t_cose;LibEay32_t;qcbor;TeepCommonTALib;TeepAgentLib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -103,7 +103,7 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>jansson;jose;jose_openssl;t_cose;LibEay32_t;qcbor;TeepCommonTALib;TeepAgentLib;TeepCommonLib</AdditionalDependencies>
+      <AdditionalDependencies>ctoken;jansson;jose;jose_openssl;t_cose;LibEay32_t;qcbor;TeepCommonTALib;TeepAgentLib;TeepCommonLib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

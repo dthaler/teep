@@ -5,10 +5,6 @@
       <Configuration>DebugStandalone</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="OPTEE-Simulation-Debug|x64">
-      <Configuration>OPTEE-Simulation-Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -19,7 +15,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5c0ca658-2ed0-4b81-b919-651c39a2b0a0}</ProjectGuid>
+    <ProjectGuid>{b71c4c27-9199-4fab-91dc-8c2a761cadce}</ProjectGuid>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <OETADevKitPath>$OETADevKitPath$</OETADevKitPath>
@@ -34,14 +30,10 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>Open Enclave (v142)</PlatformToolset>
-    <OEType>Enclave</OEType>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>Open Enclave (v142)</PlatformToolset>
+    <OEType>Enclave</OEType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -54,7 +46,6 @@
     <LibraryPath>$(NoInherit)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
-    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">
     <GenerateManifest>false</GenerateManifest>
@@ -64,15 +55,6 @@
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">
-    <GenerateManifest>false</GenerateManifest>
-    <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
-    <TargetName>5c0ca658-2ed0-4b81-b919-651c39a2b0a0</TargetName>
-    <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
-    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <GenerateManifest>false</GenerateManifest>
     <LinkIncremental>false</LinkIncremental>
@@ -80,14 +62,12 @@
     <LibraryPath>$(NoInherit)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Platform)\$(TargetName)\$(Configuration)\</IntDir>
-    <CustomBuildAfterTargets>Build</CustomBuildAfterTargets>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)obj/$(Platform);$(SolutionDir)external/ctoken/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/t_cose/inc/t_cose</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -99,45 +79,20 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(SolutionDir)obj/$(Platform);$(SolutionDir)external/ctoken/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/t_cose/inc/t_cose</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <CustomBuildStep>
-      <Command>copy $(SolutionDir)external\t_cose\inc\t_cose\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
-    </CustomBuildStep>
-    <CustomBuildStep>
-      <Outputs>$(SolutionDir)obj\x64\t_cose\t_cose_common.h</Outputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OPTEE-Simulation-Debug|x64'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
-    </ClCompile>
-    <Link>
-      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <CustomBuildStep>
-      <Command>copy $(SolutionDir)external\t_cose\inc\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
-      <Outputs>$(SolutionDir)obj\x64\t_cose\t_cose_common.h</Outputs>
-    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)obj/$(Platform);$(SolutionDir)external/ctoken/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/t_cose/inc/t_cose</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -145,26 +100,15 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
-    <CustomBuildStep>
-      <Command>copy $(SolutionDir)external\t_cose\inc\*.h $(SolutionDir)obj\$(Platform)\t_cose</Command>
-      <Outputs>$(SolutionDir)obj\x64\t_cose\t_cose_common.h</Outputs>
-    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\external\t_cose\crypto_adapters\t_cose_openssl_crypto.c" />
-    <ClCompile Include="..\external\t_cose\src\t_cose_parameters.c" />
-    <ClCompile Include="..\external\t_cose\src\t_cose_sign1_sign.c" />
-    <ClCompile Include="..\external\t_cose\src\t_cose_sign1_verify.c" />
-    <ClCompile Include="..\external\t_cose\src\t_cose_util.c" />
+  <ClCompile Include="..\external\ctoken\src\ctoken_common.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\external\ctoken\src\ctoken_common.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\external\t_cose\inc\q_useful_buf.h" />
-    <ClInclude Include="..\external\t_cose\inc\t_cose_common.h" />
-    <ClInclude Include="..\external\t_cose\inc\t_cose_sign1_sign.h" />
-    <ClInclude Include="..\external\t_cose\inc\t_cose_sign1_verify.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

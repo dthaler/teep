@@ -13,3 +13,6 @@
 [submodule "external/t_cose"]
 	path = external/t_cose
 	url = https://github.com/laurencelundblade/t_cose.git
+[submodule "external/ctoken"]
+	path = external/ctoken
+	url = https://github.com/laurencelundblade/ctoken.git

@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #include "Interop.h"
 #include <vcclr.h>
 using namespace TamCsOverCppShim;
@@ -8,14 +10,31 @@ TeepAgentSession g_AgentSession;
 TamSession::TamSession() {}
 TamSession::~TamSession() {}
 
-int TamSession::ProcessConnect(System::String^ acceptMediaType)
+// See https://stackoverflow.com/questions/186477/in-c-cli-how-do-i-declare-and-call-a-function-with-an-out-parameter
+// for how output args work.
+int TamSession::ProcessConnect(
+    System::String^ acceptMediaType,
+    [Out] array<System::Byte>^% outboundMessage,
+    [Out] System::String^% outboundMediaType)
 {
+    TeepBasicSession& session = g_AgentSession.Basic;
     pin_ptr<const wchar_t> acceptMediaTypeW = PtrToStringChars(acceptMediaType);
     char acceptMediaTypeA[256];
     sprintf_s(acceptMediaTypeA, sizeof(acceptMediaTypeA), "%ls", acceptMediaTypeW);
-    return TamProcessConnect(&g_AgentSession, acceptMediaTypeA);
+    int result = TamProcessConnect(&g_AgentSession, acceptMediaTypeA);
 
-    return 0;
+    outboundMediaType = gcnew System::String(session.OutboundMediaType);
+
+    // Copy the unmanaged buffer to a managed buffer.
+    int length = (int)session.OutboundMessageLength;
+    outboundMessage = gcnew array<System::Byte>(length);
+    Marshal::Copy(IntPtr((unsigned char*)session.OutboundMessage), outboundMessage, 0, length);
+
+    free((char*)session.OutboundMessage);
+    session.OutboundMessage = nullptr;
+    session.OutboundMessageLength = 0;
+
+    return result;
 }
 
 ManagedType::ManagedType() {}
@@ -48,66 +67,22 @@ void ManagedType::TamBrokerStop()
     //StopTamBroker();
 }
 
-#if 0
-// See https://stackoverflow.com/questions/186477/in-c-cli-how-do-i-declare-and-call-a-function-with-an-out-parameter
-// for how output args work.
-bool ManagedType::ConvertGedcomFile(
-    System::String^ input_path,
-    System::String^ save_type,
-    System::String^ output_filename,
-    [Out] System::String^% log_filename)
-{
-    pin_ptr<const wchar_t> wch = PtrToStringChars(input_path);
-    pin_ptr<const wchar_t> savetypeT = PtrToStringChars(save_type);
-    pin_ptr<const wchar_t> outputfilenameT = PtrToStringChars(output_filename);
-    char savetypeA[256];
-    TtoAbuff(savetypeA, sizeof(savetypeA), savetypeT);
-    WCHAR basedir[256];
-    wcscpy_s(basedir, CCH(basedir), wch);
-    WCHAR* p = wcsrchr(basedir, L'/');
-    if (p == nullptr) {
-        return false;
-    }
-    *p = 0;
-
-    // Construct the output file input_path.
-    WCHAR buff2[256];
-    swprintf_s(buff2, CCH(buff2), L"%s\\%s", basedir, outputfilenameT);
-    TtoAbuff(g_outputdir, sizeof(g_outputdir), basedir);
-
-    sprintf_s(g_basedir, CCH(g_basedir), "%ls\\wwwroot", basedir);
-    if (!init_backend()) {
-        return false;
-    }
-
-    database_t db = { 0 };
-    PCTSTR logfilenameT = nullptr;
-    int ok = load_databaseT(&db, nullptr, nullptr, wch, &logfilenameT);
-    if (ok) {
-        int st = find_savetype_by_filename(savetypeA);
-        if (st < 0) {
-            ok = false;
-        }
-        else {
-            // Save the database.
-            errno_t err = save_databaseT(&db, st, nullptr, nullptr, buff2);
-            if (err != 0) {
-                ok = false;
-            }
-        }
-        free_database(&db);
-    }
-
-    if (logfilenameT) {
-        log_filename = gcnew System::String(logfilenameT);
-    }
-
-    uninit_backend();
-    return ok;
-}
-#endif
-
 teep_error_code_t TamQueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
 {
+    TeepBasicSession* session = (TeepBasicSession*)sessionHandle;
+
+    assert(session->OutboundMessage == nullptr);
+
+    // Save message for later transmission.
+    char* data = (char*)malloc(messageLength);
+    if (data == nullptr) {
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+    memcpy(data, message, messageLength);
+    session->OutboundMessage = data;
+    session->OutboundMessageLength = messageLength;
+    printf("Sending %zd bytes...\n", messageLength);
+
+    strcpy_s(session->OutboundMediaType, sizeof(session->OutboundMediaType), mediaType);
     return TEEP_ERR_SUCCESS;
 }

@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation
+// SPDX-License-Identifier: MIT
 #pragma once
 
 #include <string>
@@ -14,7 +16,10 @@ namespace TamCsOverCppShim {
         TamSession();
         ~TamSession();
 
-        int ProcessConnect(System::String^ acceptMediaType);
+        int ProcessConnect(
+            System::String^ acceptMediaType,
+            [Out] array<System::Byte>^% outboundMessage,
+            [Out] System::String^% outboundMediaType);
     };
 
     public ref class ManagedType

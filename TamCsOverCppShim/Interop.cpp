@@ -3,6 +3,21 @@
 using namespace TamCsOverCppShim;
 using namespace System;
 
+TeepAgentSession g_AgentSession;
+
+TamSession::TamSession() {}
+TamSession::~TamSession() {}
+
+int TamSession::ProcessConnect(System::String^ acceptMediaType)
+{
+    pin_ptr<const wchar_t> acceptMediaTypeW = PtrToStringChars(acceptMediaType);
+    char acceptMediaTypeA[256];
+    sprintf_s(acceptMediaTypeA, sizeof(acceptMediaTypeA), "%ls", acceptMediaTypeW);
+    return TamProcessConnect(&g_AgentSession, acceptMediaTypeA);
+
+    return 0;
+}
+
 ManagedType::ManagedType() {}
 ManagedType::~ManagedType() {}
 

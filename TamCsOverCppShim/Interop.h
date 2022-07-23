@@ -2,11 +2,20 @@
 
 #include <string>
 #include "windows.h"
+#include "../protocol/TeepAgentBrokerLib/TeepSession.h"
 #include "../protocol/TeepTamBrokerLib/TeepTamBrokerLib.h"
 
 using namespace System::Runtime::InteropServices;
 
 namespace TamCsOverCppShim {
+    public ref class TamSession
+    {
+    public:
+        TamSession();
+        ~TamSession();
+
+        int ProcessConnect(System::String^ acceptMediaType);
+    };
 
     public ref class ManagedType
     {

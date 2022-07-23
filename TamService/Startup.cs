@@ -24,6 +24,7 @@ namespace TamService
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            services.AddControllers(x => x.AllowEmptyInputInBodyModelBinding = true);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

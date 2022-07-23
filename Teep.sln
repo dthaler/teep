@@ -98,6 +98,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsHttpClientLib", "protocol\WindowsHttpClientLib\WindowsHttpClientLib.vcxproj", "{A4E023F8-8D30-49DC-893F-72259BDD08D1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsHttpServerLib", "protocol\WindowsHttpServerLib\WindowsHttpServerLib.vcxproj", "{DC59EE20-BD7B-465A-813C-EC3A61585329}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ctoken", "ctoken\ctoken.vcxproj", "{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}"
 EndProject
 Global
@@ -326,8 +327,8 @@ Global
 		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.Debug|x64.ActiveCfg = Debug|x64
 		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.Debug|x64.Build.0 = Debug|x64
 		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.Debug|x86.ActiveCfg = Debug|x64
-		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.DebugStandalone|x64.ActiveCfg = Debug|x64
-		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.DebugStandalone|x64.Build.0 = Debug|x64
+		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.DebugStandalone|x64.ActiveCfg = DebugStandalone|x64
+		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.DebugStandalone|x64.Build.0 = DebugStandalone|x64
 		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.DebugStandalone|x86.ActiveCfg = Debug|x64
 		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.Release|x64.ActiveCfg = Release|x64
 		{B71C4C27-9199-4FAB-91DC-8C2A761CADCE}.Release|x64.Build.0 = Release|x64

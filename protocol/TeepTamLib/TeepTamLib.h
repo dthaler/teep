@@ -20,10 +20,6 @@ extern "C" {
         _In_reads_(messageLength) const char* message,
         size_t messageLength);
 
-    // TODO: move these out of this file.
-    int StartTamBroker(_In_z_ const char* manifestDirectory, int simulated_tee);
-    void StopTamBroker(void);
-
 #ifdef __cplusplus
 };
 #endif

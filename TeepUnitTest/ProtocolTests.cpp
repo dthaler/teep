@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 #include "catch.hpp"
 #include "MockHttpTransport.h"
+#include "TeepAgentBrokerLib.h"
 #include "TeepAgentLib.h"
+#include "TeepTamBrokerLib.h"
 #include "TeepTamLib.h"
 #define TRUE 1
 #define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"

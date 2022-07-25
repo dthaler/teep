@@ -29,6 +29,7 @@ extern "C" {
 #include "openssl/x509.h"
 #include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_encode.h"
+#include "t_cose/t_cose_common.h"
 #include "TeepDeviceEcallHandler.h"
 #include "SuitParser.h"
 #include <sstream>
@@ -198,15 +199,6 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                     }
                     QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TOKEN, item.val.string);
                     break;
-                case TEEP_LABEL_SUPPORTED_CIPHER_SUITES:
-                    if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                        REPORT_TYPE_ERROR(errorMessage, "supported-cipher-suites", QCBOR_TYPE_ARRAY, item);
-                        return TEEP_ERR_PERMANENT_ERROR;
-                    }
-                    // TODO: read supported cipher suites and potentially
-                    // add selected-cipher-suite to the QueryResponse.
-                    printf("TODO: read supported cipher suites\n");
-                    break;
                 case TEEP_LABEL_SUPPORTED_FRESHNESS_MECHANISMS:
                 {
                     if (item.uDataType != QCBOR_TYPE_ARRAY) {
@@ -244,6 +236,67 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                 }
             }
 
+            // Parse the supported-ciphersuites.
+            {
+                bool found = false;
+                QCBORDecode_GetNext(decodeContext, &item);
+                if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                    REPORT_TYPE_ERROR(errorMessage, "supported-ciphersuites", QCBOR_TYPE_ARRAY, item);
+                    return TEEP_ERR_PERMANENT_ERROR;
+                }
+                uint16_t ciphersuiteCount = item.val.uCount;
+                for (uint16_t arrayIndex = 0; arrayIndex < ciphersuiteCount; arrayIndex++) {
+                    // Parse an array of ciphersuite operations.
+                    QCBORDecode_GetNext(decodeContext, &item);
+                    if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                        REPORT_TYPE_ERROR(errorMessage, "ciphersuite operations", QCBOR_TYPE_ARRAY, item);
+                        return TEEP_ERR_PERMANENT_ERROR;
+                    }
+                    uint16_t operationCount = item.val.uCount;
+                    for (uint16_t arrayIndex = 0; arrayIndex < ciphersuiteCount; arrayIndex++) {
+                        // Parse an array that specifies an operation.
+                        QCBORDecode_GetNext(decodeContext, &item);
+                        if (item.uDataType != QCBOR_TYPE_ARRAY || item.val.uCount != 2) {
+                            REPORT_TYPE_ERROR(errorMessage, "ciphersuite operation pair", QCBOR_TYPE_ARRAY, item);
+                            return TEEP_ERR_PERMANENT_ERROR;
+                        }
+                        QCBORDecode_GetNext(decodeContext, &item);
+                        if (item.uDataType != QCBOR_TYPE_INT64) {
+                            REPORT_TYPE_ERROR(errorMessage, "cose type", QCBOR_TYPE_INT64, item);
+                            return TEEP_ERR_PERMANENT_ERROR;
+                        }
+                        int64_t coseType = item.val.int64;
+
+                        QCBORDecode_GetNext(decodeContext, &item);
+                        if (item.uDataType != QCBOR_TYPE_INT64) {
+                            REPORT_TYPE_ERROR(errorMessage, "cose algorithm", QCBOR_TYPE_INT64, item);
+                            return TEEP_ERR_PERMANENT_ERROR;
+                        }
+                        int64_t coseAlgorithm = item.val.int64;
+                        if (coseType == CBOR_TAG_COSE_SIGN1 &&
+                            coseAlgorithm == T_COSE_ALGORITHM_ES256) {
+                            found = true;
+                        }
+                    }
+                }
+                if (!found) {
+                    // TODO: include teep-ciphersuite-sign1-es256.
+                    return TEEP_ERR_UNSUPPORTED_CIPHER_SUITES;
+                }
+                // Add selected-cipher-suite to the QueryResponse.
+                QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_SELECTED_CIPHER_SUITE);
+                {
+                    // Add teep-operation-sign1-es256.
+                    QCBOREncode_OpenArray(&context);
+                    {
+                        QCBOREncode_AddInt64(&context, CBOR_TAG_COSE_SIGN1);
+                        QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_ES256);
+                    }
+                    QCBOREncode_CloseArray(&context);
+                }
+                QCBOREncode_CloseArray(&context);
+            }
+
             // Parse the data-item-requested.
             QCBORDecode_GetNext(decodeContext, &item);
             if (item.uDataType != QCBOR_TYPE_INT64) {
@@ -253,6 +306,7 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
             if (item.val.int64 & TEEP_ATTESTATION) {
                 // Add evidence.
                 // TODO(issue #9): get actual evidence via ctoken library or OE.
+                QCBOREncode_AddSZStringToMapN(&context, TEEP_LABEL_ATTESTATION_PAYLOAD_FORMAT, "text/plain");
                 UsefulBufC evidence = UsefulBuf_FROM_SZ_LITERAL("dummy value");
                 QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_ATTESTATION_PAYLOAD, evidence);
             }

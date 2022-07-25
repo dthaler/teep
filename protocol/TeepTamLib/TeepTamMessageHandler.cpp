@@ -60,8 +60,6 @@ teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
             // Create a random token only if the attestation bit will be clear,
             // but we always set the attestation bit so we never add a token.
 
-            // Add supported cipher suites (defaults to both).
-
             // Add supported freshness mechanisms (defaults to nonce only).
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_SUPPORTED_FRESHNESS_MECHANISMS);
             {
@@ -76,6 +74,27 @@ teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
             // Add ocsp-data if needed.
         }
         QCBOREncode_CloseMap(&context);
+
+        // Add supported ciphersuites.
+        QCBOREncode_OpenArray(&context);
+        {
+            // Add teep-ciphersuite-sign1-es256.
+            QCBOREncode_OpenArray(&context);
+            {
+                // Add teep-operation-sign1-es256.
+                QCBOREncode_OpenArray(&context);
+                {
+                    QCBOREncode_AddInt64(&context, CBOR_TAG_COSE_SIGN1);
+                    QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_ES256);
+                }
+                QCBOREncode_CloseArray(&context);
+            }
+            QCBOREncode_CloseArray(&context);
+
+            // Add teep-ciphersuite-sign1-eddsa.
+            // TODO: t_cose does not yet support eddsa.
+        }
+        QCBOREncode_CloseArray(&context);
 
         // Add data-item-requested.
         QCBOREncode_AddUInt64(&context, TEEP_ATTESTATION | TEEP_TRUSTED_COMPONENTS);
@@ -482,6 +501,7 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
 
     QCBORItem item;
     std::ostringstream errorMessage;
+    std::string attestationPayloadFormat;
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
@@ -510,19 +530,53 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
             return TEEP_ERR_PERMANENT_ERROR;
 
         case TEEP_LABEL_SELECTED_VERSION:
+            if (item.uDataType != QCBOR_TYPE_INT64) {
+                REPORT_TYPE_ERROR(errorMessage, "selected-version", QCBOR_TYPE_BYTE_STRING, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
             if (item.val.uint64 != 0) {
                 printf("Unrecognized protocol version %lld\n", item.val.uint64);
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
             }
             break;
 
-        case TEEP_LABEL_SELECTED_CIPHER_SUITE:
-            if ((item.val.uint64 != TEEP_CIPHERSUITE_ES256) &&
-                (item.val.uint64 != TEEP_CIPHERSUITE_EDDSA)) {
-                printf("Unrecognized cipher suite %lld\n", item.val.uint64);
+        case TEEP_LABEL_SELECTED_CIPHER_SUITE: {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                REPORT_TYPE_ERROR(errorMessage, "selected-cipher-suite", QCBOR_TYPE_BYTE_STRING, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+            // Parse an array of ciphersuite operations.
+            uint16_t operationCount = item.val.uCount;
+            if (operationCount != 1) {
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+
+            // Parse an array that specifies an operation.
+            QCBORDecode_GetNext(context, &item);
+            if (item.uDataType != QCBOR_TYPE_ARRAY || item.val.uCount != 2) {
+                REPORT_TYPE_ERROR(errorMessage, "ciphersuite operation pair", QCBOR_TYPE_ARRAY, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+            QCBORDecode_GetNext(context, &item);
+            if (item.uDataType != QCBOR_TYPE_INT64) {
+                REPORT_TYPE_ERROR(errorMessage, "cose type", QCBOR_TYPE_INT64, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+            if (item.val.int64 != CBOR_TAG_COSE_SIGN1) {
+                printf("Unrecognized COSE type %lld\n", item.val.uint64);
+                return TEEP_ERR_PERMANENT_ERROR; /* invalid ciphersuite */
+            }
+            QCBORDecode_GetNext(context, &item);
+            if (item.uDataType != QCBOR_TYPE_INT64) {
+                REPORT_TYPE_ERROR(errorMessage, "cose algorithm", QCBOR_TYPE_INT64, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+            if (item.val.int64 != T_COSE_ALGORITHM_ES256) {
+                printf("Unrecognized COSE algorithm %lld\n", item.val.uint64);
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid ciphersuite */
             }
             break;
+        }
 
         case TEEP_LABEL_REQUESTED_TC_LIST:
         {
@@ -658,15 +712,26 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
             }
             break;
         }
-        case TEEP_LABEL_ATTESTATION_PAYLOAD_FORMAT:
-#ifdef _DEBUG
-            printf("Ignoring unimplemented option TEEP_LABEL_ATTESTATION_PAYLOAD_FORMAT\n");
-#endif
+        case TEEP_LABEL_ATTESTATION_PAYLOAD_FORMAT: {
+            if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
+                REPORT_TYPE_ERROR(errorMessage, "attestation-payload-format", QCBOR_TYPE_ARRAY, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+            attestationPayloadFormat = std::string((const char*)item.val.string.ptr, item.val.string.len);
             break;
+        }
         case TEEP_LABEL_ATTESTATION_PAYLOAD:
+            if (attestationPayloadFormat == "application/eat-cwt; profile=https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-09") {
+                // We have Attestation Results.
 #ifdef _DEBUG
-            printf("Ignoring unimplemented option label TEEP_LABEL_ATTESTATION_PAYLOAD\n");
+                printf("Got attestation results in the TEEP profile\n");
 #endif
+            } else {
+                // We have Evidence that we need to send to a verifier.
+#ifdef _DEBUG
+                printf("Got Evidence in format: %s\n", attestationPayloadFormat.c_str());
+#endif
+            }
             break;
         default:
 #ifdef _DEBUG

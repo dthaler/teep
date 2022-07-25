@@ -67,7 +67,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -79,7 +79,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -93,7 +93,7 @@
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

@@ -61,11 +61,6 @@ typedef enum {
 } teep_label_t;
 
 typedef enum {
-    TEEP_CIPHERSUITE_EDDSA = 1,
-    TEEP_CIPHERSUITE_ES256 = 2
-} teep_ciphersuite_t;
-
-typedef enum {
     TEEP_FRESHNESS_MECHANISM_NONCE = 1,
     TEEP_FRESHNESS_MECHANISM_TIMESTAMP = 2,
     TEEP_FRESHNESS_MECHANISM_EPOCH_ID = 3,

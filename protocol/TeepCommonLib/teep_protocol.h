@@ -35,6 +35,7 @@ typedef enum {
     TEEP_ATTESTATION = 1,
     TEEP_TRUSTED_COMPONENTS = 2,
     TEEP_EXTENSIONS = 4,
+    TEEP_SUIT_REPORTS = 8,
 } teep_data_items_t;
 
 typedef enum {
@@ -61,7 +62,7 @@ typedef enum {
 } teep_label_t;
 
 typedef enum {
-    TEEP_FRESHNESS_MECHANISM_NONCE = 1,
-    TEEP_FRESHNESS_MECHANISM_TIMESTAMP = 2,
-    TEEP_FRESHNESS_MECHANISM_EPOCH_ID = 3,
+    TEEP_FRESHNESS_MECHANISM_NONCE = 0,
+    TEEP_FRESHNESS_MECHANISM_TIMESTAMP = 1,
+    TEEP_FRESHNESS_MECHANISM_EPOCH_ID = 2,
 } teep_freshness_mechanism_t;

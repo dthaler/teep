@@ -8,22 +8,8 @@
 #include <string.h>
 #include <string>
 #include "TrustedComponent.h"
-extern "C" {
-#ifdef TEEP_ENABLE_JSON
-#include "jansson.h"
-#include "joseinit.h"
-#include "jose/b64.h"
-#include "jose/jwe.h"
-#include "jose/jwk.h"
-#include "jose/jws.h"
-#include "jose/openssl.h"
-#endif
-};
 #include "teep_protocol.h"
 #include "TeepAgentLib.h"
-#ifdef TEEP_ENABLE_JSON
-#include "../jansson/JsonAuto.h"
-#endif
 #include "openssl/bio.h"
 #include "openssl/evp.h"
 #include "openssl/x509.h"
@@ -95,48 +81,6 @@ teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri)
 
     return err;
 }
-
-#ifdef TEEP_ENABLE_JSON
-/* Compose a TEEP QueryResponse message. */
-const char* TeepAgentComposeJsonQueryResponse(
-    const json_t* request)    // Request we're responding to.
-{
-    JsonAuto response(json_object(), true);
-    if (response == nullptr) {
-        return nullptr;
-    }
-    if (response.AddIntegerToObject("TYPE", TEEP_MESSAGE_QUERY_RESPONSE) == nullptr) {
-        return nullptr;
-    }
-
-    /* Copy TOKEN from request. */
-    json_t* token = json_object_get(request, "TOKEN");
-    if (!json_is_string(token) || (json_string_value(token) == nullptr)) {
-        return nullptr;
-    }
-    if (response.AddStringToObject("TOKEN", json_string_value(token)) == nullptr) {
-        return nullptr;
-    }
-
-    if (g_RequestedComponentList != nullptr) {
-        JsonAuto requested_component_list = response.AddArrayToObject("REQUESTED_TC_LIST");
-        if (requested_component_list == nullptr) {
-            return nullptr;
-        }
-        char IDString[37];
-        for (TrustedComponent* component = g_RequestedComponentList; component != nullptr; component = component->Next) {
-            TrustedComponent::ConvertUUIDToString(IDString, sizeof(IDString), component->ID);
-            if (requested_component_list.AddStringToArray(IDString) == nullptr) {
-                return nullptr;
-            }
-        }
-    }
-
-    /* Convert to message buffer. */
-    const char* message = json_dumps(response, 0);
-    return message;
-}
-#endif
 
 static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* tc)
 {
@@ -236,28 +180,28 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                 }
             }
 
-            // Parse the supported-ciphersuites.
+            // Parse the supported-cipher-suites.
             {
                 bool found = false;
                 QCBORDecode_GetNext(decodeContext, &item);
                 if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                    REPORT_TYPE_ERROR(errorMessage, "supported-ciphersuites", QCBOR_TYPE_ARRAY, item);
+                    REPORT_TYPE_ERROR(errorMessage, "supported-cipher-suites", QCBOR_TYPE_ARRAY, item);
                     return TEEP_ERR_PERMANENT_ERROR;
                 }
-                uint16_t ciphersuiteCount = item.val.uCount;
-                for (uint16_t arrayIndex = 0; arrayIndex < ciphersuiteCount; arrayIndex++) {
-                    // Parse an array of ciphersuite operations.
+                uint16_t cipherSuiteCount = item.val.uCount;
+                for (uint16_t arrayIndex = 0; arrayIndex < cipherSuiteCount; arrayIndex++) {
+                    // Parse an array of cipher suite operations.
                     QCBORDecode_GetNext(decodeContext, &item);
                     if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                        REPORT_TYPE_ERROR(errorMessage, "ciphersuite operations", QCBOR_TYPE_ARRAY, item);
+                        REPORT_TYPE_ERROR(errorMessage, "cipher suite operations", QCBOR_TYPE_ARRAY, item);
                         return TEEP_ERR_PERMANENT_ERROR;
                     }
                     uint16_t operationCount = item.val.uCount;
-                    for (uint16_t arrayIndex = 0; arrayIndex < ciphersuiteCount; arrayIndex++) {
+                    for (uint16_t arrayIndex = 0; arrayIndex < cipherSuiteCount; arrayIndex++) {
                         // Parse an array that specifies an operation.
                         QCBORDecode_GetNext(decodeContext, &item);
                         if (item.uDataType != QCBOR_TYPE_ARRAY || item.val.uCount != 2) {
-                            REPORT_TYPE_ERROR(errorMessage, "ciphersuite operation pair", QCBOR_TYPE_ARRAY, item);
+                            REPORT_TYPE_ERROR(errorMessage, "cipher suite operation pair", QCBOR_TYPE_ARRAY, item);
                             return TEEP_ERR_PERMANENT_ERROR;
                         }
                         QCBORDecode_GetNext(decodeContext, &item);
@@ -280,7 +224,7 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                     }
                 }
                 if (!found) {
-                    // TODO: include teep-ciphersuite-sign1-es256.
+                    // TODO: include teep-cipher-suite-sign1-es256.
                     return TEEP_ERR_UNSUPPORTED_CIPHER_SUITES;
                 }
                 // Add selected-cipher-suite to the QueryResponse.
@@ -424,145 +368,6 @@ static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QC
     free((void*)queryResponse.ptr);
     return err;
 }
-
-#ifdef TEEP_ENABLE_JSON
-// Returns 0 on success, non-zero on error.
-int TeepAgentHandleJsonQueryRequest(void* sessionHandle, json_t* object)
-{
-    int err = 1;
-    oe_result_t result;
-
-    printf("TeepHandleJsonQueryRequest\n");
-    if (!json_is_object(object)) {
-        return 1; /* Error */
-    }
-
-    /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
-    /* ... */
-
-    /* 2.  Validate that the request TAM certificate is chained to a trusted
-     *     CA that the TEE embeds as its trust anchor.
-     *
-     *     *  Cache the CA OCSP stapling data and certificate revocation
-     *        check status for other subsequent requests.
-     *
-     *     *  A TEE can use its own clock time for the OCSP stapling data
-     *        validation.
-     */
-    /* ...*/
-
-    /* 3. Compose a response. */
-    const char* message = TeepComposeJsonQueryResponse(object);
-
-    printf("Sending QueryResponse: %s\n\n", message);
-
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_JSON_MEDIA_TYPE, message, strlen(message));
-    free((void*)message);
-    if (result != OE_OK) {
-        return result;
-    }
-    return 0;
-}
-
-/* Compose a TEEP Success message. */
-const char* TeepAgentComposeJsonSuccess(
-    const json_t* request)    // Request we're responding to.
-{
-    JsonAuto response(json_object(), true);
-    if (response == nullptr) {
-        return nullptr;
-    }
-    if (response.AddIntegerToObject("TYPE", TEEP_MESSAGE_SUCCESS) == nullptr) {
-        return nullptr;
-    }
-
-    /* Copy TOKEN from request. */
-    json_t* token = json_object_get(request, "TOKEN");
-    if (!json_is_string(token) || (json_string_value(token) == nullptr)) {
-        return nullptr;
-    }
-    if (response.AddStringToObject("TOKEN", json_string_value(token)) == nullptr) {
-        return nullptr;
-    }
-
-    /* Convert to message buffer. */
-    const char* message = json_dumps(response, 0);
-    return message;
-}
-
-/* Compose a TEEP Error message. */
-const char* TeepAgentComposeJsonError(
-    const json_t* request,    // Request we're responding to.
-    int errorCode)
-{
-    JsonAuto response(json_object(), true);
-    if (response == nullptr) {
-        return nullptr;
-    }
-    if (response.AddIntegerToObject("TYPE", TEEP_MESSAGE_ERROR) == nullptr) {
-        return nullptr;
-    }
-
-    /* Copy TOKEN from request. */
-    json_t* token = json_object_get(request, "TOKEN");
-    if (!json_is_string(token) || (json_string_value(token) == nullptr)) {
-        return nullptr;
-    }
-    if (response.AddStringToObject("TOKEN", json_string_value(token)) == nullptr) {
-        return nullptr;
-    }
-
-    if (response.AddIntegerToObject("ERR_CODE", errorCode) == nullptr) {
-        return nullptr;
-    }
-
-    /* Convert to message buffer. */
-    const char* message = json_dumps(response, 0);
-    return message;
-}
-
-// Returns 0 on success, non-zero on error.
-int TeepAgentHandleJsonInstall(void* sessionHandle, json_t* request)
-{
-    printf("TeepHandleJsonInstall\n");
-
-    if (!json_is_object(request)) {
-        return 1; /* Error */
-    }
-
-    int err = 1;
-    oe_result_t result;
-
-    /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
-    /* ... */
-
-    /* 2.  Validate that the request TAM certificate is chained to a trusted
-     *     CA that the TEE embeds as its trust anchor.
-     *
-     *     *  Cache the CA OCSP stapling data and certificate revocation
-     *        check status for other subsequent requests.
-     *
-     *     *  A TEE can use its own clock time for the OCSP stapling data
-     *        validation.
-     */
-    /* ... */
-
-#if 0
-    const char* message = TeepComposeJsonSuccess(request);
-    printf("Sending Success: %s\n\n", message);
-#else
-    const char* message = TeepComposeJsonError(request, TEEP_ERR_INTERNAL_ERROR);
-    printf("Sending Error: %s\n\n", message);
-#endif
-
-    result = ocall_QueueOutboundTeepMessage(&err, sessionHandle, TEEP_JSON_MEDIA_TYPE, message, strlen(message));
-    free((void*)message);
-    if (result != OE_OK) {
-        return result;
-    }
-    return 0;
-}
-#endif
 
 /* Compose a raw Success message to be signed. */
 teep_error_code_t TeepAgentComposeCborSuccess(UsefulBufC token, UsefulBufC* encoded)
@@ -778,41 +583,6 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
     return teeperr;
 }
 
-#ifdef TEEP_ENABLE_JSON
-int TeepHandleJsonDelete(void* sessionHandle, json_t* object)
-{
-    (void)sessionHandle; // Unused.
-    (void)object; // Unused.
-
-    printf("TeepHandleDelete\n");
-    return 1;
-}
-
-int TeepHandleRawJsonMessage(void* sessionHandle, json_t* object)
-{
-    // Get message TYPE value.
-    JsonAuto typeValue = json_object_get(object, "TYPE");
-    if (!json_is_integer((json_t*)typeValue)) {
-        return 1;
-    }
-    teep_message_type_t messageType = (teep_message_type_t)json_integer_value(typeValue);
-
-    printf("TYPE=%d\n", messageType);
-
-    switch (messageType) {
-    case TEEP_MESSAGE_QUERY_REQUEST:
-        return TeepHandleJsonQueryRequest(sessionHandle, object);
-    case TEEP_MESSAGE_INSTALL:
-        return TeepHandleJsonInstall(sessionHandle, object);
-    case TEEP_MESSAGE_DELETE:
-        return TeepHandleJsonDelete(sessionHandle, object);
-    default:
-        // Not a legal message from the TAM.
-        return 1;
-    }
-}
-#endif
-
 /* Handle an incoming message from a TEEP Agent. */
 teep_error_code_t TeepAgentHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength)
 {
@@ -895,57 +665,6 @@ teep_error_code_t TeepAgentHandleCborMessage(void* sessionHandle, const char* me
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-#ifdef TEEP_ENABLE_JSON
-/* Handle an incoming message from a TEEP Agent. */
-/* Returns 0 on success, or non-zero if error. */
-int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength)
-{
-    char* newstr = nullptr;
-
-    /* Verify message is null-terminated. */
-    const char* str = message;
-    if (message[messageLength - 1] == 0) {
-        str = message;
-    } else {
-        newstr = (char*)malloc(messageLength + 1);
-        if (newstr == nullptr) {
-            return 1; /* error */
-        }
-        memcpy(newstr, message, messageLength);
-        newstr[messageLength] = 0;
-        str = newstr;
-    }
-
-    printf("Received message='%s'\n", str);
-
-    json_error_t error;
-    JsonAuto object(json_loads(str, 0, &error), true);
-
-    free(newstr);
-    newstr = nullptr;
-
-    if ((object == nullptr) || !json_is_object((json_t*)object)) {
-        return 1; /* Error */
-    }
-
-    /* 1.  Validate JSON message signing.  If it doesn't pass, an error message is returned. */
-    char* payload = DecodeJWS(object, nullptr);
-    if (!payload) {
-        // For now, we continue and just use plain JSON.
-        // Later, we should return an error.
-        // return 1; /* Error */
-        return TeepHandleRawJsonMessage(sessionHandle, (json_t*)object);
-    } else {
-        json_error_t error;
-        JsonAuto request(json_loads(payload, 0, &error), true);
-        if ((json_t*)request == nullptr) {
-            return 1;
-        }
-        return TeepHandleRawJsonMessage(sessionHandle, (json_t*)request);
-    }
-}
-#endif
-
 teep_error_code_t TeepAgentProcessTeepMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
@@ -962,10 +681,6 @@ teep_error_code_t TeepAgentProcessTeepMessage(
 
     if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
         err = TeepAgentHandleCborMessage(sessionHandle, message, messageLength);
-#ifdef TEEP_ENABLE_JSON
-    } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
-        err = TeepAgentHandleJsonMessage(sessionHandle, message, messageLength);
-#endif
     } else {
         return TEEP_ERR_PERMANENT_ERROR;
     }
@@ -1014,14 +729,10 @@ int TeepAgentRequestTA(
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
         printf("Sending an empty message...\n");
-#ifdef TEEP_ENABLE_JSON
-        const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
-#else
         if (!useCbor) {
             return 1; /* Error */
         }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
-#endif
         int error = TeepAgentConnect(tamUri, acceptMediaType);
         if (error != 0) {
             return error;
@@ -1075,14 +786,10 @@ int TeepAgentUnrequestTA(
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
         printf("Sending an empty message...\n");
-#ifdef TEEP_ENABLE_JSON
-        const char* acceptMediaType = (useCbor) ? TEEP_CBOR_MEDIA_TYPE : TEEP_JSON_MEDIA_TYPE;
-#else
         if (!useCbor) {
             return 1; /* Error */
         }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
-#endif
         int error = TeepAgentConnect(tamUri, acceptMediaType);
         if (error != 0) {
             return error;

@@ -703,27 +703,6 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
             token = item.val.string;
             break;
         }
-        case TEEP_LABEL_TC_LIST:
-        {
-            if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                REPORT_TYPE_ERROR(errorMessage, "tc-list", QCBOR_TYPE_ARRAY, item);
-                teeperr = TEEP_ERR_PERMANENT_ERROR;
-                TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
-                return teeperr;
-            }
-            uint16_t arrayEntryCount = item.val.uCount;
-            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
-                QCBORDecode_GetNext(context, &item);
-                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, item);
-                    teeperr = TEEP_ERR_PERMANENT_ERROR;
-                    TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
-                    return teeperr;
-                }
-                /* TODO: do a delete */
-            }
-            break;
-        }
         case TEEP_LABEL_MANIFEST_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
@@ -749,6 +728,28 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
                     errorCode = TryProcessSuitEnvelope(item.val.string, errorMessage);
                 }
             }
+            break;
+        }
+        case TEEP_LABEL_ATTESTATION_PAYLOAD_FORMAT:
+        {
+            if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
+                REPORT_TYPE_ERROR(errorMessage, "attestation-payload-format", QCBOR_TYPE_TEXT_STRING, item);
+                teeperr = TEEP_ERR_PERMANENT_ERROR;
+                TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
+                return teeperr;
+            }
+            // TODO: use Attestation Result.
+            break;
+        }
+        case TEEP_LABEL_ATTESTATION_PAYLOAD:
+        {
+            if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                REPORT_TYPE_ERROR(errorMessage, "attestation-payload", QCBOR_TYPE_BYTE_STRING, item);
+                teeperr = TEEP_ERR_PERMANENT_ERROR;
+                TeepAgentSendError(token, sessionHandle, teeperr, errorMessage.str());
+                return teeperr;
+            }
+            // TODO: use Attestation Result.
             break;
         }
         default:

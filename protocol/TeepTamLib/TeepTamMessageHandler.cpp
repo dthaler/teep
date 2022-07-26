@@ -399,34 +399,6 @@ teep_error_code_t TamComposeCborUpdate(
             QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TOKEN, UsefulBuf_Const(token));
 #endif
 
-            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
-            {
-                // List any optional components that are reported as unneeded.
-                for (RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
-                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
-                    if ((manifest == nullptr) || (manifest->IsRequired)) {
-                        continue;
-                    }
-
-                    // The component is allowed but optional, so ok to delete on request.
-                    QCBOREncode_AddBytes(&context, rci->ComponentId);
-                    (*count)++;
-                }
-
-                // List any installed components that are not in the required or optional list.
-                for (RequestedComponentInfo* rci = currentComponentList; rci != nullptr; rci = rci->Next) {
-                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
-                    if (manifest != nullptr) {
-                        continue;
-                    }
-
-                    // The installed component is not found in the latest policy.
-                    QCBOREncode_AddBytes(&context, rci->ComponentId);
-                    (*count)++;
-                }
-            }
-            QCBOREncode_CloseArray(&context);
-
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_MANIFEST_LIST);
             {
                 // Any SUIT manifest for any required components that aren't reported to be present.
@@ -454,6 +426,35 @@ teep_error_code_t TamComposeCborUpdate(
                     // The component is allowed and optional, so ok to install on request.
                     QCBOREncode_AddBytes(&context, manifest->ManifestContents);
                     (*count)++;
+                }
+
+                // Add a deletion manifest for any optional components that are reported as unneeded.
+                for (RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
+                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
+                    if ((manifest == nullptr) || (manifest->IsRequired)) {
+                        continue;
+                    }
+
+                    // The component is allowed but optional, so ok to delete on request.
+                    // TODO: need a deletion manifest
+#if 0
+                    QCBOREncode_AddBytes(&context, manifest->DeletionManifestContents);
+                    (*count)++;
+#endif
+                }
+
+                // List any installed components that are not in the required or optional list.
+                for (RequestedComponentInfo* rci = currentComponentList; rci != nullptr; rci = rci->Next) {
+                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
+                    if (manifest != nullptr) {
+                        continue;
+                    }
+
+                    // TODO: need a deletion manifest
+#if 0
+                    QCBOREncode_AddBytes(&context, manifest->DeletionManifestContents);
+                    (*count)++;
+#endif
                 }
             }
             QCBOREncode_CloseArray(&context);

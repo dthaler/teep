@@ -174,7 +174,7 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                     break;
                 case TEEP_LABEL_VERSIONS:
                     printf("TODO: read versions\n");
-                    // TODO: read supported versions and potentially
+                    // TODO(issue #70): read supported versions and potentially
                     // add selected-version to the QueryResponse.
                     break;
                 }
@@ -335,10 +335,6 @@ teep_error_code_t TeepAgentSendCborMessage(void* sessionHandle, const char* medi
     //     a COSE_Sign1 object MUST be followed.
     // ... TODO(issue #8) ...
 
-    // 4.  Prepend the COSE object with the TEEP CBOR tag to indicate that
-    //     the CBOR-encoded message is indeed a TEEP message.
-    // TODO: see https://github.com/ietf-teep/teep-protocol/issues/147
-
     return TeepAgentQueueOutboundTeepMessage(sessionHandle, mediaType, buffer, bufferlen);
 }
 
@@ -351,8 +347,7 @@ static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QC
     std::ostringstream errorMessage;
     teep_error_code_t err = TeepAgentComposeCborQueryResponse(context, &queryResponse, errorMessage);
     if (err != TEEP_ERR_SUCCESS) {
-        // TODO: see https://github.com/ietf-teep/teep-protocol/issues/129
-        // TeepSendError(token, sessionHandle, err, errorMessage.str());
+        TeepSendError(token, sessionHandle, err, errorMessage.str());
         return err;
     }
     if (queryResponse.len == 0) {
@@ -596,36 +591,20 @@ teep_error_code_t TeepAgentHandleCborMessage(void* sessionHandle, const char* me
 
     // From draft-ietf-teep-protocol section 4.1.2:
     //  1.  Verify that the received message is a valid CBOR object.
-    //  2.  Remove the TEEP message CBOR tag and verify that one of the COSE
-    //      CBOR tags follows it.
+
+    //  2.  Verify that the message contains a COSE_Sign1 structure.
     // ... TODO(issue #8) ...
 
-    //  3.  Verify that the message contains a COSE_Sign1 structure.
-    // ... TODO(issue #8) ...
-
-    //  4.  Verify that the resulting COSE Header includes only parameters
+    //  3.  Verify that the resulting COSE Header includes only parameters
     //      and values whose syntax and semantics are both understood and
     //      supported or that are specified as being ignored when not
     //      understood.
     // ... TODO(issue #8) ...
 
-    //  5.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
+    //  4.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
     //      Objects") for validating a COSE_Sign1 object.  The COSE_Sign1
     //      payload is the content of the TEEP message.
     // ... TODO(issue #8) ...
-
-    /*     Validate that the request TAM certificate is chained to a trusted
-     *     CA that the TEE embeds as its trust anchor.
-     *
-     *     *  Cache the CA OCSP stapling data and certificate revocation
-     *        check status for other subsequent requests.
-     *
-     *     *  A TEE can use its own clock time for the OCSP stapling data
-     *        validation.
-     *  TODO: teep protocol spec is missing above statements, closest
-     *        thing is in ocsp-data description
-     *  See https://github.com/ietf-teep/teep-protocol/issues/148
-     */
 
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);

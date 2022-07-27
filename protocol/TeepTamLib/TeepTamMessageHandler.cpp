@@ -75,10 +75,10 @@ teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
         }
         QCBOREncode_CloseMap(&context);
 
-        // Add supported ciphersuites.
+        // Add supported cipher suites.
         QCBOREncode_OpenArray(&context);
         {
-            // Add teep-ciphersuite-sign1-es256.
+            // Add teep-cipher-suite-sign1-es256.
             QCBOREncode_OpenArray(&context);
             {
                 // Add teep-operation-sign1-es256.
@@ -91,7 +91,7 @@ teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
             }
             QCBOREncode_CloseArray(&context);
 
-            // Add teep-ciphersuite-sign1-eddsa.
+            // Add teep-cipher-suite-sign1-eddsa.
             // TODO: t_cose does not yet support eddsa.
         }
         QCBOREncode_CloseArray(&context);
@@ -305,37 +305,25 @@ teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaTy
 
     teep_error_code_t err = TEEP_ERR_SUCCESS;
     UsefulBufC encoded;
-#ifdef TEEP_ENABLE_JSON
-    if (strcmp(mediaType, TEEP_JSON_MEDIA_TYPE) == 0) {
-        const char* message = TeepComposeJsonQueryRequest();
-        if (message == nullptr) {
-            return 1; /* Error */
-        }
-        encoded.ptr = message;
-        encoded.len = strlen(message);
-    } else
-#endif
-    {
-        int maxBufferLength = 4096;
-        char* buffer = (char*)malloc(maxBufferLength);
-        if (buffer == nullptr) {
-            return TEEP_ERR_TEMPORARY_ERROR;
-        }
-        encoded.ptr = buffer;
-        encoded.len = maxBufferLength;
-
-        err = TamComposeCborQueryRequest(&encoded);
-        if (err != TEEP_ERR_SUCCESS) {
-            return err;
-        }
-
-        if (encoded.len == 0) {
-            return TEEP_ERR_PERMANENT_ERROR;
-        }
-
-        printf("Sending CBOR message: ");
-        HexPrintBuffer(encoded.ptr, encoded.len);
+    int maxBufferLength = 4096;
+    char* buffer = (char*)malloc(maxBufferLength);
+    if (buffer == nullptr) {
+        return TEEP_ERR_TEMPORARY_ERROR;
     }
+    encoded.ptr = buffer;
+    encoded.len = maxBufferLength;
+
+    err = TamComposeCborQueryRequest(&encoded);
+    if (err != TEEP_ERR_SUCCESS) {
+        return err;
+    }
+
+    if (encoded.len == 0) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    printf("Sending CBOR message: ");
+    HexPrintBuffer(encoded.ptr, encoded.len);
 
     printf("Sending QueryRequest...\n");
     err = TamSendCborMessage(sessionHandle, mediaType, &encoded);
@@ -345,11 +333,7 @@ teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaTy
 
 teep_error_code_t TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType)
 {
-    if ((strncmp(acceptMediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0)
-#ifdef TEEP_ENABLE_JSON
-            || (strncmp(acceptMediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0)
-#endif
-        ) {
+    if (strncmp(acceptMediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
         return TamProcessTeepConnect(sessionHandle, acceptMediaType);
     } else {
         return TEEP_ERR_PERMANENT_ERROR;
@@ -546,7 +530,7 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
                 REPORT_TYPE_ERROR(errorMessage, "selected-cipher-suite", QCBOR_TYPE_BYTE_STRING, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
-            // Parse an array of ciphersuite operations.
+            // Parse an array of cipher suite operations.
             uint16_t operationCount = item.val.uCount;
             if (operationCount != 1) {
                 return TEEP_ERR_PERMANENT_ERROR;
@@ -555,7 +539,7 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
             // Parse an array that specifies an operation.
             QCBORDecode_GetNext(context, &item);
             if (item.uDataType != QCBOR_TYPE_ARRAY || item.val.uCount != 2) {
-                REPORT_TYPE_ERROR(errorMessage, "ciphersuite operation pair", QCBOR_TYPE_ARRAY, item);
+                REPORT_TYPE_ERROR(errorMessage, "cipher suite operation pair", QCBOR_TYPE_ARRAY, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             QCBORDecode_GetNext(context, &item);
@@ -565,7 +549,7 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
             }
             if (item.val.int64 != CBOR_TAG_COSE_SIGN1) {
                 printf("Unrecognized COSE type %lld\n", item.val.uint64);
-                return TEEP_ERR_PERMANENT_ERROR; /* invalid ciphersuite */
+                return TEEP_ERR_PERMANENT_ERROR; /* invalid cipher suite */
             }
             QCBORDecode_GetNext(context, &item);
             if (item.uDataType != QCBOR_TYPE_INT64) {
@@ -574,7 +558,7 @@ teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeCon
             }
             if (item.val.int64 != T_COSE_ALGORITHM_ES256) {
                 printf("Unrecognized COSE algorithm %lld\n", item.val.uint64);
-                return TEEP_ERR_PERMANENT_ERROR; /* invalid ciphersuite */
+                return TEEP_ERR_PERMANENT_ERROR; /* invalid cipher suite */
             }
             break;
         }
@@ -935,10 +919,6 @@ teep_error_code_t TamProcessTeepMessage(
 
     if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
         err = TamHandleCborMessage(sessionHandle, message, messageLength);
-#ifdef TEEP_ENABLE_JSON
-    } else if (strncmp(mediaType, TEEP_JSON_MEDIA_TYPE, strlen(TEEP_JSON_MEDIA_TYPE)) == 0) {
-        err = TamHandleJsonMessage(sessionHandle, message, messageLength);
-#endif
     } else {
         return TEEP_ERR_PERMANENT_ERROR;
     }

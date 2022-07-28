@@ -93,11 +93,13 @@ static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* t
 }
 
 // Parse QueryRequest and compose QueryResponse.
-static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* decodeContext, UsefulBufC* encoded, std::ostream& errorMessage)
+static teep_error_code_t TeepAgentComposeCborQueryResponse(_In_ QCBORDecodeContext* decodeContext, _Out_ UsefulBufC* encoded, std::ostream& errorMessage, _Out_ UsefulBufC* errorToken)
 {
     UsefulBufC challenge = NULLUsefulBufC;
     encoded->ptr = nullptr;
     encoded->len = 0;
+    errorToken->ptr = nullptr;
+    errorToken->len = 0;
 
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
@@ -141,6 +143,7 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(QCBORDecodeContext* d
                         REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_BYTE_STRING, item);
                         return TEEP_ERR_PERMANENT_ERROR;
                     }
+                    *errorToken = item.val.string;
                     QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TOKEN, item.val.string);
                     break;
                 case TEEP_LABEL_SUPPORTED_FRESHNESS_MECHANISMS:
@@ -338,32 +341,6 @@ teep_error_code_t TeepAgentSendCborMessage(void* sessionHandle, const char* medi
     return TeepAgentQueueOutboundTeepMessage(sessionHandle, mediaType, buffer, bufferlen);
 }
 
-static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
-{
-    printf("TeepHandleCborQueryRequest\n");
-
-    /* 3. Compose a raw response. */
-    UsefulBufC queryResponse;
-    std::ostringstream errorMessage;
-    teep_error_code_t err = TeepAgentComposeCborQueryResponse(context, &queryResponse, errorMessage);
-    if (err != TEEP_ERR_SUCCESS) {
-        TeepSendError(token, sessionHandle, err, errorMessage.str());
-        return err;
-    }
-    if (queryResponse.len == 0) {
-        return TEEP_ERR_PERMANENT_ERROR;
-    }
-
-    printf("Sending CBOR message: ");
-    HexPrintBuffer(queryResponse.ptr, queryResponse.len);
-
-    printf("Sending QueryResponse...\n");
-
-    err = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
-    free((void*)queryResponse.ptr);
-    return err;
-}
-
 /* Compose a raw Success message to be signed. */
 teep_error_code_t TeepAgentComposeCborSuccess(UsefulBufC token, UsefulBufC* encoded)
 {
@@ -451,7 +428,7 @@ teep_error_code_t TeepAgentComposeCborError(UsefulBufC token, teep_error_code_t 
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-void TeepAgentSendError(UsefulBufC token, void* sessionHandle, teep_error_code_t errorCode, const std::string& errorMessage)
+static void TeepAgentSendError(UsefulBufC token, void* sessionHandle, teep_error_code_t errorCode, const std::string& errorMessage)
 {
     UsefulBufC reply;
     if (TeepAgentComposeCborError(token, errorCode, errorMessage, &reply) != TEEP_ERR_SUCCESS) {
@@ -466,6 +443,33 @@ void TeepAgentSendError(UsefulBufC token, void* sessionHandle, teep_error_code_t
 
     (void)TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
     free((void*)reply.ptr);
+}
+
+static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
+{
+    printf("TeepHandleCborQueryRequest\n");
+
+    /* 3. Compose a raw response. */
+    UsefulBufC queryResponse;
+    UsefulBufC errorToken;
+    std::ostringstream errorMessage;
+    teep_error_code_t errorCode = TeepAgentComposeCborQueryResponse(context, &queryResponse, errorMessage, &errorToken);
+    if (errorCode != TEEP_ERR_SUCCESS) {
+        TeepAgentSendError(errorToken, sessionHandle, errorCode, errorMessage.str());
+        return errorCode;
+    }
+    if (queryResponse.len == 0) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    printf("Sending CBOR message: ");
+    HexPrintBuffer(queryResponse.ptr, queryResponse.len);
+
+    printf("Sending QueryResponse...\n");
+
+    errorCode = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
+    free((void*)queryResponse.ptr);
+    return errorCode;
 }
 
 teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)

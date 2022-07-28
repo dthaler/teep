@@ -34,7 +34,7 @@ const unsigned char* GetTamDerCertificate(size_t *pCertLen)
         json_t* jwk = GetTamEncryptionKey();
         g_TamDerCertificate = GetDerCertificate(jwk, &g_TamDerCertificateSize);
 #else
-        // TODO
+        // TODO(issue #8)
         return nullptr;
 #endif
     }

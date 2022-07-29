@@ -5,6 +5,8 @@
 // This file has defines that are in common between
 // the TAM and the TEEP Agent.
 
+#define TEEP_USE_COSE 1
+
 #include "teep_protocol.h"
 
 #define UUID_LENGTH 16 // Size in bytes of a UUID (RFC 4122)

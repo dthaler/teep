@@ -136,14 +136,6 @@
       <Project>{0ba01906-2dae-48e9-8044-4a631267b4ba}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
-    <ProjectReference Include="..\jose\jose.vcxproj">
-      <Project>{da064898-e24b-44b9-8297-b5be1089779f}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
-    <ProjectReference Include="..\jose_openssl\jose_openssl.vcxproj">
-      <Project>{2a4e62ee-c5bb-4b0d-9798-3d76f2e4481b}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
     <ProjectReference Include="..\libeay32\LibEay32_t.vcxproj">
       <Project>{275fac8b-b49c-4c91-b708-5abfb9e24215}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

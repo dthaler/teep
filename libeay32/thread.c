@@ -6,11 +6,13 @@
 
 #include <TrustedOpenssl.h>
 
+#ifdef OE_USE_SGX
 char *getenv(const char *varname)
 {
     (void)varname;
     return NULL;
 }
+#endif
 
 /*
 void SetLastError(DWORD dwErrCode)

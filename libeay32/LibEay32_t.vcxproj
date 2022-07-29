@@ -760,7 +760,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)LibEay32;$(SolutionDir)openssl\include;$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(OEIncludePath)\openenclave\3rdparty\libc;$(SolutionDir)openssl\include;$(OEIncludePath)\openenclave\3rdparty;$(SolutionDir)UntrustedTime\enc;$(OpensslDir);$(OpensslDir)crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)LibEay32;$(SolutionDir)openssl\include;$(SolutionDir)external\jansson\src;$(SolutionDir)external\jansson\private_include;$(SolutionDir)UntrustedTime\enc;$(OpensslDir)include;$(OpensslDir)include\crypto;$(OpensslDir)crypto\asn1;$(OpensslDir)crypto\modes;$(OpensslDir)crypto\evp</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TRUSTED_CODE;TRUSTED_CODE;OPENSSL_NO_CAMELLIA;OPENSSL_NO_DSA;OPENSSL_NO_SOCK;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>

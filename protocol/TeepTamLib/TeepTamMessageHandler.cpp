@@ -5,9 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "common.h"
-extern "C" {
-#include "teep_protocol.h"
-};
 #include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_encode.h"
 #include "openssl/x509.h"

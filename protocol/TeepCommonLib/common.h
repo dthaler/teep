@@ -45,6 +45,17 @@ json_t* CreateNewJwk(const char* alg);
 json_t* CopyToJweKey(json_t* jwk1, const char* alg);
 
 const unsigned char* GetDerCertificate(json_t* jwk, size_t *pCertificateSize);
+#else
+#define TAM_SIGNING_PUBLIC_KEY_FILENAME "tam-public-key.pem"
+
+teep_error_code_t get_signing_key_pair(
+    _Out_ struct t_cose_key* key_pair,
+    _In_z_ const char* private_file_name,
+    _In_z_ const char* public_file_name);
+
+teep_error_code_t get_verifying_key_pair(
+    _Out_ struct t_cose_key* key_pair,
+    _In_z_ const char* public_file_name);
 #endif
 
 #ifdef __cplusplus

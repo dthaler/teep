@@ -4,27 +4,17 @@
 // This file contains trusted code in common between the TAM and TEEP Agent.
 #include <stdio.h>
 #include <string.h>
-#ifdef TEEP_ENABLE_JSON
-#include "JsonAuto.h"
-#endif
+#include "t_cose/t_cose_common.h"
 #include "common.h"
 extern "C" {
 #ifdef OE_BUILD_ENCLAVE
 #define _countof(x) OE_COUNTOF(x)
 #define sprintf_s(dest, len, ...) sprintf(dest, __VA_ARGS__)
 #endif
-#ifdef TEEP_ENABLE_JSON
-#include "../jose/joseinit.h"
-#endif
 #include "teep_protocol.h"
-#ifdef TEEP_ENABLE_JSON
-#include "jose/jwk.h"
-#include "jose/jws.h"
-#include "jose/b64.h"
-#include "jose/openssl.h"
-#endif
 #include "openssl/rsa.h"
 #include "openssl/evp.h"
+#include "openssl/pem.h"
 #include "openssl/x509.h"
 };
 
@@ -141,14 +131,164 @@ void TestJwLibs(void)
 }
 #endif
 
+static teep_error_code_t save_signing_key_pair(
+    _In_ const struct t_cose_key* key_pair,
+    _In_z_ const char* private_file_name,
+    _In_z_ const char* public_file_name)
+{
+    EVP_PKEY* pkey = (EVP_PKEY*)key_pair->k.key_ptr;
+
+    // Write key pair with private key, for future use by the TAM.
+    FILE* fp = fopen(private_file_name, "wb");
+    if (fp == nullptr) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    int succeeded = PEM_write_PrivateKey(fp, (EVP_PKEY*)key_pair->k.key_ptr,
+        NULL, NULL, 0, NULL, NULL);
+    fclose(fp);
+    if (!succeeded) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    // Write public key for use by TEEP Agents.
+    fp = fopen(public_file_name, "wb");
+    if (fp == nullptr) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    succeeded = PEM_write_PUBKEY(fp, pkey);
+    fclose(fp);
+    if (!succeeded) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    return TEEP_ERR_SUCCESS;
+}
+
+static teep_error_code_t load_signing_key_pair(
+    _Out_ struct t_cose_key* key_pair,
+    _In_z_ const char* file_name)
+{
+    FILE* fp = fopen(file_name, "rb");
+    if (fp == nullptr) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
+    key_pair->k.key_ptr = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
+    fclose(fp);
+    if (key_pair->k.key_ptr == nullptr) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    return TEEP_ERR_SUCCESS;
+}
+
+/**
+ * \brief Make an EC key pair in OpenSSL library form.
+ *
+ * \param[in] cose_algorithm_id  The algorithm to sign with, for example
+ *                               \ref T_COSE_ALGORITHM_ES256.
+ * \param[out] key_pair          The key pair. This must be freed.
+ *
+ * The key made here is fixed and just useful for testing.
+ */
+enum t_cose_err_t make_ossl_ecdsa_key_pair(int32_t            cose_algorithm_id,
+    struct t_cose_key* key_pair)
+{
+    enum t_cose_err_t  return_value;
+    int                ossl_result;
+    int                ossl_nid;
+    EVP_PKEY* pkey = NULL;
+    EVP_PKEY_CTX* ctx;
+
+    switch (cose_algorithm_id) {
+    case T_COSE_ALGORITHM_ES256:
+        ossl_nid = NID_X9_62_prime256v1;
+        break;
+
+    case T_COSE_ALGORITHM_ES384:
+        ossl_nid = NID_secp384r1;
+        break;
+
+    case T_COSE_ALGORITHM_ES512:
+        ossl_nid = NID_secp521r1;
+        break;
+
+    default:
+        return T_COSE_ERR_UNSUPPORTED_SIGNING_ALG;
+    }
+
+    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    if (ctx == NULL) {
+        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
+        goto Done;
+    }
+
+    if (EVP_PKEY_keygen_init(ctx) <= 0) {
+        return_value = T_COSE_ERR_FAIL;
+        goto Done;
+    }
+
+    ossl_result = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, ossl_nid);
+    if (ossl_result != 1) {
+        return_value = T_COSE_ERR_FAIL;
+        goto Done;
+    }
+
+    pkey = EVP_PKEY_new();
+
+    ossl_result = EVP_PKEY_keygen(ctx, &pkey);
+
+    if (ossl_result != 1) {
+        return_value = T_COSE_ERR_FAIL;
+        goto Done;
+    }
+
+    key_pair->k.key_ptr = pkey;
+    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
+    return_value = T_COSE_SUCCESS;
+
+Done:
+    return return_value;
+}
+
+teep_error_code_t get_signing_key_pair(
+    _Out_ struct t_cose_key* key_pair,
+    _In_z_ const char* private_file_name,
+    _In_z_ const char* public_file_name)
+{
+    if (load_signing_key_pair(key_pair, private_file_name) == TEEP_ERR_PERMANENT_ERROR) {
+        enum t_cose_err_t return_value = make_ossl_ecdsa_key_pair(T_COSE_ALGORITHM_ES256, key_pair);
+        if (return_value != T_COSE_SUCCESS) {
+            return TEEP_ERR_TEMPORARY_ERROR;
+        }
+
+        save_signing_key_pair(key_pair, private_file_name, public_file_name);
+    }
+
+    return TEEP_ERR_SUCCESS;
+}
+
+teep_error_code_t get_verifying_key_pair(
+    _Out_ struct t_cose_key* key_pair,
+    _In_z_ const char* public_file_name)
+{
+    FILE* fp = fopen(public_file_name, "rb");
+    if (fp == nullptr) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
+    key_pair->k.key_ptr = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
+    fclose(fp);
+    if (key_pair->k.key_ptr == nullptr) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    return TEEP_ERR_SUCCESS;
+}
+
 int TeepInitialize(void)
 {
 #ifdef TEEP_ENABLE_JSON
     jose_init();
-#endif
-
-#if 0
-    TestJwLibs();
 #endif
     return 0;
 }
@@ -214,21 +354,6 @@ json_t* CopyToJweKey(json_t* jwk1, const char* alg)
     }
 
     return jwk2.Detach();
-}
-
-json_t* CreateNewJwke(void)
-{
-    return CreateNewJwk("ECDH-ES+A128KW");
-}
-
-json_t* CreateNewJwkR1_5(void)
-{
-    return CreateNewJwk("RSA1_5");
-}
-
-json_t* CreateNewJwkRS256(void)
-{
-    return CreateNewJwk("RS256");
 }
 
 const unsigned char* GetDerCertificate(json_t* jwk, size_t *pCertificateSize)

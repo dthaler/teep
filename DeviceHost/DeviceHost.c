@@ -6,6 +6,12 @@
 #include <openenclave/host.h>
 #endif
 #include "../protocol/TeepAgentBrokerLib/TeepAgentBrokerLib.h"
+#if 0
+#pragma warning(push)
+#pragma warning(disable:4996)
+#include "openssl/applink.c"
+#pragma warning(pop)
+#endif
 
 //#define DEFAULT_TAM_URI "http://127.0.0.1:12345/TEEP"
 //#define DEFAULT_TAM_URI "http://localhost:54321/TEEP"

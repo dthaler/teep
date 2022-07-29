@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "../protocol/TeepTamBrokerLib/TeepTamBrokerLib.h"
+#if 0
+#pragma warning(push)
+#pragma warning(disable:4996)
+#include "openssl/applink.c"
+#pragma warning(pop)
+#endif
 
 #define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"
 

@@ -9,12 +9,10 @@ enclave {
         /* define ECALLs here. */
 
         public int ecall_RequestTA(
-            int useCbor,
             oe_uuid_t requestedTaid,
             [in, string] const char* tamUri);
 
         public int ecall_UnrequestTA(
-            int useCbor,
             oe_uuid_t unneededTaid,
             [in, string] const char* tamUri);
 

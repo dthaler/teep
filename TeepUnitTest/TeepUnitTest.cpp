@@ -5,3 +5,7 @@
 
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
+#pragma warning(push)
+#pragma warning(disable:4996)
+#include "openssl/applink.c"
+#pragma warning(pop)

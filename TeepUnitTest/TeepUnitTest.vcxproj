@@ -182,14 +182,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)protocol/TeepAgentBrokerLib;$(SolutionDir)jansson;$(SolutionDir)external\jansson\src;$(SolutionDir)protocol\TeepTamBrokerLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)protocol/TeepAgentBrokerLib;$(SolutionDir)jansson;$(SolutionDir)external\jansson\src;$(SolutionDir)protocol\TeepTamBrokerLib;$(ProgramW6432)/OpenSSL/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>qcbor.lib;TeepCommonLib.lib;TeepAgentLib.lib;TeepAgentBrokerLib.lib;TeepTamLib.lib;TeepTamBrokerLib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;t_cose.lib;LibEay32_t.lib;ws2_32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>qcbor.lib;TeepCommonLib.lib;TeepAgentLib.lib;TeepAgentBrokerLib.lib;TeepTamLib.lib;TeepTamBrokerLib.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;t_cose.lib;ws2_32.lib;wininet.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(ProgramW6432)/OpenSSL/lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

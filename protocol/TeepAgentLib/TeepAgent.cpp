@@ -16,6 +16,7 @@
 #include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_encode.h"
 #include "t_cose/t_cose_common.h"
+#include "t_cose/t_cose_sign1_verify.h"
 #include "TeepDeviceEcallHandler.h"
 #include "SuitParser.h"
 #include <sstream>
@@ -582,6 +583,20 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
     return teeperr;
 }
 
+#define TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME "teepagent-private-key-pair.pem"
+#define TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME "teepagent-public-key.pem"
+
+static teep_error_code_t TeepAgentGetSigningKeyPair(struct t_cose_key* key_pair)
+{
+    return get_signing_key_pair(key_pair, TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME, TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME);
+}
+
+/* Get the TAM's public key to verify an incoming message against. */
+teep_error_code_t TeepAgentGetTamKey(_Out_ struct t_cose_key* key_pair)
+{
+    return get_verifying_key_pair(key_pair, TAM_SIGNING_PUBLIC_KEY_FILENAME);
+}
+
 /* Handle an incoming message from a TEEP Agent. */
 teep_error_code_t TeepAgentHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength)
 {
@@ -590,14 +605,19 @@ teep_error_code_t TeepAgentHandleCborMessage(void* sessionHandle, const char* me
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
-    encoded.ptr = message;
-    encoded.len = messageLength;
 
     // From draft-ietf-teep-protocol section 4.1.2:
     //  1.  Verify that the received message is a valid CBOR object.
 
+#ifdef TEEP_USE_COSE
     //  2.  Verify that the message contains a COSE_Sign1 structure.
     // ... TODO(issue #8) ...
+    struct t_cose_sign1_verify_ctx verify_ctx;
+    t_cose_sign1_verify_init(&verify_ctx, 0);
+
+    struct t_cose_key key_pair;
+    teeperr = TeepAgentGetTamKey(&key_pair);
+    t_cose_sign1_set_verification_key(&verify_ctx, key_pair);
 
     //  3.  Verify that the resulting COSE Header includes only parameters
     //      and values whose syntax and semantics are both understood and
@@ -609,6 +629,21 @@ teep_error_code_t TeepAgentHandleCborMessage(void* sessionHandle, const char* me
     //      Objects") for validating a COSE_Sign1 object.  The COSE_Sign1
     //      payload is the content of the TEEP message.
     // ... TODO(issue #8) ...
+    UsefulBufC signed_cose;
+    signed_cose.ptr = message;
+    signed_cose.len = messageLength;
+
+    int return_value = t_cose_sign1_verify(&verify_ctx,
+        signed_cose,         /* COSE to verify */
+        &encoded,            /* Payload from signed_cose */
+        NULL);               /* Don't return parameters */
+    if (return_value != T_COSE_SUCCESS) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+#else
+    encoded.ptr = message;
+    encoded.len = messageLength;
+#endif
 
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);
@@ -671,8 +706,7 @@ teep_error_code_t TeepAgentProcessTeepMessage(
     return err;
 }
 
-int TeepAgentRequestTA(
-    int useCbor,
+teep_error_code_t TeepAgentRequestTA(
     teep_uuid_t requestedTaid,
     _In_z_ const char* tamUri)
 {
@@ -685,7 +719,7 @@ int TeepAgentRequestTA(
     if (isInstalled) {
         // Already installed, nothing to do.
         // This counts as "pass no data back" in the broker spec.
-        return 0;
+        return TEEP_ERR_SUCCESS;
     }
 
     // See whether requestedTaid has already been requested.
@@ -694,7 +728,7 @@ int TeepAgentRequestTA(
         if (memcmp(tc->ID.b, requestedTaid.b, TEEP_UUID_SIZE) == 0) {
             // Already requested, nothing to do.
             // This counts as "pass no data back" in the broker spec.
-            return 0;
+            return TEEP_ERR_SUCCESS;
         }
     }
 
@@ -712,13 +746,10 @@ int TeepAgentRequestTA(
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
         printf("Sending an empty message...\n");
-        if (!useCbor) {
-            return 1; /* Error */
-        }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
-        int error = TeepAgentConnect(tamUri, acceptMediaType);
-        if (error != 0) {
-            return error;
+        err = TeepAgentConnect(tamUri, acceptMediaType);
+        if (err != TEEP_ERR_SUCCESS) {
+            return err;
         }
     } else {
         // TODO: implement going on to the next message.
@@ -728,12 +759,11 @@ int TeepAgentRequestTA(
     return err;
 }
 
-int TeepAgentUnrequestTA(
-    int useCbor,
+teep_error_code_t TeepAgentUnrequestTA(
     teep_uuid_t unneededTaid,
     _In_z_ const char* tamUri)
 {
-    teep_error_code_t err = TEEP_ERR_SUCCESS;
+    teep_error_code_t teep_error = TEEP_ERR_SUCCESS;
 
     // TODO: See whether unneededTaid is installed.
     // For now we skip this step and pretend it is.
@@ -742,7 +772,7 @@ int TeepAgentUnrequestTA(
     if (!isInstalled) {
         // Already not installed, nothing to do.
         // This counts as "pass no data back" in the broker spec.
-        return 0;
+        return TEEP_ERR_SUCCESS;
     }
 
     // See whether unneededTaid has already been notified to the TAM.
@@ -751,7 +781,7 @@ int TeepAgentUnrequestTA(
         if (memcmp(tc->ID.b, unneededTaid.b, TEEP_UUID_SIZE) == 0) {
             // Already requested, nothing to do.
             // This counts as "pass no data back" in the broker spec.
-            return 0;
+            return TEEP_ERR_SUCCESS;
         }
     }
 
@@ -769,20 +799,17 @@ int TeepAgentUnrequestTA(
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
         printf("Sending an empty message...\n");
-        if (!useCbor) {
-            return 1; /* Error */
-        }
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
-        int error = TeepAgentConnect(tamUri, acceptMediaType);
-        if (error != 0) {
-            return error;
+        teep_error = TeepAgentConnect(tamUri, acceptMediaType);
+        if (teep_error != TEEP_ERR_SUCCESS) {
+            return teep_error;
         }
     } else {
         // TODO: implement going on to the next message.
         TEEP_ASSERT(false);
     }
 
-    return err;
+    return teep_error;
 }
 
 #ifdef TEEP_ENABLE_JSON

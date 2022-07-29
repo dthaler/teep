@@ -18,7 +18,6 @@
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_cbc.c" />
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_cfb.c" />
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_core.c" />
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ctr.c" />
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_ecb.c" />
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_ige.c" />
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_misc.c" />

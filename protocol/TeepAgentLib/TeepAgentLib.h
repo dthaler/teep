@@ -24,13 +24,11 @@ extern "C" {
         _In_reads_(messageLength) const char* message,
         size_t messageLength);
 
-    int TeepAgentRequestTA(
-        int useCbor,
+    teep_error_code_t TeepAgentRequestTA(
         teep_uuid_t requestedTaid,
         _In_z_ const char* tamUri);
 
-    int TeepAgentUnrequestTA(
-        int useCbor,
+    teep_error_code_t TeepAgentUnrequestTA(
         teep_uuid_t unneededTaid,
         _In_z_ const char* tamUri);
 

@@ -124,11 +124,6 @@
     <None Include="optee/uuids.reg" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\jansson\jansson.vcxproj">
-      <Project>{0ba01906-2dae-48e9-8044-4a631267b4ba}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets" Condition="Exists('..\..\packages\open-enclave-cross.0.17.1\build\native\open-enclave-cross.targets')" />

@@ -18,22 +18,27 @@
 #include "TeepTamLib.h"
 #include <sstream>
 
+#define TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME "tam-private-key-pair.pem"
+
+static teep_error_code_t TamGetSigningKeyPair(struct t_cose_key* key_pair)
+{
+    return teep_get_signing_key_pair(key_pair, TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME, TAM_SIGNING_PUBLIC_KEY_FILENAME);
+}
+
 const unsigned char* g_TamDerCertificate = nullptr;
 size_t g_TamDerCertificateSize = 0;
 
 const unsigned char* GetTamDerCertificate(size_t *pCertLen)
 {
     if (g_TamDerCertificate == nullptr) {
-        // Construct a self-signed DER certificate based on the JWK.
+        // Construct a self-signed DER certificate based on the COSE key.
+        t_cose_key key_pair;
+        teep_error_code_t teep_error = TamGetSigningKeyPair(&key_pair);
+        if (teep_error != TEEP_ERR_SUCCESS) {
+            return nullptr;
+        }
 
-        // First get the RSA key.
-#ifdef TEEP_ENABLE_JSON
-        json_t* jwk = GetTamEncryptionKey();
-        g_TamDerCertificate = GetDerCertificate(jwk, &g_TamDerCertificateSize);
-#else
-        // TODO(issue #8)
-        return nullptr;
-#endif
+        g_TamDerCertificate = GetDerCertificate(&key_pair, &g_TamDerCertificateSize);
     }
 
     *pCertLen = g_TamDerCertificateSize;
@@ -100,13 +105,6 @@ teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
 
     QCBORError err = QCBOREncode_Finish(&context, bufferToSend);
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_PERMANENT_ERROR;
-}
-
-#define TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME "tam-private-key-pair.pem"
-
-static teep_error_code_t TamGetSigningKeyPair(struct t_cose_key* key_pair)
-{
-    return get_signing_key_pair(key_pair, TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME, TAM_SIGNING_PUBLIC_KEY_FILENAME);
 }
 
 teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType, const UsefulBufC* buffer)

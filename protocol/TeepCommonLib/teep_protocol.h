@@ -5,9 +5,6 @@
 // The values in this file are taken from
 // https://tools.ietf.org/html/draft-ietf-teep-protocol
 
-#ifdef TEEP_ENABLE_JSON
-#define TEEP_JSON_MEDIA_TYPE "application/teep+json" /* obsolete */
-#endif
 #define TEEP_CBOR_MEDIA_TYPE "application/teep+cbor"
 
 typedef enum {

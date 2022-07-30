@@ -132,10 +132,6 @@
     <Xml Include="TeepTamTA.config.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\jansson\jansson.vcxproj">
-      <Project>{0ba01906-2dae-48e9-8044-4a631267b4ba}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
     <ProjectReference Include="..\libeay32\LibEay32_t.vcxproj">
       <Project>{275fac8b-b49c-4c91-b708-5abfb9e24215}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

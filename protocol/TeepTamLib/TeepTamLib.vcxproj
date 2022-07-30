@@ -105,7 +105,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="LegacyTeepJson.cpp" />
     <ClCompile Include="Manifest.cpp" />
     <ClCompile Include="RequestedComponentInfo.cpp" />
     <ClCompile Include="TeepTam.cpp" />

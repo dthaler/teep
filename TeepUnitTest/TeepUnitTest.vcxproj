@@ -182,7 +182,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)protocol/TeepAgentBrokerLib;$(SolutionDir)jansson;$(SolutionDir)external\jansson\src;$(SolutionDir)protocol\TeepTamBrokerLib;$(ProgramW6432)/OpenSSL/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)protocol/TeepAgentBrokerLib;$(SolutionDir)jansson;$(SolutionDir)external\jansson\src;$(SolutionDir)protocol\TeepTamBrokerLib;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\ms</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>

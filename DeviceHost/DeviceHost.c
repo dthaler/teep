@@ -8,7 +8,7 @@
 #include "../protocol/TeepAgentBrokerLib/TeepAgentBrokerLib.h"
 #pragma warning(push)
 #pragma warning(disable:4996)
-#include "openssl/applink.c"
+#include "applink.c"
 #pragma warning(pop)
 
 //#define DEFAULT_TAM_URI "http://127.0.0.1:12345/TEEP"

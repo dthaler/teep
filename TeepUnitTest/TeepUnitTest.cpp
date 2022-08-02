@@ -7,5 +7,5 @@
 #include "catch.hpp"
 #pragma warning(push)
 #pragma warning(disable:4996)
-#include "openssl/applink.c"
+#include "applink.c"
 #pragma warning(pop)

@@ -59,6 +59,10 @@ jobs:
       working-directory: ${{github.workspace}}/external/openssl/_build
       run: nmake # verbose, so no /S here
 
+    - name: install OpenSSL
+      working-directory: ${{github.workspace}}/external/openssl/_build
+      run: nmake install
+
         #- name: test
         #working-directory: ${{github.workspace}}/external/openssl/_build
         #run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
@@ -69,10 +73,6 @@ jobs:
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
-
-    - name: Find OpenSSL
-      run: |
-        dir "${{env.GITHUB_WORKSPACE}}/external/openssl/_build"
 
         #- name: Install Open Enclave VSIX
         #run:  |

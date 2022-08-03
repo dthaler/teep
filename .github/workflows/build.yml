@@ -63,10 +63,6 @@ jobs:
       working-directory: ${{github.workspace}}/external/openssl/_build
       run: nmake install
 
-        #- name: test
-        #working-directory: ${{github.workspace}}/external/openssl/_build
-        #run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
-
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
 

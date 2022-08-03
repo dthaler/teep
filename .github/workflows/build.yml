@@ -32,10 +32,10 @@ jobs:
 
     steps:
     # https://stackoverflow.com/questions/65164060/install-nasm-on-github-windows-job
-    #- name: Install NASM
-    #  run: |
-    #    choco install nasm
-    #    echo "C:\Program Files\NASM" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    - name: Install NASM
+      run: |
+        choco install nasm
+        echo "C:\Program Files\NASM" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - uses: actions/checkout@v3
       with:
@@ -52,14 +52,14 @@ jobs:
     - name: Configure OpenSSL
       working-directory: ${{github.workspace}}/external/openssl/_build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend no-deprecated no-asm -DOPENSSL_SMALL_FOOTPRINT VC-WIN64A
+        perl ..\Configure VC-WIN64A
         perl configdata.pm --dump
 
-    - name: build
+    - name: Build OpenSSL
       working-directory: ${{github.workspace}}/external/openssl/_build
       run: nmake # verbose, so no /S here
 
-    - name: install OpenSSL
+    - name: Install OpenSSL
       working-directory: ${{github.workspace}}/external/openssl/_build
       run: nmake install
 

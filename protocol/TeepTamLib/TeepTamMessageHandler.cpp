@@ -5,9 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "common.h"
-extern "C" {
-#include "teep_protocol.h"
-};
 #include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_encode.h"
 #include "openssl/x509.h"
@@ -21,22 +18,27 @@ extern "C" {
 #include "TeepTamLib.h"
 #include <sstream>
 
+#define TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME "tam-private-key-pair.pem"
+
+static teep_error_code_t TamGetSigningKeyPair(struct t_cose_key* key_pair)
+{
+    return teep_get_signing_key_pair(key_pair, TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME, TAM_SIGNING_PUBLIC_KEY_FILENAME);
+}
+
 const unsigned char* g_TamDerCertificate = nullptr;
 size_t g_TamDerCertificateSize = 0;
 
 const unsigned char* GetTamDerCertificate(size_t *pCertLen)
 {
     if (g_TamDerCertificate == nullptr) {
-        // Construct a self-signed DER certificate based on the JWK.
+        // Construct a self-signed DER certificate based on the COSE key.
+        t_cose_key key_pair;
+        teep_error_code_t teep_error = TamGetSigningKeyPair(&key_pair);
+        if (teep_error != TEEP_ERR_SUCCESS) {
+            return nullptr;
+        }
 
-        // First get the RSA key.
-#ifdef TEEP_ENABLE_JSON
-        json_t* jwk = GetTamEncryptionKey();
-        g_TamDerCertificate = GetDerCertificate(jwk, &g_TamDerCertificateSize);
-#else
-        // TODO(issue #8)
-        return nullptr;
-#endif
+        g_TamDerCertificate = GetDerCertificate(&key_pair, &g_TamDerCertificateSize);
     }
 
     *pCertLen = g_TamDerCertificateSize;
@@ -105,143 +107,6 @@ teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_PERMANENT_ERROR;
 }
 
-#ifdef TEEP_USE_COSE
-// Some temporarily hard coded keys.
-// TODO: remove hard coded keys.
-#define PUBLIC_KEY_prime256v1 \
-"0437ab65955fae0466673c3a2934a3" \
-"4f2f0ec2b3eec224198557998fc04b" \
-"f4b2b495d9798f2539c90d7d102b3b" \
-"bbda7fcbdb0e9b58d4e1ad2e61508d" \
-"a75f84a67b"
-
-#define PRIVATE_KEY_prime256v1 \
-"f1b7142343402f3b5de7315ea894f9" \
-"da5cf503ff7938a37ca14eb0328698" \
-"8450"
-
-/**
- * \brief Make an EC key pair in OpenSSL library form.
- *
- * \param[in] cose_algorithm_id  The algorithm to sign with, for example
- *                               \ref T_COSE_ALGORITHM_ES256.
- * \param[out] key_pair          The key pair. This must be freed.
- *
- * The key made here is fixed and just useful for testing.
- */
-enum t_cose_err_t make_ossl_ecdsa_key_pair(
-    int32_t            cose_algorithm_id,
-    struct t_cose_key* key_pair)
-{
-    EC_GROUP* ossl_ec_group = NULL;
-    enum t_cose_err_t  return_value;
-    BIGNUM* ossl_private_key_bn = NULL;
-    EC_KEY* ossl_ec_key = NULL;
-    int                ossl_result;
-    EC_POINT* ossl_pub_key_point = NULL;
-    int                nid;
-    const char* public_key;
-    const char* private_key;
-
-    switch (cose_algorithm_id) {
-    case T_COSE_ALGORITHM_ES256:
-        nid = NID_X9_62_prime256v1;
-        public_key = PUBLIC_KEY_prime256v1;
-        private_key = PRIVATE_KEY_prime256v1;
-        break;
-
-    default:
-        return T_COSE_ERR_UNSUPPORTED_SIGNING_ALG;
-    }
-
-    /* Make a group for the particular EC algorithm */
-    ossl_ec_group = EC_GROUP_new_by_curve_name(nid);
-    if (ossl_ec_group == NULL) {
-        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
-        goto Done;
-    }
-
-    /* Make an empty EC key object */
-    ossl_ec_key = EC_KEY_new();
-    if (ossl_ec_key == NULL) {
-        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
-        goto Done;
-    }
-
-    /* Associate group with key object */
-    ossl_result = EC_KEY_set_group(ossl_ec_key, ossl_ec_group);
-    if (!ossl_result) {
-        return_value = T_COSE_ERR_SIG_FAIL;
-        goto Done;
-    }
-
-    /* Make an instance of a big number to store the private key */
-    ossl_private_key_bn = BN_new();
-    if (ossl_private_key_bn == NULL) {
-        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
-        goto Done;
-    }
-    BN_zero(ossl_private_key_bn);
-
-    /* Stuff the specific private key into the big num */
-    ossl_result = BN_hex2bn(&ossl_private_key_bn, private_key);
-    if (ossl_private_key_bn == 0) {
-        return_value = T_COSE_ERR_SIG_FAIL;
-        goto Done;
-    }
-
-    /* Now associate the big num with the key object so we finally
-     * have a key set up and ready for signing */
-    ossl_result = EC_KEY_set_private_key(ossl_ec_key, ossl_private_key_bn);
-    if (!ossl_result) {
-        return_value = T_COSE_ERR_SIG_FAIL;
-        goto Done;
-    }
-
-
-    /* Make an empty EC point into which the public key gets loaded */
-    ossl_pub_key_point = EC_POINT_new(ossl_ec_group);
-    if (ossl_pub_key_point == NULL) {
-        return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
-        goto Done;
-    }
-
-    /* Turn the serialized public key into an EC point */
-    ossl_pub_key_point = EC_POINT_hex2point(ossl_ec_group,
-        public_key,
-        ossl_pub_key_point,
-        NULL);
-    if (ossl_pub_key_point == NULL) {
-        return_value = T_COSE_ERR_SIG_FAIL;
-        goto Done;
-    }
-
-    /* Associate the EC point with key object */
-    /* The key object has both the public and private keys in it */
-    ossl_result = EC_KEY_set_public_key(ossl_ec_key, ossl_pub_key_point);
-    if (ossl_result == 0) {
-        return_value = T_COSE_ERR_SIG_FAIL;
-        goto Done;
-    }
-
-    key_pair->k.key_ptr = ossl_ec_key;
-    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
-    return_value = T_COSE_SUCCESS;
-
-Done:
-    return return_value;
-}
-
-static teep_error_code_t get_signing_key_pair(struct t_cose_key* key_pair)
-{
-    enum t_cose_err_t return_value = make_ossl_ecdsa_key_pair(T_COSE_ALGORITHM_ES256, key_pair);
-    if (return_value != T_COSE_SUCCESS) {
-        return TEEP_ERR_TEMPORARY_ERROR;
-    }
-    return TEEP_ERR_SUCCESS;
-}
-#endif
-
 teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType, const UsefulBufC* buffer)
 {
     // From draft-ietf-teep-protocol section 4.1.1:
@@ -256,7 +121,7 @@ teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType,
 
 #ifdef TEEP_USE_COSE
     struct t_cose_key key_pair;
-    teep_error_code_t err = get_signing_key_pair(&key_pair);
+    teep_error_code_t err = TamGetSigningKeyPair(&key_pair);
     if (err != TEEP_ERR_SUCCESS) {
         return err;
     }
@@ -286,6 +151,7 @@ teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType,
          */
         &signed_cose);
     if (return_value != T_COSE_SUCCESS) {
+        printf("COSE Sign1 failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
     }
     const char* output_buffer = (const char*)signed_cose.ptr;
@@ -303,7 +169,7 @@ teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaTy
 {
     printf("Received client connection\n");
 
-    teep_error_code_t err = TEEP_ERR_SUCCESS;
+    teep_error_code_t teep_error = TEEP_ERR_SUCCESS;
     UsefulBufC encoded;
     int maxBufferLength = 4096;
     char* buffer = (char*)malloc(maxBufferLength);
@@ -313,9 +179,9 @@ teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaTy
     encoded.ptr = buffer;
     encoded.len = maxBufferLength;
 
-    err = TamComposeCborQueryRequest(&encoded);
-    if (err != TEEP_ERR_SUCCESS) {
-        return err;
+    teep_error = TamComposeCborQueryRequest(&encoded);
+    if (teep_error != TEEP_ERR_SUCCESS) {
+        return teep_error;
     }
 
     if (encoded.len == 0) {
@@ -326,9 +192,9 @@ teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaTy
     HexPrintBuffer(encoded.ptr, encoded.len);
 
     printf("Sending QueryRequest...\n");
-    err = TamSendCborMessage(sessionHandle, mediaType, &encoded);
+    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encoded);
     free((void*)encoded.ptr);
-    return err;
+    return teep_error;
 }
 
 teep_error_code_t TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char* acceptMediaType)

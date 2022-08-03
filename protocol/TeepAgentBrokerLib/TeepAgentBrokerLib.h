@@ -4,12 +4,10 @@
 #include "common.h"
 
 int AgentBrokerRequestTA(
-    int useCbor,
     teep_uuid_t unneededTaid,
     _In_z_ const char* tamUri);
 
 int AgentBrokerUnrequestTA(
-    int useCbor,
     teep_uuid_t unneededTaid,
     _In_z_ const char* tamUri);
 

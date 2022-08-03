@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
 #pragma once
-#include "JsonAuto.h"
 
 #define ABT_USER_AGENT "TEEP Test"
 
@@ -60,40 +59,6 @@ MakeHttpCall(
     _Out_ int* pContentLength,
     _Outptr_opt_result_nullonfailure_ char** pBuffer = nullptr,
     _Outptr_opt_result_nullonfailure_ char** pMediaType = nullptr);
-
-_Success_(return == 0)
-int
-MakeHttpGet(
-    _In_ PCWSTR authority,
-    _In_ PCSTR path,
-    _Out_ int* pStatusCode,
-    _Outptr_result_nullonfailure_ json_t** result);
-
-_Success_(return == 0)
-int
-MakeHttpPost(
-    _In_ PCWSTR authority,
-    _In_ PCSTR path,
-    _In_opt_ const json_t* content,
-    _Out_ int* pStatusCode,
-    _Outptr_opt_result_nullonfailure_ json_t** result);
-
-_Success_(return == 0)
-int
-MakeHttpPut(
-    _In_ PCWSTR authority,
-    _In_ PCSTR path,
-    _In_ const json_t* content,
-    _Out_ int* pStatusCode,
-    _Outptr_opt_result_nullonfailure_ json_t** result);
-
-_Success_(return == 0)
-int
-MakeHttpDelete(
-    _In_ PCWSTR authority,
-    _In_ PCSTR path,
-    _Out_ int* pStatusCode,
-    _Outptr_opt_result_nullonfailure_ json_t** result);
 
 #ifdef __cplusplus
 };

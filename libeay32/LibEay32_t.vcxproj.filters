@@ -1581,9 +1581,6 @@
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_core.c">
       <Filter>Source Files\aes</Filter>
     </ClCompile>
-    <ClCompile Include="$(OpensslDir)crypto\aes\aes_ctr.c">
-      <Filter>Source Files\aes</Filter>
-    </ClCompile>
     <ClCompile Include="$(OpensslDir)crypto\aes\aes_ecb.c">
       <Filter>Source Files\aes</Filter>
     </ClCompile>

@@ -5,7 +5,6 @@
 #endif
 #include <stdlib.h>
 extern "C" {
-#include "jansson.h"
 #include "teep_protocol.h"
 #include "suit_manifest.h"
 };

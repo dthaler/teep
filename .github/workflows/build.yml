@@ -7,6 +7,12 @@ name: MSBuild
 
 on: pull_request
 
+concurrency:
+      # Cancel any builds currently in progress for the same PR.
+      # Allow running concurrently for with any other commits.
+      group: ci-${{ github.event.pull_request.number || github.sha }}
+      cancel-in-progress: true
+
 jobs:
   build:
     strategy:
@@ -25,21 +31,49 @@ jobs:
       BUILD_PLATFORM: x64
 
     steps:
+    # https://stackoverflow.com/questions/65164060/install-nasm-on-github-windows-job
+    - name: Install NASM
+      run: |
+        choco install nasm
+        echo "C:\Program Files\NASM" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
     - uses: actions/checkout@v3
       with:
         submodules: 'recursive'
 
+    - uses: ilammy/msvc-dev-cmd@v1
+
+    - uses: shogo82148/actions-setup-perl@v1
+
+    - name: Prepare the OpenSSL build directory
+      working-directory: ${{github.workspace}}/external/openssl
+      run: mkdir _build
+
+    - name: Configure OpenSSL
+      working-directory: ${{github.workspace}}/external/openssl/_build
+      run: |
+        perl ..\Configure VC-WIN64A
+        perl configdata.pm --dump
+
+    - name: Build OpenSSL
+      working-directory: ${{github.workspace}}/external/openssl/_build
+      run: nmake # verbose, so no /S here
+
+    - name: Install OpenSSL
+      working-directory: ${{github.workspace}}/external/openssl/_build
+      run: nmake install
+
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
         #- name: Install Open Enclave VSIX
         #run:  |
         #curl -fsSL -o OE.vsix https://marketplace.visualstudio.com/_apis/public/gallery/publishers/MS-TCPS/vsextensions/OpenEnclaveSDK-VSIX/0.17.37/vspackage
         #VSIXInstaller.exe /q /a "OE.vsix"
-
-    - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}

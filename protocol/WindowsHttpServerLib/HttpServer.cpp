@@ -325,46 +325,16 @@ DWORD DoReceiveRequests(
                 wprintf(L"Got a GET request for %ws\n",
                     pRequest->CookedUrl.pFullUrl);
 
-                if (wcscmp(pRequest->CookedUrl.pAbsPath, TEEP_PATH) == 0) {
-                    // Get the Accept header value, if any.
-                    HTTP_KNOWN_HEADER* acceptHeader = &pRequest->Headers.KnownHeaders[HttpHeaderAccept];
-                    int mediaTypeLength = acceptHeader->RawValueLength;
-                    char* mediaType = nullptr;
-                    if (mediaTypeLength > 0) {
-                        mediaType = new char[mediaTypeLength + 1];
-                        memcpy(mediaType, acceptHeader->pRawValue, mediaTypeLength);
-                        mediaType[mediaTypeLength] = 0;
-                    }
+                pResponseString = "This is a TEEP TAM endpoint. The TEEP protocol uses only POST.\r\n";
 
-                    int connectResult = TamProcessConnect(session, mediaType);
-                    delete mediaType;
-                    if (connectResult != 0) {
-                        break;
-                    }
-
-                    result = SendHttpResponse(
-                        hReqQueue,
-                        pRequest,
-                        200,
-                        "OK",
-                        session->OutboundMediaType,
-                        session->OutboundMessage,
-                        session->OutboundMessageLength);
-
-                    free((char*)session->OutboundMessage);
-                    session->OutboundMessage = nullptr;
-                } else {
-                    pResponseString = "[{\"error\":1234}}]\r\n";
-
-                    result = SendHttpResponse(
-                        hReqQueue,
-                        pRequest,
-                        200,
-                        "OK",
-                        session->OutboundMediaType,
-                        pResponseString,
-                        strlen(pResponseString));
-                }
+                result = SendHttpResponse(
+                    hReqQueue,
+                    pRequest,
+                    200,
+                    "OK",
+                    "text/plain",
+                    pResponseString,
+                    strlen(pResponseString));
                 break;
 
             case HttpVerbPOST:

@@ -1,11 +1,20 @@
 /* opensslconf.h */
 /* WARNING: Generated automatically from opensslconf.h.in by Configure. */
 
+#include <openssl/opensslv.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-/* OpenSSL was configured with the following options: */
+#ifdef OPENSSL_ALGORITHM_DEFINES
+# error OPENSSL_ALGORITHM_DEFINES no longer supported
+#endif
+
+/*
+ * OpenSSL was configured with the following options:
+ */
+
 #define OE_NO_SAL 1
 #ifdef TEEP_USE_TEE
 #include <openenclave/enclave.h>

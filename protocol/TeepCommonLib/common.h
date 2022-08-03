@@ -5,6 +5,8 @@
 // This file has defines that are in common between
 // the TAM and the TEEP Agent.
 
+#define TEEP_USE_COSE 1
+
 #include "teep_protocol.h"
 
 #define UUID_LENGTH 16 // Size in bytes of a UUID (RFC 4122)
@@ -28,22 +30,24 @@ typedef struct _teep_uuid_t
 #define TEEP_ASSERT(x) assert(x)
 #endif
 
-#ifdef TEEP_ENABLE_JSON
-int TeepHandleJsonMessage(void* sessionHandle, const char* message, unsigned int messageLength);
-#endif
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength);
 void HexPrintBuffer(const void* buffer, size_t length);
 
-#if defined(TEEP_ENABLE_JSON)
-char *DecodeJWS(const json_t *jws, const json_t *jwk);
+#define TAM_SIGNING_PUBLIC_KEY_FILENAME "tam-public-key.pem"
 
-json_t* CreateNewJwkRS256(void);
-json_t* CreateNewJwkR1_5(void);
-json_t* CreateNewJwk(const char* alg);
-json_t* CopyToJweKey(json_t* jwk1, const char* alg);
+teep_error_code_t teep_get_signing_key_pair(
+    _Out_ struct t_cose_key* key_pair,
+    _In_z_ const char* private_file_name,
+    _In_z_ const char* public_file_name);
 
-const unsigned char* GetDerCertificate(json_t* jwk, size_t *pCertificateSize);
-#endif
+teep_error_code_t teep_get_verifying_key_pair(
+    _Out_ struct t_cose_key* key_pair,
+    _In_z_ const char* public_file_name);
+
+_Ret_writes_bytes_(*pCertificateSize)
+const unsigned char* GetDerCertificate(
+    _In_ const struct t_cose_key* key_pair,
+    _Out_ size_t* pCertificateSize);
 
 #ifdef __cplusplus
 #include <iostream>

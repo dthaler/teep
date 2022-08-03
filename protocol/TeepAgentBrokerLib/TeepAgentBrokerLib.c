@@ -54,14 +54,13 @@ static int HandleMessages(void)
 }
 
 int AgentBrokerRequestTA(
-    int useCbor,
     teep_uuid_t requestedTaid,
     _In_z_ const char* tamUri)
 {
     int err;
 
     // Invoke a "RequestTA" API in the agent.
-    err = TeepAgentRequestTA(useCbor, requestedTaid, tamUri);
+    err = TeepAgentRequestTA(requestedTaid, tamUri);
     if (err != 0) {
         return err;
     }
@@ -70,14 +69,13 @@ int AgentBrokerRequestTA(
 }
 
 int AgentBrokerUnrequestTA(
-    int useCbor,
     teep_uuid_t unneededTaid,
     _In_z_ const char* tamUri)
 {
     int err;
 
     // Invoke an "UnrequestTA" API in the agent.
-    err = TeepAgentUnrequestTA(useCbor, unneededTaid, tamUri);
+    err = TeepAgentUnrequestTA(unneededTaid, tamUri);
     if (err != 0) {
         return err;
     }

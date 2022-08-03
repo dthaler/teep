@@ -98,8 +98,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
+      <WarningLevel>Level4</WarningLevel>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>

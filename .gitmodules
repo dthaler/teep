@@ -1,6 +1,7 @@
 [submodule "external/openssl"]
 	path = external/openssl
 	url = https://github.com/openssl/openssl.git
+    branch = OpenSSL_1_1_1-stable
 [submodule "external/qcbor"]
 	path = external/qcbor
 	url = https://github.com/laurencelundblade/QCBOR.git

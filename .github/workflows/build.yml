@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   build:
+    timeout-minutes: 30
     strategy:
       matrix:
         configurations: [DebugStandalone]

@@ -16,7 +16,10 @@ void StopTamTABroker(void);
 #define MAX_PATH 256
 #endif
 
-teep_error_code_t ConfigureManifest(const char* directory_name, const char* filename, int is_required)
+static teep_error_code_t ConfigureManifest(
+    _In_z_ const char* directory_name,
+    _In_z_ const char* filename,
+    int is_required)
 {
     FILE* fp = NULL;
     char* manifest = NULL;
@@ -85,7 +88,9 @@ teep_error_code_t ConfigureManifest(const char* directory_name, const char* file
  * manifests from a trusted location, or use sealed storage
  * (decrypting the contents inside the enclave).
  */
-teep_error_code_t ConfigureManifests(const char* directory_name, int is_required)
+teep_error_code_t ConfigureManifests(
+    _In_z_ const char* directory_name,
+    int is_required)
 {
     teep_error_code_t result = TEEP_ERR_SUCCESS;
     DIR* dir = opendir(directory_name);

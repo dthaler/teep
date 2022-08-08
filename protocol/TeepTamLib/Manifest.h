@@ -8,10 +8,10 @@ class Manifest
 {
 public:
     static void AddManifest(teep_uuid_t component_id, const char* manifest_content, size_t manifest_content_size, int is_required);
-    static Manifest* FindManifest(UsefulBufC* component_id);
+    static Manifest* FindManifest(_In_ const UsefulBufC* component_id);
     static Manifest* First(void);
 
-    bool HasComponentId(UsefulBufC* component_id);
+    bool HasComponentId(_In_ const UsefulBufC* component_id);
     Manifest* Next;
     int IsRequired;
     UsefulBufC ManifestContents;

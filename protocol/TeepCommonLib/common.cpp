@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "t_cose/t_cose_common.h"
+#include "t_cose/t_cose_sign1_sign.h"
+#include "t_cose/t_cose_sign1_verify.h"
 #include "common.h"
 extern "C" {
 #ifdef OE_BUILD_ENCLAVE
@@ -169,7 +171,7 @@ teep_error_code_t teep_get_signing_key_pair(
             return TEEP_ERR_TEMPORARY_ERROR;
         }
 
-        _save_signing_key_pair(key_pair, private_file_name, public_file_name);
+        return _save_signing_key_pair(key_pair, private_file_name, public_file_name);
     }
 
     return TEEP_ERR_SUCCESS;
@@ -196,6 +198,66 @@ int TeepInitialize(void)
 {
     // TODO: create/load key here, for efficiency.
     return 0;
+}
+
+teep_error_code_t
+teep_sign_cbor_message(
+    _In_ struct t_cose_key key_pair,
+    _In_ const UsefulBufC* unsignedMessage,
+    _In_ UsefulBuf signedMessageBuffer,
+    _Out_ UsefulBufC* signedMessage)
+{
+    // Initialize for signing.
+    struct t_cose_sign1_sign_ctx sign_ctx;
+    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
+    t_cose_sign1_set_signing_key(&sign_ctx, key_pair, NULL_Q_USEFUL_BUF_C);
+
+    // Sign.
+    enum t_cose_err_t return_value = t_cose_sign1_sign(
+        &sign_ctx,
+        *unsignedMessage,
+        /* Non-const pointer and length of the
+         * buffer where the completed output is
+         * written to. The length here is that
+         * of the whole buffer.
+         */
+        signedMessageBuffer,
+        /* Const pointer and actual length of
+         * the completed, signed and encoded
+         * COSE_Sign1 message. This points
+         * into the output buffer and has the
+         * lifetime of the output buffer.
+         */
+        signedMessage);
+    if (return_value != T_COSE_SUCCESS) {
+        printf("COSE Sign1 failed with error %d\n", return_value);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    return TEEP_ERR_SUCCESS;
+}
+
+teep_error_code_t
+teep_verify_cbor_message(
+    _In_ const struct t_cose_key* key_pair,
+    _In_ const UsefulBufC* signed_cose,
+    _Out_ UsefulBufC* encoded)
+{
+    struct t_cose_sign1_verify_ctx verify_ctx;
+    t_cose_sign1_verify_init(&verify_ctx, 0);
+
+    t_cose_sign1_set_verification_key(&verify_ctx, *key_pair);
+
+    int return_value = t_cose_sign1_verify(&verify_ctx,
+        *signed_cose,        /* COSE to verify */
+        encoded,             /* Payload from signed_cose */
+        NULL);               /* Don't return parameters */
+    if (return_value != T_COSE_SUCCESS) {
+        printf("TAM key verification failed\n");
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    return TEEP_ERR_SUCCESS;
 }
 
 _Ret_writes_bytes_(*pCertificateSize)

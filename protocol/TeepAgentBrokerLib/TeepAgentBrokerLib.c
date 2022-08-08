@@ -83,8 +83,11 @@ int AgentBrokerUnrequestTA(
     return HandleMessages();
 }
 
-int StartAgentBroker(int simulated_tee)
+int StartAgentBroker(_In_z_ const char* dataDirectory, int simulated_tee)
 {
+    // Create data directory if it doesn't already exist.
+    _mkdir(dataDirectory);
+
 #ifdef TEEP_USE_TEE
     int result = StartAgentTABroker(simulated_tee);
     if (result)

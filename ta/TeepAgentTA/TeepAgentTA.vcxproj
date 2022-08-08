@@ -68,7 +68,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -81,7 +81,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -96,7 +96,7 @@
       <Optimization>MaxSpeed</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/jose;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)UntrustedTime/enc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

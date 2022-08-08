@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
 #pragma once
-#include "common.h"
 
 // Other prototypes are the same as in the TEE.
 #include "..\TeepTamLib\TeepTamLib.h"

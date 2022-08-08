@@ -5,6 +5,7 @@ Debug/
 DebugStandalone/
 OPTEE-Simulation-Debug/
 packages/
+*.pem
 
 # Visual Studio generated files
 .vs/

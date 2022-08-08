@@ -40,10 +40,13 @@ int TamBrokerProcess(_In_z_ const wchar_t* tamUri)
     return err;
 }
 
-int StartTamBroker(_In_z_ const char* manifestDirectory, int simulated_tee)
+int StartTamBroker(_In_z_ const char* data_directory, int simulated_tee)
 {
+    // Create data directory if it doesn't already exist.
+    _mkdir(data_directory);
+
 #ifdef TEEP_USE_TEE
-    int result = StartTamTABroker(manifestDirectory, simulated_tee);
+    int result = StartTamTABroker(data_directory, simulated_tee);
     if (result)
         return result;
 #endif

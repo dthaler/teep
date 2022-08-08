@@ -17,6 +17,7 @@
 //#define DEFAULT_TAM_URI "http://192.168.11.10:8888/api/tam"
 
 #define DEFAULT_TA_ID "38b08738-227d-4f6a-b1f0-b208bc02a781" // TODO: default to none
+#define DEFAULT_DATA_DIRECTORY "../../../agent"
 
 // Returns 0 on success, error on failure.
 int ConvertStringToUUID(teep_uuid_t* uuid, const char* idString)
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
     const char* defaultTamUri = argv[1];
     printf("Using default TAM URI: %s\n", defaultTamUri);
 
-    int err = StartAgentBroker(simulated_tee);
+    int err = StartAgentBroker(DEFAULT_DATA_DIRECTORY, simulated_tee);
     if (err != 0) {
         return err;
     }

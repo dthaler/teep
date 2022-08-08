@@ -35,7 +35,7 @@ void Manifest::AddManifest(teep_uuid_t component_id, const char* manifest_conten
     g_Manifest = manifest;
 }
 
-bool Manifest::HasComponentId(UsefulBufC* component_id)
+bool Manifest::HasComponentId(_In_ const UsefulBufC* component_id)
 {
     if (sizeof(_component_id) != component_id->len) {
         return false;
@@ -46,7 +46,7 @@ bool Manifest::HasComponentId(UsefulBufC* component_id)
     return true;
 }
 
-Manifest* Manifest::FindManifest(UsefulBufC* component_id)
+Manifest* Manifest::FindManifest(_In_ const UsefulBufC* component_id)
 {
     for (Manifest* manifest = g_Manifest; manifest != nullptr; manifest = manifest->Next) {
         if (manifest->HasComponentId(component_id)) {

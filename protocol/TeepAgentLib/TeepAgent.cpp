@@ -29,8 +29,7 @@ TrustedComponent* g_RequestedComponentList = nullptr;
 // List of unneeded Trusted Components.
 TrustedComponent* g_UnneededComponentList = nullptr;
 
-#define TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME "teepagent-private-key-pair.pem"
-#define TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME "teepagent-public-key.pem"
+#define TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME "./agent/agent-private-key-pair.pem"
 
 static teep_error_code_t TeepAgentGetSigningKeyPair(struct t_cose_key* key_pair)
 {
@@ -62,6 +61,21 @@ const unsigned char* GetAgentDerCertificate(size_t* pCertLen)
 
     *pCertLen = g_AgentDerCertificateSize;
     return g_AgentDerCertificate;
+}
+
+teep_error_code_t
+TeepAgentSignCborMessage(
+    _In_ const UsefulBufC* unsignedMessage,
+    _In_ UsefulBuf signedMessageBuffer,
+    _Out_ UsefulBufC* signedMessage)
+{
+    struct t_cose_key key_pair;
+    teep_error_code_t err = TeepAgentGetSigningKeyPair(&key_pair);
+    if (err != TEEP_ERR_SUCCESS) {
+        return err;
+    }
+
+    return teep_sign_cbor_message(key_pair, unsignedMessage, signedMessageBuffer, signedMessage);
 }
 
 // Process a transport error.
@@ -338,22 +352,31 @@ static teep_error_code_t TeepAgentComposeCborQueryResponse(_In_ QCBORDecodeConte
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t TeepAgentSendCborMessage(void* sessionHandle, const char* mediaType, const char* buffer, size_t bufferlen)
+teep_error_code_t TeepAgentSendCborMessage(
+    _In_ void* sessionHandle,
+    _In_z_ const char* mediaType,
+    _In_ const UsefulBufC* unsignedMessage)
 {
-    // From draft-ietf-teep-protocol section 4.1.1:
-    // 1.  Create a TEEP message according to the description below and
-    //     populate it with the respective content.  (done by caller)
-    // 2.  Create a COSE Header containing the desired set of Header
-    //     Parameters.  The COSE Header MUST be valid per the [RFC8152]
-    //     specification.
-    // ... TODO(issue #8) ...
+#ifdef TEEP_USE_COSE
+    UsefulBufC signedMessage;
+    Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
+    teep_error_code_t error = TeepAgentSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
+    if (error != TEEP_ERR_SUCCESS) {
+        return error;
+    }
 
-    // 3.  Create a COSE_Sign1 object using the TEEP message as the
-    //     COSE_Sign1 Payload; all steps specified in [RFC8152] for creating
-    //     a COSE_Sign1 object MUST be followed.
-    // ... TODO(issue #8) ...
+    const char* output_buffer = (const char*)signedMessage.ptr;
+    size_t output_buffer_length = signedMessage.len;
+#else
+    const char* output_buffer = (const char*)unsignedMessage->ptr;
+    size_t output_buffer_length = unsignedMessage->len;
+#endif
 
-    return TeepAgentQueueOutboundTeepMessage(sessionHandle, mediaType, buffer, bufferlen);
+    return TeepAgentQueueOutboundTeepMessage(
+        sessionHandle,
+        mediaType,
+        output_buffer,
+        output_buffer_length);
 }
 
 /* Compose a raw Success message to be signed. */
@@ -451,7 +474,7 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
     printf("Sending CBOR message: ");
     HexPrintBuffer(reply.ptr, reply.len);
 
-    (void)TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    (void)TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
     free((void*)reply.ptr);
 }
 
@@ -476,7 +499,7 @@ static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QC
 
     printf("Sending QueryResponse...\n");
 
-    errorCode = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)queryResponse.ptr, queryResponse.len);
+    errorCode = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &queryResponse);
     free((void*)queryResponse.ptr);
     return errorCode;
 }
@@ -488,16 +511,16 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
     std::ostringstream errorMessage;
     QCBORItem item;
     UsefulBufC token = NULLUsefulBufC;
-    teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
+    teep_error_code_t teep_error = TEEP_ERR_SUCCESS;
     UsefulBufC errorResponse = NULLUsefulBufC;
 
     // Parse the options map.
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
         REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_MAP, item);
-        teeperr = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+        teep_error = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
         TeepAgentSendError(errorResponse, sessionHandle);
-        return teeperr;
+        return teep_error;
     }
     teep_error_code_t errorCode = TEEP_ERR_SUCCESS;
     uint16_t mapEntryCount = item.val.uCount;
@@ -510,9 +533,9 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
             // Get token from request.
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                 REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_BYTE_STRING, item);
-                teeperr = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                teep_error = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
                 TeepAgentSendError(errorResponse, sessionHandle);
-                return teeperr;
+                return teep_error;
             }
             token = item.val.string;
             break;
@@ -521,9 +544,9 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR(errorMessage, "manifest-list", QCBOR_TYPE_ARRAY, item);
-                teeperr = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                teep_error = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
                 TeepAgentSendError(errorResponse, sessionHandle);
-                return teeperr;
+                return teep_error;
             }
             uint16_t arrayEntryCount = item.val.uCount;
 #ifdef _DEBUG
@@ -533,9 +556,9 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                     REPORT_TYPE_ERROR(errorMessage, "SUIT_Envelope", QCBOR_TYPE_BYTE_STRING, item);
-                    teeperr = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                    teep_error = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
                     TeepAgentSendError(errorResponse, sessionHandle);
-                    return teeperr;
+                    return teep_error;
                 }
                 if (errorCode == TEEP_ERR_SUCCESS) {
                     // Try until we hit the first error.
@@ -548,9 +571,9 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
         {
             if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
                 REPORT_TYPE_ERROR(errorMessage, "attestation-payload-format", QCBOR_TYPE_TEXT_STRING, item);
-                teeperr = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                teep_error = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
                 TeepAgentSendError(errorResponse, sessionHandle);
-                return teeperr;
+                return teep_error;
             }
             // TODO: use Attestation Result.
             break;
@@ -559,26 +582,26 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
         {
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                 REPORT_TYPE_ERROR(errorMessage, "attestation-payload", QCBOR_TYPE_BYTE_STRING, item);
-                teeperr = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                teep_error = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
                 TeepAgentSendError(errorResponse, sessionHandle);
-                return teeperr;
+                return teep_error;
             }
             // TODO: use Attestation Result.
             break;
         }
         default:
             errorMessage << "Unrecognized option label " << label;
-            teeperr = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+            teep_error = TeepAgentComposeCborError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
             TeepAgentSendError(errorResponse, sessionHandle);
-            return teeperr;
+            return teep_error;
         }
     }
 
     /* 3. Compose a Success reply. */
     UsefulBufC reply;
-    teeperr = TeepAgentComposeCborSuccess(token, &reply);
-    if (teeperr != TEEP_ERR_SUCCESS) {
-        return teeperr;
+    teep_error = TeepAgentComposeCborSuccess(token, &reply);
+    if (teep_error != TEEP_ERR_SUCCESS) {
+        return teep_error;
     }
     if (reply.len == 0) {
         return TEEP_ERR_TEMPORARY_ERROR;
@@ -587,9 +610,9 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
     printf("Sending CBOR message: ");
     HexPrintBuffer(reply.ptr, reply.len);
 
-    teeperr = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)reply.ptr, reply.len);
+    teep_error = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
     free((void*)reply.ptr);
-    return teeperr;
+    return teep_error;
 }
 
 /* Handle an incoming message from a TAM. */
@@ -599,48 +622,22 @@ static teep_error_code_t TeepAgentHandleCborMessage(
     size_t messageLength)
 {
     teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
+    struct t_cose_key key_pair;
+    teeperr = TeepAgentGetTamKey(&key_pair);
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
+    }
+
     std::ostringstream errorMessage;
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
-
-    // From draft-ietf-teep-protocol section 4.1.2:
-    //  1.  Verify that the received message is a valid CBOR object.
-
-    //  2.  Verify that the message contains a COSE_Sign1 structure.
-    // ... TODO(issue #8) ...
-    struct t_cose_sign1_verify_ctx verify_ctx;
-    t_cose_sign1_verify_init(&verify_ctx, 0);
-
-    struct t_cose_key key_pair;
-    teeperr = TeepAgentGetTamKey(&key_pair);
-    t_cose_sign1_set_verification_key(&verify_ctx, key_pair);
-
-    //  3.  Verify that the resulting COSE Header includes only parameters
-    //      and values whose syntax and semantics are both understood and
-    //      supported or that are specified as being ignored when not
-    //      understood.
-    // ... TODO(issue #8) ...
-
-    //  4.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
-    //      Objects") for validating a COSE_Sign1 object.  The COSE_Sign1
-    //      payload is the content of the TEEP message.
-    // ... TODO(issue #8) ...
     UsefulBufC signed_cose;
     signed_cose.ptr = message;
     signed_cose.len = messageLength;
-
-    printf("Signed:   ");
-    HexPrintBuffer(message, messageLength);
-    printf("\n");
-
-    int return_value = t_cose_sign1_verify(&verify_ctx,
-        signed_cose,         /* COSE to verify */
-        &encoded,            /* Payload from signed_cose */
-        NULL);               /* Don't return parameters */
-    if (return_value != T_COSE_SUCCESS) {
-        printf("TAM key verification failed\n");
-        return TEEP_ERR_PERMANENT_ERROR;
+    teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, &encoded);
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
     }
 
     printf("Received CBOR message: ");
@@ -799,8 +796,7 @@ teep_error_code_t TeepAgentUnrequestTA(
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
         printf("Sending an empty message...\n");
-        const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
-        teep_error = TeepAgentConnect(tamUri, acceptMediaType);
+        teep_error = TeepAgentConnect(tamUri, TEEP_CBOR_MEDIA_TYPE);
         if (teep_error != TEEP_ERR_SUCCESS) {
             return teep_error;
         }

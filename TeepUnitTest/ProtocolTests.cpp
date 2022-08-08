@@ -7,7 +7,7 @@
 #include "TeepTamBrokerLib.h"
 #include "TeepTamLib.h"
 #define TRUE 1
-#define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"
+#define DEFAULT_MANIFEST_DIRECTORY "../../../tam/manifests"
 #define DEFAULT_TA_ID "38b08738-227d-4f6a-b1f0-b208bc02a781"
 #define DEFAULT_TAM_URI "http://example.com/tam"
 

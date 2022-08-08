@@ -8,7 +8,6 @@ void ecall_Initialize(void)
     TeepInitialize();
 }
 
-
 int ecall_ProcessTeepMessage(
     void* sessionHandle,
     const char* mediaType,

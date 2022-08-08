@@ -68,7 +68,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/jose;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -82,7 +82,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/jose;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -98,7 +98,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)jose;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/jose;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

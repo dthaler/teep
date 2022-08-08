@@ -18,11 +18,18 @@
 #include "TeepTamLib.h"
 #include <sstream>
 
-#define TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME "tam-private-key-pair.pem"
+#define TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME "./tam/tam-private-key-pair.pem"
 
 static teep_error_code_t TamGetSigningKeyPair(struct t_cose_key* key_pair)
 {
     return teep_get_signing_key_pair(key_pair, TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME, TAM_SIGNING_PUBLIC_KEY_FILENAME);
+}
+
+/* Get the TEEP Agent's public key to verify an incoming message against. */
+/* TODO: support multiple TEEP Agents */
+teep_error_code_t TamGetTeepAgentKey(_Out_ struct t_cose_key* key_pair)
+{
+    return teep_get_verifying_key_pair(key_pair, TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME);
 }
 
 const unsigned char* g_TamDerCertificate = nullptr;
@@ -46,7 +53,8 @@ const unsigned char* GetTamDerCertificate(size_t *pCertLen)
 }
 
 /* Compose a raw QueryRequest message to be signed. */
-teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
+static teep_error_code_t TamComposeCborQueryRequest(
+    _Out_ UsefulBufC* bufferToSend)
 {
     QCBOREncodeContext context;
     UsefulBuf buffer = UsefulBuf_Unconst(*bufferToSend);
@@ -119,40 +127,7 @@ TamSignCborMessage(
         return err;
     }
 
-    // Initialize for signing.
-    struct t_cose_sign1_sign_ctx sign_ctx;
-    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
-    t_cose_sign1_set_signing_key(&sign_ctx, key_pair, NULL_Q_USEFUL_BUF_C);
-
-    // Sign.
-    enum t_cose_err_t return_value = t_cose_sign1_sign(
-        &sign_ctx,
-        *unsignedMessage,
-        /* Non-const pointer and length of the
-         * buffer where the completed output is
-         * written to. The length here is that
-         * of the whole buffer.
-         */
-        signedMessageBuffer,
-        /* Const pointer and actual length of
-         * the completed, signed and encoded
-         * COSE_Sign1 message. This points
-         * into the output buffer and has the
-         * lifetime of the output buffer.
-         */
-        signedMessage);
-    if (return_value != T_COSE_SUCCESS) {
-        printf("COSE Sign1 failed with error %d\n", return_value);
-        return TEEP_ERR_PERMANENT_ERROR;
-    }
-
-    printf("Unsigned: ");
-    HexPrintBuffer(unsignedMessage->ptr, unsignedMessage->len);
-    printf("\nSigned:   ");
-    HexPrintBuffer(signedMessage->ptr, signedMessage->len);
-    printf("\n");
-
-    return TEEP_ERR_SUCCESS;
+    return teep_sign_cbor_message(key_pair, unsignedMessage, signedMessageBuffer, signedMessage);
 }
 
 static teep_error_code_t
@@ -165,6 +140,10 @@ TamSendCborMessage(
     UsefulBufC signedMessage;
     Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
     teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
+    if (error != TEEP_ERR_SUCCESS) {
+        return error;
+    }
+    
     const char* output_buffer = (const char*)signedMessage.ptr;
     size_t output_buffer_length = signedMessage.len;
 #else
@@ -176,21 +155,17 @@ TamSendCborMessage(
 }
 
 /* Handle a new incoming connection from a device. */
-teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaType)
+static teep_error_code_t TamProcessTeepConnect(
+    _In_ void* sessionHandle,
+    _In_z_ const char* mediaType)
 {
     printf("Received client connection\n");
 
     teep_error_code_t teep_error = TEEP_ERR_SUCCESS;
-    UsefulBufC encoded;
-    int maxBufferLength = 4096;
-    char* buffer = (char*)malloc(maxBufferLength);
-    if (buffer == nullptr) {
-        return TEEP_ERR_TEMPORARY_ERROR;
-    }
-    encoded.ptr = buffer;
-    encoded.len = maxBufferLength;
+    Q_USEFUL_BUF_MAKE_STACK_UB(encoded, 4096);
+    UsefulBufC encodedC = UsefulBuf_Const(encoded);
 
-    teep_error = TamComposeCborQueryRequest(&encoded);
+    teep_error = TamComposeCborQueryRequest(&encodedC);
     if (teep_error != TEEP_ERR_SUCCESS) {
         return teep_error;
     }
@@ -200,11 +175,10 @@ teep_error_code_t TamProcessTeepConnect(void* sessionHandle, const char* mediaTy
     }
 
     printf("Sending CBOR message: ");
-    HexPrintBuffer(encoded.ptr, encoded.len);
+    HexPrintBuffer(encodedC.ptr, encodedC.len);
 
     printf("Sending QueryRequest...\n");
-    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encoded);
-    free((void*)encoded.ptr);
+    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC);
     return teep_error;
 }
 
@@ -218,16 +192,15 @@ teep_error_code_t TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char*
 }
 
 /* Compose a raw Update message to be signed. */
-teep_error_code_t TamComposeCborUpdate(
-    UsefulBufC* encoded,
-    RequestedComponentInfo* currentComponentList,
-    RequestedComponentInfo* requestedComponentList,
-    RequestedComponentInfo* unneededComponentList,
-    int* count)
+static teep_error_code_t TamComposeCborUpdate(
+    _Out_ UsefulBufC* encoded,
+    _In_ const RequestedComponentInfo* currentComponentList,
+    _In_ const RequestedComponentInfo* requestedComponentList,
+    _In_ const RequestedComponentInfo* unneededComponentList,
+    _Out_ int* count)
 {
     *count = 0;
-    encoded->ptr = nullptr;
-    encoded->len = 0;
+    *encoded = NULLUsefulBufC;
 
     int maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
@@ -265,7 +238,7 @@ teep_error_code_t TamComposeCborUpdate(
                 // Any SUIT manifest for any required components that aren't reported to be present.
                 for (Manifest* manifest = Manifest::First(); manifest != nullptr; manifest = manifest->Next) {
                     bool found = false;
-                    for (RequestedComponentInfo* cci = currentComponentList; cci != nullptr; cci = cci->Next) {
+                    for (const RequestedComponentInfo* cci = currentComponentList; cci != nullptr; cci = cci->Next) {
                         if (manifest->HasComponentId(&cci->ComponentId)) {
                             found = true;
                             break;
@@ -278,7 +251,7 @@ teep_error_code_t TamComposeCborUpdate(
                 }
 
                 // Add SUIT manifest for any optional components that were requested.
-                for (RequestedComponentInfo* rci = requestedComponentList; rci != nullptr; rci = rci->Next) {
+                for (const RequestedComponentInfo* rci = requestedComponentList; rci != nullptr; rci = rci->Next) {
                     Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
                     if ((manifest == nullptr) || (manifest->IsRequired)) {
                         continue;
@@ -290,7 +263,7 @@ teep_error_code_t TamComposeCborUpdate(
                 }
 
                 // Add a deletion manifest for any optional components that are reported as unneeded.
-                for (RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
+                for (const RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
                     Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
                     if ((manifest == nullptr) || (manifest->IsRequired)) {
                         continue;
@@ -305,7 +278,7 @@ teep_error_code_t TamComposeCborUpdate(
                 }
 
                 // List any installed components that are not in the required or optional list.
-                for (RequestedComponentInfo* rci = currentComponentList; rci != nullptr; rci = rci->Next) {
+                for (const RequestedComponentInfo* rci = currentComponentList; rci != nullptr; rci = rci->Next) {
                     Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
                     if (manifest != nullptr) {
                         continue;
@@ -328,7 +301,11 @@ teep_error_code_t TamComposeCborUpdate(
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t ParseComponentId(QCBORDecodeContext* context, QCBORItem* item, RequestedComponentInfo** currentRci, std::ostringstream& errorMessage)
+teep_error_code_t ParseComponentId(
+    QCBORDecodeContext* context,
+    QCBORItem* item,
+    RequestedComponentInfo** currentRci,
+    std::ostringstream& errorMessage)
 {
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
         REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_ARRAY, *item);
@@ -354,11 +331,10 @@ teep_error_code_t ParseComponentId(QCBORDecodeContext* context, QCBORItem* item,
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TamHandleCborQueryResponse(void* sessionHandle, QCBORDecodeContext* context)
+teep_error_code_t TamHandleCborQueryResponse(
+    void* sessionHandle,
+    QCBORDecodeContext* context)
 {
-    (void)sessionHandle;
-    (void)context;
-
     printf("TamHandleCborQueryResponse\n");
 
     QCBORItem item;
@@ -702,7 +678,9 @@ teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* 
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TamHandleCborError(void* sessionHandle, QCBORDecodeContext* context)
+teep_error_code_t TamHandleCborError(
+    void* sessionHandle,
+    QCBORDecodeContext* context)
 {
     (void)sessionHandle;
     (void)context;
@@ -712,31 +690,29 @@ teep_error_code_t TamHandleCborError(void* sessionHandle, QCBORDecodeContext* co
 }
 
 /* Handle an incoming message from a TEEP Agent. */
-teep_error_code_t TamHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength)
+teep_error_code_t TamHandleCborMessage(
+    _In_ void* sessionHandle,
+    _In_reads_(messageLength) const char* message,
+    size_t messageLength)
 {
+    teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
+    struct t_cose_key key_pair;
+    teeperr = TamGetTeepAgentKey(&key_pair);
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
+    }
+
     std::ostringstream errorMessage;
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
-    encoded.ptr = message;
-    encoded.len = messageLength;
-
-    // From draft-ietf-teep-protocol section 4.1.2:
-    //  1.  Verify that the received message is a valid CBOR object.
-
-    //  2.  Verify that the message contains a COSE_Sign1 structure.
-    // ... TODO(issue #8) ...
-
-    //  3.  Verify that the resulting COSE Header includes only parameters
-    //      and values whose syntax and semantics are both understood and
-    //      supported or that are specified as being ignored when not
-    //      understood.
-    // ... TODO(issue #8) ...
-
-    //  4.  Follow the steps specified in Section 4 of [RFC8152] ("Signing
-    //      Objects") for validating a COSE_Sign1 object.  The COSE_Sign1
-    //      payload is the content of the TEEP message.
-    // ... TODO(issue #8) ...
+    UsefulBufC signed_cose;
+    signed_cose.ptr = message;
+    signed_cose.len = messageLength;
+    teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, &encoded);
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
+    }
 
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);
@@ -757,7 +733,6 @@ teep_error_code_t TamHandleCborMessage(void* sessionHandle, const char* message,
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
     printf("Received CBOR TEEP message type=%d\n", messageType);
-    teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_RESPONSE:
         teeperr = TamHandleCborQueryResponse(sessionHandle, &context);

@@ -8,7 +8,7 @@
 #include "applink.c"
 #pragma warning(pop)
 
-#define DEFAULT_MANIFEST_DIRECTORY "../../../manifests"
+#define DEFAULT_MANIFEST_DIRECTORY "../../../tam/manifests"
 
 int wmain(int argc, wchar_t** argv)
 {

@@ -10,12 +10,6 @@ with actual files under the directories of the same names under the external/ di
 
 * ctoken: EAT implementation.
 
-* jansson: JSON implementation.  This dependency will eventually be removed.
-
-* jose: JOSE implementation.  This dependency will eventually be removed.
-
-* jose\_openssl: JOSE's use of OpenSSL's crypto library.  This dependency will eventually be removed.
-
 * LibEay32: OpenSSL's crypto library.
 
 * openssl_includes: Copies OpenSSL includes into the openssl directory where other libs can find them.
@@ -114,21 +108,14 @@ Currently the <TAM URI> must end in /TEEP
 
 The following configurations should work:
 
+* DebugStandalone | x64 - Use this to test/run as a normal application
+                outside any TEE, for development and debugging purposes.
 * Debug | x64 - Use this to test/run on an SGX-capable machine
                 or with the `-s` option to run on a non-SGX-capable machine
                 but simulating run inside SGX.
-* DebugStandalone | x64 - Use this to test/run as a normal application
-                outside any TEE, for development and debugging purposes.
 
 To run and debug inside Visual Studio, change the debugger Working Directory
 to $(OutDir).  To do this, right click on the project,
 and change Properties -> Debugging -> Working Directory and change the
 value to $(OutDir) instead of $(ProjectDir).  This is because the apps
 will attempt to load the enclaves from the current directory.
-
-Partial support for the obsolete use of JSON
-in TEEP, are both still in the code but not defined by default, and are slated for removal.
-TEEP JSON support is gated by
-`TEEP_ENABLE_JSON` so if you have a need to experiment with it, define
-those symbols globally in Visual Studio, but expect that TEEP JSON support
-will be deleted in the near future.

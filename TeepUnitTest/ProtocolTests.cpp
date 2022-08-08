@@ -7,12 +7,13 @@
 #include "TeepTamBrokerLib.h"
 #include "TeepTamLib.h"
 #define TRUE 1
-#define DEFAULT_MANIFEST_DIRECTORY "../../../tam/manifests"
+#define TAM_DATA_DIRECTORY "./tam"
+#define TEEP_AGENT_DATA_DIRECTORY "./agent"
 #define DEFAULT_TA_ID "38b08738-227d-4f6a-b1f0-b208bc02a781"
 #define DEFAULT_TAM_URI "http://example.com/tam"
 
 // Returns 0 on success, error on failure.
-int ConvertStringToUUID(teep_uuid_t* uuid, const char* idString)
+static int ConvertStringToUUID(_Out_ teep_uuid_t* uuid, _In_z_ const char* idString)
 {
     const char* p = idString;
     int length = 0;
@@ -36,8 +37,8 @@ int ConvertStringToUUID(teep_uuid_t* uuid, const char* idString)
 
 TEST_CASE("UnrequestTA", "[protocol]")
 {
-    REQUIRE(StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, TRUE) == 0);
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     teep_uuid_t unneededTaid;
     int err = ConvertStringToUUID(&unneededTaid, DEFAULT_TA_ID);
@@ -51,8 +52,8 @@ TEST_CASE("UnrequestTA", "[protocol]")
 
 TEST_CASE("RequestTA", "[protocol]")
 {
-    REQUIRE(StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, TRUE) == 0);
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     teep_uuid_t requestedTaid;
     int err = ConvertStringToUUID(&requestedTaid, DEFAULT_TA_ID);
@@ -66,8 +67,8 @@ TEST_CASE("RequestTA", "[protocol]")
 
 TEST_CASE("PolicyCheck with no policy change", "[protocol]")
 {
-    REQUIRE(StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, TRUE) == 0);
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     teep_error_code_t teep_error = TeepAgentRequestPolicyCheck(DEFAULT_TAM_URI);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
@@ -80,8 +81,8 @@ TEST_CASE("PolicyCheck with no policy change", "[protocol]")
 
 TEST_CASE("Unexpected ProcessError", "[protocol]")
 {
-    REQUIRE(StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, TRUE) == 0);
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     teep_error_code_t teep_error = TeepAgentProcessError(nullptr);
     REQUIRE(teep_error == TEEP_ERR_TEMPORARY_ERROR);
@@ -92,8 +93,8 @@ TEST_CASE("Unexpected ProcessError", "[protocol]")
 
 TEST_CASE("RequestPolicyCheck errors", "[protocol]")
 {
-    REQUIRE(StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, TRUE) == 0);
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     // Schedule a transport error during each of the 3 operations:
     // Connect, QueryRequest, QueryResponse.
@@ -110,7 +111,7 @@ TEST_CASE("RequestPolicyCheck errors", "[protocol]")
 
 TEST_CASE("Agent receives bad media type", "[protocol]")
 {
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     // Try bad media type.
     void* sessionHandle = nullptr;
@@ -127,7 +128,7 @@ TEST_CASE("Agent receives bad media type", "[protocol]")
 
 TEST_CASE("Agent receives bad COSE message", "[protocol]")
 {
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     // Try bad COSE message.
     void* sessionHandle = nullptr;
@@ -152,7 +153,7 @@ TamSignCborMessage(
 
 TEST_CASE("Agent receives bad TEEP message", "[protocol]")
 {
-    REQUIRE(StartAgentBroker(TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
     // Compose a bad TEEP message.
     std::string message = "hello";

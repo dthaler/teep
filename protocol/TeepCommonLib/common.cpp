@@ -171,7 +171,7 @@ teep_error_code_t teep_get_signing_key_pair(
             return TEEP_ERR_TEMPORARY_ERROR;
         }
 
-        _save_signing_key_pair(key_pair, private_file_name, public_file_name);
+        return _save_signing_key_pair(key_pair, private_file_name, public_file_name);
     }
 
     return TEEP_ERR_SUCCESS;

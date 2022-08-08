@@ -44,7 +44,7 @@ TAs:
 
 Configuration:
 
-* manifests: Repository of SUIT manifest files for Trusted Components. This
+* tam/manifests: Repository of SUIT manifest files for Trusted Components. This
   directory is read by the TeepTamBrokerLib and used to populate the TAM's
   repository of manifests.  A sample SUIT manifest is included by default.
   The files must be named as `<UUID>.cbor` where UUID is the TA ID.
@@ -82,9 +82,8 @@ Compiling on Windows will result in generating DeviceHost.exe and TamHost.exe.
 DeviceHost.exe is run as follows:
 
 ```
-Usage: DeviceHost [-j] [-s] [-r <TA ID>] [-u <TA ID>] <TAM URI>
-       where -j if present means to try JSON instead of CBOR
-             -s if present means to only simulate a TEE
+Usage: DeviceHost [-s] [-r <TA ID>] [-u <TA ID>] <TAM URI>
+       where -s if present means to only simulate a TEE
              -r <TA ID> if present is a TA ID to request (38b08738-227d-4f6a-b1f0-b208bc02a781 if none specified)
              -u <TA ID> if present is a TA ID that is no longer needed by any normal app
              <TAM URI> is the default TAM URI to use

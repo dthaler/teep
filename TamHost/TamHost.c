@@ -8,7 +8,7 @@
 #include "applink.c"
 #pragma warning(pop)
 
-#define DEFAULT_MANIFEST_DIRECTORY "../../../tam/manifests"
+#define DEFAULT_DATA_DIRECTORY "../../../tam"
 
 int wmain(int argc, wchar_t** argv)
 {
@@ -30,7 +30,7 @@ int wmain(int argc, wchar_t** argv)
     const wchar_t* tamUri = argv[1];
     printf("Listening on TAM URI: %ls\n", tamUri);
 
-    int err = StartTamBroker(DEFAULT_MANIFEST_DIRECTORY, simulated_tee);
+    int err = StartTamBroker(DEFAULT_DATA_DIRECTORY, simulated_tee);
     if (err != 0) {
         return err;
     }

@@ -695,6 +695,10 @@ teep_error_code_t TamHandleCborMessage(
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
 {
+    printf("TeepHandleCborMessage got COSE message:\n");
+    HexPrintBuffer(message, messageLength);
+    printf("\n");
+
     teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
     struct t_cose_key key_pair;
     teeperr = TamGetTeepAgentKey(&key_pair);

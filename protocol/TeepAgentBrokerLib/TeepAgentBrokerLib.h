@@ -15,7 +15,7 @@ int AgentBrokerUnrequestTA(
 extern "C" {
 #endif
 
-int StartAgentBroker(int simulated_tee);
+int StartAgentBroker(_In_z_ const char* data_directory, int simulated_tee);
 void StopAgentBroker(void);
 
 #ifdef __cplusplus

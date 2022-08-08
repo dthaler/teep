@@ -107,3 +107,71 @@ TEST_CASE("RequestPolicyCheck errors", "[protocol]")
     StopAgentBroker();
     StopTamBroker();
 }
+
+TEST_CASE("Agent receives bad media type", "[protocol]")
+{
+    REQUIRE(StartAgentBroker(TRUE) == 0);
+
+    // Try bad media type.
+    void* sessionHandle = nullptr;
+    std::string message = "hello";
+    teep_error_code_t teep_error = TeepAgentProcessTeepMessage(
+        sessionHandle, "mediaType", message.c_str(), message.size());
+    REQUIRE(teep_error == TEEP_ERR_PERMANENT_ERROR);
+
+    // Silent drop.
+    // TODO: verify no message sent.
+
+    StopAgentBroker();
+}
+
+TEST_CASE("Agent receives bad COSE message", "[protocol]")
+{
+    REQUIRE(StartAgentBroker(TRUE) == 0);
+
+    // Try bad COSE message.
+    void* sessionHandle = nullptr;
+    std::string message = "hello";
+    teep_error_code_t teep_error = TeepAgentProcessTeepMessage(
+        sessionHandle, TEEP_CBOR_MEDIA_TYPE, message.c_str(), message.size());
+    REQUIRE(teep_error == TEEP_ERR_PERMANENT_ERROR);
+
+    // Silent drop.
+    // TODO: verify no message sent.
+
+    StopAgentBroker();
+}
+
+#include "..\external\qcbor\inc\UsefulBuf.h"
+
+teep_error_code_t
+TamSignCborMessage(
+    _In_ const UsefulBufC* unsignedMessage,
+    _In_ UsefulBuf signedMessageBuffer,
+    _Out_ UsefulBufC* signedMessage);
+
+TEST_CASE("Agent receives bad TEEP message", "[protocol]")
+{
+    REQUIRE(StartAgentBroker(TRUE) == 0);
+
+    // Compose a bad TEEP message.
+    std::string message = "hello";
+    UsefulBufC unsignedMessage;
+    unsignedMessage.ptr = message.c_str();
+    unsignedMessage.len = message.size();
+    UsefulBufC signedMessage;
+    UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
+    teep_error_code_t teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
+    REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    // Try bad COSE message.
+    void* sessionHandle = nullptr;
+    teep_error = TeepAgentProcessTeepMessage(
+        sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)signedMessage.ptr, signedMessage.len);
+    REQUIRE(teep_error == TEEP_ERR_PERMANENT_ERROR);
+
+    // Silent drop.
+    // TODO: verify no message sent.
+
+    StopAgentBroker();
+}

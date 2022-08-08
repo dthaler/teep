@@ -107,19 +107,12 @@ teep_error_code_t TamComposeCborQueryRequest(UsefulBufC* bufferToSend)
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_PERMANENT_ERROR;
 }
 
-teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType, const UsefulBufC* buffer)
+teep_error_code_t
+TamSignCborMessage(
+    _In_ const UsefulBufC* unsignedMessage,
+    _In_ UsefulBuf signedMessageBuffer,
+    _Out_ UsefulBufC* signedMessage)
 {
-    // From draft-ietf-teep-protocol section 4.1.1:
-    // 1.  Create a TEEP message according to the description below and
-    //     populate it with the respective content.  (done by caller)
-    // 2.  Create a COSE Header containing the desired set of Header
-    //     Parameters.  The COSE Header MUST be valid per the [RFC8152]
-    //     specification.
-    // 3.  Create a COSE_Sign1 object using the TEEP message as the
-    //     COSE_Sign1 Payload; all steps specified in [RFC8152] for creating
-    //     a COSE_Sign1 object MUST be followed.
-
-#ifdef TEEP_USE_COSE
     struct t_cose_key key_pair;
     teep_error_code_t err = TamGetSigningKeyPair(&key_pair);
     if (err != TEEP_ERR_SUCCESS) {
@@ -132,33 +125,51 @@ teep_error_code_t TamSendCborMessage(void* sessionHandle, const char* mediaType,
     t_cose_sign1_set_signing_key(&sign_ctx, key_pair, NULL_Q_USEFUL_BUF_C);
 
     // Sign.
-    Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
-    struct q_useful_buf_c signed_cose;
     enum t_cose_err_t return_value = t_cose_sign1_sign(
         &sign_ctx,
-        *buffer,
+        *unsignedMessage,
         /* Non-const pointer and length of the
          * buffer where the completed output is
          * written to. The length here is that
          * of the whole buffer.
          */
-        signed_cose_buffer,
+        signedMessageBuffer,
         /* Const pointer and actual length of
          * the completed, signed and encoded
          * COSE_Sign1 message. This points
          * into the output buffer and has the
          * lifetime of the output buffer.
          */
-        &signed_cose);
+        signedMessage);
     if (return_value != T_COSE_SUCCESS) {
         printf("COSE Sign1 failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
     }
-    const char* output_buffer = (const char*)signed_cose.ptr;
-    size_t output_buffer_length = signed_cose.len;
+
+    printf("Unsigned: ");
+    HexPrintBuffer(unsignedMessage->ptr, unsignedMessage->len);
+    printf("\nSigned:   ");
+    HexPrintBuffer(signedMessage->ptr, signedMessage->len);
+    printf("\n");
+
+    return TEEP_ERR_SUCCESS;
+}
+
+static teep_error_code_t
+TamSendCborMessage(
+    _In_ void* sessionHandle,
+    _In_z_ const char* mediaType,
+    _In_ const UsefulBufC* unsignedMessage)
+{
+#ifdef TEEP_USE_COSE
+    UsefulBufC signedMessage;
+    Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
+    teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
+    const char* output_buffer = (const char*)signedMessage.ptr;
+    size_t output_buffer_length = signedMessage.len;
 #else
-    const char* output_buffer = (const char*)buffer->ptr;
-    size_t output_buffer_length = buffer->len;
+    const char* output_buffer = (const char*)unsignedMessage->ptr;
+    size_t output_buffer_length = unsignedMessage->len;
 #endif
 
     return TamQueueOutboundTeepMessage(sessionHandle, mediaType, output_buffer, output_buffer_length);

@@ -15,7 +15,7 @@ typedef enum {
     TEEP_MESSAGE_ERROR = 6,
 } teep_message_type_t;
 
-typedef enum {
+typedef _Return_type_success_(return == TEEP_ERR_SUCCESS) enum {
     TEEP_ERR_SUCCESS = 0,
     TEEP_ERR_PERMANENT_ERROR = 1,
     TEEP_ERR_UNSUPPORTED_EXTENSION = 2,

@@ -91,7 +91,7 @@ static teep_error_code_t _load_signing_key_pair(
 }
 
 /**
- * \brief Make an EC key pair in OpenSSL library form.
+ * \brief Make a key pair in OpenSSL library form.
  *
  * \param[in] cose_algorithm_id  The algorithm to sign with, for example
  *                               \ref T_COSE_ALGORITHM_ES256.
@@ -99,34 +99,42 @@ static teep_error_code_t _load_signing_key_pair(
  *
  * The key made here is fixed and just useful for testing.
  */
-static enum t_cose_err_t _make_ossl_ecdsa_key_pair(
+static enum t_cose_err_t _make_ossl_key_pair(
     int32_t cose_algorithm_id,
     _Out_ struct t_cose_key* key_pair)
 {
     enum t_cose_err_t return_value;
     int ossl_result;
-    int ossl_nid;
+    int ossl_key_type;
+    int ossl_curve_nid;
     EVP_PKEY* pkey = NULL;
     EVP_PKEY_CTX* ctx;
 
     switch (cose_algorithm_id) {
     case T_COSE_ALGORITHM_ES256:
-        ossl_nid = NID_X9_62_prime256v1;
+        ossl_key_type = EVP_PKEY_EC;
+        ossl_curve_nid = NID_X9_62_prime256v1;
         break;
 
     case T_COSE_ALGORITHM_ES384:
-        ossl_nid = NID_secp384r1;
+        ossl_key_type = EVP_PKEY_EC;
+        ossl_curve_nid = NID_secp384r1;
         break;
 
     case T_COSE_ALGORITHM_ES512:
-        ossl_nid = NID_secp521r1;
+        ossl_key_type = EVP_PKEY_EC;
+        ossl_curve_nid = NID_secp521r1;
+        break;
+
+    case T_COSE_ALGORITHM_EDDSA:
+        ossl_key_type = EVP_PKEY_ED25519;
         break;
 
     default:
         return T_COSE_ERR_UNSUPPORTED_SIGNING_ALG;
     }
 
-    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    ctx = EVP_PKEY_CTX_new_id(ossl_key_type, NULL);
     if (ctx == NULL) {
         return_value = T_COSE_ERR_INSUFFICIENT_MEMORY;
         goto Done;
@@ -137,10 +145,12 @@ static enum t_cose_err_t _make_ossl_ecdsa_key_pair(
         goto Done;
     }
 
-    ossl_result = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, ossl_nid);
-    if (ossl_result != 1) {
-        return_value = T_COSE_ERR_FAIL;
-        goto Done;
+    if (ossl_key_type == EVP_PKEY_EC) {
+        ossl_result = EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, ossl_curve_nid);
+        if (ossl_result != 1) {
+            return_value = T_COSE_ERR_FAIL;
+            goto Done;
+        }
     }
 
     pkey = EVP_PKEY_new();
@@ -166,7 +176,7 @@ teep_error_code_t teep_get_signing_key_pair(
     _In_z_ const char* public_file_name)
 {
     if (_load_signing_key_pair(key_pair, private_file_name) == TEEP_ERR_PERMANENT_ERROR) {
-        enum t_cose_err_t return_value = _make_ossl_ecdsa_key_pair(T_COSE_ALGORITHM_ES256, key_pair);
+        enum t_cose_err_t return_value = _make_ossl_key_pair(T_COSE_ALGORITHM_ES256, key_pair);
         if (return_value != T_COSE_SUCCESS) {
             return TEEP_ERR_TEMPORARY_ERROR;
         }

@@ -134,21 +134,29 @@ static teep_error_code_t
 TamSendCborMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
-    _In_ const UsefulBufC* unsignedMessage)
+    _In_ const UsefulBufC* unsignedMessage,
+    bool signMessage)
 {
-#ifdef TEEP_USE_COSE
     UsefulBufC signedMessage;
-    Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
-    teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
-    if (error != TEEP_ERR_SUCCESS) {
-        return error;
+    const char* output_buffer;
+    size_t output_buffer_length;
+
+#ifdef TEEP_USE_COSE
+    if (signMessage) {
+        Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
+        teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
+        if (error != TEEP_ERR_SUCCESS) {
+            return error;
+        }
+
+        output_buffer = (const char*)signedMessage.ptr;
+        output_buffer_length = signedMessage.len;
+    } else {
+#endif
+        output_buffer = (const char*)unsignedMessage->ptr;
+        output_buffer_length = unsignedMessage->len;
+#ifdef TEEP_USE_COSE
     }
-    
-    const char* output_buffer = (const char*)signedMessage.ptr;
-    size_t output_buffer_length = signedMessage.len;
-#else
-    const char* output_buffer = (const char*)unsignedMessage->ptr;
-    size_t output_buffer_length = unsignedMessage->len;
 #endif
 
     return TamQueueOutboundTeepMessage(sessionHandle, mediaType, output_buffer, output_buffer_length);
@@ -178,7 +186,7 @@ static teep_error_code_t TamProcessTeepConnect(
     HexPrintBuffer(encodedC.ptr, encodedC.len);
 
     printf("Sending QueryRequest...\n");
-    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC);
+    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, false);
     return teep_error;
 }
 
@@ -597,7 +605,7 @@ teep_error_code_t TamHandleCborQueryResponse(
 
             printf("Sending Update message...\n");
 
-            err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update);
+            err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, true);
             free((void*)update.ptr);
             if (err != TEEP_ERR_SUCCESS) {
                 return err;

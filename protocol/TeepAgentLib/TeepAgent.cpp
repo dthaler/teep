@@ -480,7 +480,7 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
 
 static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
-    printf("TeepHandleCborQueryRequest\n");
+    printf("TeepAgentHandleCborQueryRequest\n");
 
     /* 3. Compose a raw response. */
     UsefulBufC queryResponse;
@@ -506,7 +506,7 @@ static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QC
 
 teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
 {
-    printf("TeepHandleCborUpdate\n");
+    printf("TeepAgentHandleCborUpdate\n");
 
     std::ostringstream errorMessage;
     QCBORItem item;
@@ -622,23 +622,36 @@ static teep_error_code_t TeepAgentHandleCborMessage(
     size_t messageLength)
 {
     teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
-    struct t_cose_key key_pair;
-    teeperr = TeepAgentGetTamKey(&key_pair);
-    if (teeperr != TEEP_ERR_SUCCESS) {
-        return teeperr;
-    }
-
-    std::ostringstream errorMessage;
     QCBORDecodeContext context;
     QCBORItem item;
     UsefulBufC encoded;
-    UsefulBufC signed_cose;
-    signed_cose.ptr = message;
-    signed_cose.len = messageLength;
-    teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, &encoded);
-    if (teeperr != TEEP_ERR_SUCCESS) {
-        return teeperr;
+    std::ostringstream errorMessage;
+
+#ifdef TEEP_USE_COSE
+    // Determine whether message is COSE_Sign1 or not.
+    if ((messageLength >= 2) && (message[0] == (char)0x84) && (message[1] == TEEP_MESSAGE_QUERY_REQUEST)) {
+        // The only message that isn't is a query request where
+        // the first byte means array of size 4 and the second byte is a 1.
+#endif
+        encoded.ptr = message;
+        encoded.len = messageLength;
+#ifdef TEEP_USE_COSE
+    } else {
+        struct t_cose_key key_pair;
+        teeperr = TeepAgentGetTamKey(&key_pair);
+        if (teeperr != TEEP_ERR_SUCCESS) {
+            return teeperr;
+        }
+
+        UsefulBufC signed_cose;
+        signed_cose.ptr = message;
+        signed_cose.len = messageLength;
+        teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, &encoded);
+        if (teeperr != TEEP_ERR_SUCCESS) {
+            return teeperr;
+        }
     }
+#endif
 
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);

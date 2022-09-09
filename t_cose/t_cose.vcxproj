@@ -153,6 +153,7 @@
   <ItemGroup>
     <ClCompile Include="..\external\t_cose\crypto_adapters\t_cose_openssl_crypto.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_parameters.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_short_circuit.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_sign1_sign.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_sign1_verify.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_util.c" />
@@ -165,6 +166,7 @@
     <ClInclude Include="..\external\t_cose\inc\t_cose_common.h" />
     <ClInclude Include="..\external\t_cose\inc\t_cose_sign1_sign.h" />
     <ClInclude Include="..\external\t_cose\inc\t_cose_sign1_verify.h" />
+    <ClInclude Include="..\external\t_cose\src\t_cose_short_circuit.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

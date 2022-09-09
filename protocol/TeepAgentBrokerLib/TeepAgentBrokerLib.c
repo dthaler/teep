@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
+#include <direct.h>
 #include <stdio.h>
 #include <windows.h> // for Sleep()
 #include "TeepAgentBrokerLib.h"

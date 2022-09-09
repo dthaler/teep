@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
+#include <direct.h>
 #include <string.h>
 #include "TeepTamBrokerLib.h"
 #ifdef USE_TCP

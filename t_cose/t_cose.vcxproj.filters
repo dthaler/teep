@@ -30,6 +30,9 @@
     <ClCompile Include="..\external\t_cose\crypto_adapters\t_cose_openssl_crypto.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_short_circuit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\external\t_cose\inc\t_cose_sign1_verify.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\t_cose\src\t_cose_short_circuit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

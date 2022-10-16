@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
 #pragma once
+#include <stdint.h>
 
 typedef struct {
     char OutboundMediaType[80];
     const char* OutboundMessage;
     size_t OutboundMessageLength;
+    uint64_t OutboundMessagesSent; // Counter used for diagnostic purposes.
 } TeepBasicSession;
 
 typedef struct {

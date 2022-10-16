@@ -40,11 +40,17 @@ TEST_CASE("UnrequestTA", "[protocol]")
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
+    uint64_t counter1 = GetOutboundMessagesSent();
+
     teep_uuid_t unneededTaid;
     int err = ConvertStringToUUID(&unneededTaid, DEFAULT_TA_ID);
     REQUIRE(err == 0);
     teep_error_code_t teep_error = TeepAgentUnrequestTA(unneededTaid, DEFAULT_TAM_URI);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    // Verify 2 messages sent (empty connect + QueryResponse).
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + 2);
 
     StopAgentBroker();
     StopTamBroker();
@@ -55,11 +61,17 @@ TEST_CASE("RequestTA", "[protocol]")
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
+    uint64_t counter1 = GetOutboundMessagesSent();
+
     teep_uuid_t requestedTaid;
     int err = ConvertStringToUUID(&requestedTaid, DEFAULT_TA_ID);
     REQUIRE(err == 0);
     teep_error_code_t teep_error = TeepAgentRequestTA(requestedTaid, DEFAULT_TAM_URI);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    // Verify 2 messages sent (empty connect + QueryResponse).
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + 2);
 
     StopAgentBroker();
     StopTamBroker();
@@ -70,8 +82,14 @@ TEST_CASE("PolicyCheck with no policy change", "[protocol]")
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
+    uint64_t counter1 = GetOutboundMessagesSent();
+
     teep_error_code_t teep_error = TeepAgentRequestPolicyCheck(DEFAULT_TAM_URI);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    // Verify 2 messages sent (empty connect + QueryResponse).
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + 2);
 
     StopAgentBroker();
     StopTamBroker();
@@ -84,8 +102,14 @@ TEST_CASE("Unexpected ProcessError", "[protocol]")
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
+    uint64_t counter1 = GetOutboundMessagesSent();
+
     teep_error_code_t teep_error = TeepAgentProcessError(nullptr);
     REQUIRE(teep_error == TEEP_ERR_TEMPORARY_ERROR);
+
+    // Verify no messages sent.
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1);
 
     StopAgentBroker();
     StopTamBroker();
@@ -99,10 +123,15 @@ TEST_CASE("RequestPolicyCheck errors", "[protocol]")
     // Schedule a transport error during each of the 3 operations:
     // Connect, QueryRequest, QueryResponse.
     for (int count = 1; count <= 3; count++) {
+        uint64_t counter1 = GetOutboundMessagesSent();
         ScheduleTransportError(count);
 
         teep_error_code_t teep_error = TeepAgentRequestPolicyCheck(DEFAULT_TAM_URI);
         REQUIRE(teep_error == TEEP_ERR_TEMPORARY_ERROR);
+
+        // Verify the correct number of messages were sent.
+        uint64_t counter2 = GetOutboundMessagesSent();
+        REQUIRE(counter2 == counter1 + count - 1);
     }
 
     StopAgentBroker();
@@ -113,6 +142,8 @@ TEST_CASE("Agent receives bad media type", "[protocol]")
 {
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
+    uint64_t counter1 = GetOutboundMessagesSent();
+
     // Try bad media type.
     void* sessionHandle = nullptr;
     std::string message = "hello";
@@ -120,8 +151,9 @@ TEST_CASE("Agent receives bad media type", "[protocol]")
         sessionHandle, "mediaType", message.c_str(), message.size());
     REQUIRE(teep_error == TEEP_ERR_PERMANENT_ERROR);
 
-    // Silent drop.
-    // TODO: verify no message sent.
+    // Silent drop.  Verify no message sent.
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1);
 
     StopAgentBroker();
 }
@@ -130,6 +162,8 @@ TEST_CASE("Agent receives bad COSE message", "[protocol]")
 {
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
 
+    uint64_t counter1 = GetOutboundMessagesSent();
+
     // Try bad COSE message.
     void* sessionHandle = nullptr;
     std::string message = "hello";
@@ -137,8 +171,9 @@ TEST_CASE("Agent receives bad COSE message", "[protocol]")
         sessionHandle, TEEP_CBOR_MEDIA_TYPE, message.c_str(), message.size());
     REQUIRE(teep_error == TEEP_ERR_PERMANENT_ERROR);
 
-    // Silent drop.
-    // TODO: verify no message sent.
+    // Silent drop.  Verify no message sent.
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1);
 
     StopAgentBroker();
 }
@@ -154,6 +189,8 @@ TamSignCborMessage(
 TEST_CASE("Agent receives bad TEEP message", "[protocol]")
 {
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
+
+    uint64_t counter1 = GetOutboundMessagesSent();
 
     // Compose a bad TEEP message.
     std::string message = "hello";
@@ -171,8 +208,9 @@ TEST_CASE("Agent receives bad TEEP message", "[protocol]")
         sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)signedMessage.ptr, signedMessage.len);
     REQUIRE(teep_error == TEEP_ERR_PERMANENT_ERROR);
 
-    // Silent drop.
-    // TODO: verify no message sent.
+    // Verify that an Error message was sent.
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + 1);
 
     StopAgentBroker();
 }

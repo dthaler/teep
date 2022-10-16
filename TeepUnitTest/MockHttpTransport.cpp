@@ -18,6 +18,11 @@ void ScheduleTransportError(int count)
     g_TransportErrorSchedule = count;
 }
 
+uint64_t GetOutboundMessagesSent()
+{
+    return g_Session.Basic.OutboundMessagesSent;
+}
+
 // The caller is responsible for freeing the buffer if one is returned.
 _Success_(return == NO_ERROR)
 int
@@ -55,6 +60,8 @@ teep_error_code_t TeepAgentQueueOutboundTeepMessage(
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
 {
+    g_Session.Basic.OutboundMessagesSent++;
+
     // Check for error injection.
     g_TransportErrorSchedule--;
     if (g_TransportErrorSchedule == 0) {
@@ -81,6 +88,8 @@ int RunHttpServer(int argc, const wchar_t** argv)
 
 teep_error_code_t TamQueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
 {
+    g_Session.Basic.OutboundMessagesSent++;
+
     // Check for error injection.
     g_TransportErrorSchedule--;
     if (g_TransportErrorSchedule == 0) {

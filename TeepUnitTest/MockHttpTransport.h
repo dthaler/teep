@@ -3,3 +3,4 @@
 #pragma once
 
 void ScheduleTransportError(int count);
+uint64_t GetOutboundMessagesSent();

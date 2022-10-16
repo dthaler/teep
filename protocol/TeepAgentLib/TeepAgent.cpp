@@ -478,6 +478,20 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
     free((void*)reply.ptr);
 }
 
+static teep_error_code_t TeepAgentHandleInvalidMessage(void* sessionHandle, QCBORDecodeContext* context)
+{
+    printf("TeepAgentHandleInvalidMessage\n");
+
+    UsefulBufC errorResponse;
+    UsefulBufC errorToken = NULLUsefulBufC;
+    teep_error_code_t teeperr = TeepAgentComposeCborError(errorToken, TEEP_ERR_TEMPORARY_ERROR, "Out of memory", &errorResponse);
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
+    }
+    TeepAgentSendError(errorResponse, sessionHandle);
+    return TEEP_ERR_PERMANENT_ERROR;
+}
+
 static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
     printf("TeepAgentHandleCborQueryRequest\n");
@@ -660,16 +674,14 @@ static teep_error_code_t TeepAgentHandleCborMessage(
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
-        // TODO: if one cannot parse a message into a type, should one
-        // send an Error message back or not?
         REPORT_TYPE_ERROR(errorMessage, "message", QCBOR_TYPE_ARRAY, item);
-        return TEEP_ERR_PERMANENT_ERROR;
+        return TeepAgentHandleInvalidMessage(sessionHandle, &context);
     }
 
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_INT64) {
         REPORT_TYPE_ERROR(errorMessage, "TYPE", QCBOR_TYPE_INT64, item);
-        return TEEP_ERR_PERMANENT_ERROR;
+        return TeepAgentHandleInvalidMessage(sessionHandle, &context);
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
@@ -682,7 +694,7 @@ static teep_error_code_t TeepAgentHandleCborMessage(
         teeperr = TeepAgentHandleCborUpdate(sessionHandle, &context);
         break;
     default:
-        teeperr = TEEP_ERR_PERMANENT_ERROR;
+        teeperr = TeepAgentHandleInvalidMessage(sessionHandle, &context);
         break;
     }
     if (teeperr != TEEP_ERR_SUCCESS) {

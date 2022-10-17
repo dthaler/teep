@@ -30,6 +30,9 @@
     <ClCompile Include="TeepAgent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AgentKeys.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SuitParser.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TeepAgentLib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AgentKeys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

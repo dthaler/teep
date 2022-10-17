@@ -8,6 +8,9 @@
 #else
 #include "HttpServer.h"
 #endif
+#ifndef TEEP_USE_TEE
+#include "TeepTamLib.h"
+#endif
 
 int TamBrokerProcess(_In_z_ const wchar_t* tamUri)
 {
@@ -41,18 +44,32 @@ int TamBrokerProcess(_In_z_ const wchar_t* tamUri)
     return err;
 }
 
-int StartTamBroker(_In_z_ const char* data_directory, int simulated_tee)
+int StartTamBroker(_In_z_ const char* dataDirectory, int simulatedTee,
+    _Out_writes_opt_z_(256) char* publicKeyFilename)
 {
     // Create data directory if it doesn't already exist.
-    _mkdir(data_directory);
+    _mkdir(dataDirectory);
+
+    // Make "trusted" directory if it doesn't already exist.
+    char directory[256];
+    sprintf_s(directory, sizeof(directory), "%s/trusted", dataDirectory);
+    _mkdir(directory);
+
+    // Make "untrusted" directory if it doesn't already exist.
+    sprintf_s(directory, sizeof(directory), "%s/untrusted", dataDirectory);
+    _mkdir(directory);
 
 #ifdef TEEP_USE_TEE
-    int result = StartTamTABroker(data_directory, simulated_tee);
-    if (result)
+    int result = StartTamTABroker(dataDirectory, simulatedTee);
+    return result;
+#else
+    teep_error_code_t result = TamLoadConfiguration(dataDirectory);
+    if (result != TEEP_ERR_SUCCESS) {
         return result;
-#endif
+    }
 
-    return TeepInitialize();
+    return TamInitializeKeys(dataDirectory, publicKeyFilename);
+#endif
 }
 
 void StopTamBroker(void)

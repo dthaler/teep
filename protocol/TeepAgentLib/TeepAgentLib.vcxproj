@@ -68,6 +68,7 @@
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -79,8 +80,9 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/t_cose/inc;$(ProgramW6432)\openssl\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/t_cose/inc;$(ProgramW6432)\openssl\include;$(SolutionDir)protocol/TeepCommonLib/win32</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -94,6 +96,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -106,11 +109,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AgentKeys.cpp" />
     <ClCompile Include="SuitParser.cpp" />
     <ClCompile Include="TeepAgent.cpp" />
     <ClCompile Include="TrustedComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AgentKeys.h" />
     <ClInclude Include="SuitParser.h" />
     <ClInclude Include="TeepAgentLib.h" />
     <ClInclude Include="TeepDeviceEcallHandler.h" />

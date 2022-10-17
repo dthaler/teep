@@ -20,6 +20,7 @@
 #include "TeepDeviceEcallHandler.h"
 #include "SuitParser.h"
 #include <sstream>
+#include "AgentKeys.h"
 
 static teep_error_code_t TeepAgentComposeCborError(UsefulBufC token, teep_error_code_t errorCode, const std::string& errorMessage, UsefulBufC* encoded);
 
@@ -28,19 +29,6 @@ TrustedComponent* g_RequestedComponentList = nullptr;
 
 // List of unneeded Trusted Components.
 TrustedComponent* g_UnneededComponentList = nullptr;
-
-#define TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME "./agent/agent-private-key-pair.pem"
-
-static teep_error_code_t TeepAgentGetSigningKeyPair(struct t_cose_key* key_pair)
-{
-    return teep_get_signing_key_pair(key_pair, TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME, TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME);
-}
-
-/* Get the TAM's public key to verify an incoming message against. */
-teep_error_code_t TeepAgentGetTamKey(_Out_ struct t_cose_key* key_pair)
-{
-    return teep_get_verifying_key_pair(key_pair, TAM_SIGNING_PUBLIC_KEY_FILENAME);
-}
 
 const unsigned char* g_AgentDerCertificate = nullptr;
 size_t g_AgentDerCertificateSize = 0;
@@ -629,18 +617,27 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
     return teep_error;
 }
 
-/* Handle an incoming message from a TAM. */
-static teep_error_code_t TeepAgentHandleCborMessage(
+static teep_error_code_t TeepAgentVerifyMessageSignature(
     _In_ void* sessionHandle,
     _In_reads_(messageLength) const char* message,
-    size_t messageLength)
-{
-    teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
-    QCBORDecodeContext context;
-    QCBORItem item;
-    UsefulBufC encoded;
-    std::ostringstream errorMessage;
+    size_t messageLength,
+    _Out_ UsefulBufC* pencoded)
 
+{
+    UsefulBufC signed_cose;
+    signed_cose.ptr = message;
+    signed_cose.len = messageLength;
+    for (auto key_pair : TeepAgentGetTamKeys()) {
+        teep_error_code_t teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, pencoded);
+        if (teeperr == TEEP_ERR_SUCCESS) {
+            // TODO: save key_pair in session
+            return TEEP_ERR_SUCCESS;
+        }
+    }
+    printf("TAM key verification failed\n");
+    return TEEP_ERR_PERMANENT_ERROR;
+
+#if 0
 #ifdef TEEP_USE_COSE
     // Determine whether message is COSE_Sign1 or not.
     if ((messageLength >= 2) && (message[0] == (char)0x84) && (message[1] == TEEP_MESSAGE_QUERY_REQUEST)) {
@@ -650,7 +647,8 @@ static teep_error_code_t TeepAgentHandleCborMessage(
         encoded.ptr = message;
         encoded.len = messageLength;
 #ifdef TEEP_USE_COSE
-    } else {
+    }
+    else {
         struct t_cose_key key_pair;
         teeperr = TeepAgentGetTamKey(&key_pair);
         if (teeperr != TEEP_ERR_SUCCESS) {
@@ -660,12 +658,32 @@ static teep_error_code_t TeepAgentHandleCborMessage(
         UsefulBufC signed_cose;
         signed_cose.ptr = message;
         signed_cose.len = messageLength;
-        teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, &encoded);
+        teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, pencoded);
         if (teeperr != TEEP_ERR_SUCCESS) {
             return teeperr;
         }
     }
 #endif
+#endif
+}
+
+
+/* Handle an incoming message from a TAM. */
+static teep_error_code_t TeepAgentHandleCborMessage(
+    _In_ void* sessionHandle,
+    _In_reads_(messageLength) const char* message,
+    size_t messageLength)
+{
+    QCBORDecodeContext context;
+    QCBORItem item;
+    std::ostringstream errorMessage;
+
+    // Verify signature and save which signing key was used.
+    UsefulBufC encoded;
+    teep_error_code_t teeperr = TeepAgentVerifyMessageSignature(sessionHandle, message, messageLength, &encoded);
+    if (teeperr != TEEP_ERR_SUCCESS) {
+        return teeperr;
+    }
 
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);
@@ -831,4 +849,9 @@ teep_error_code_t TeepAgentUnrequestTA(
     }
 
     return teep_error;
+}
+
+teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
+{
+    return TEEP_ERR_SUCCESS;
 }

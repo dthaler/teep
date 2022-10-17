@@ -84,18 +84,31 @@ int AgentBrokerUnrequestTA(
     return HandleMessages();
 }
 
-int StartAgentBroker(_In_z_ const char* dataDirectory, int simulated_tee)
+int StartAgentBroker(_In_z_ const char* dataDirectory, int simulatedTee, _Out_writes_opt_z_(256) char* publicKeyFilename)
 {
     // Create data directory if it doesn't already exist.
     _mkdir(dataDirectory);
 
-#ifdef TEEP_USE_TEE
-    int result = StartAgentTABroker(simulated_tee);
-    if (result)
-        return result;
-#endif
+    // Make "trusted" directory if it doesn't already exist.
+    char directory[256];
+    sprintf_s(directory, sizeof(directory), "%s/trusted", dataDirectory);
+    _mkdir(directory);
 
-    return TeepInitialize();
+    // Make "untrusted" directory if it doesn't already exist.
+    sprintf_s(directory, sizeof(directory), "%s/untrusted", dataDirectory);
+    _mkdir(directory);
+
+#ifdef TEEP_USE_TEE
+    int result = StartAgentTABroker(simulatedTee);
+    return result;
+#else
+    teep_error_code_t result = TeepAgentLoadConfiguration(dataDirectory);
+    if (result != TEEP_ERR_SUCCESS) {
+        return result;
+    }
+
+    return TeepAgentInitializeKeys(dataDirectory, publicKeyFilename);
+#endif
 }
 
 void StopAgentBroker(void)

@@ -106,11 +106,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="common.cpp" />
+    <ClCompile Include="win32\dirent.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
     <ClInclude Include="suit_manifest.h" />
     <ClInclude Include="teep_protocol.h" />
+    <ClInclude Include="win32\dirent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

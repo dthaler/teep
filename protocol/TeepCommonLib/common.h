@@ -34,9 +34,6 @@ typedef struct _teep_uuid_t
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength);
 void HexPrintBuffer(const void* buffer, size_t length);
 
-#define TAM_SIGNING_PUBLIC_KEY_FILENAME "./tam/tam-public-key.pem"
-#define TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME "./agent/agent-public-key.pem"
-
 teep_error_code_t teep_get_signing_key_pair(
     _Out_ struct t_cose_key* key_pair,
     _In_z_ const char* private_file_name,
@@ -88,7 +85,7 @@ extern "C" {
 
     // Calls up from broker.
 
-    int TeepInitialize();
+    teep_error_code_t TeepInitialize(_In_z_ const char* signing_private_key_pair_filename, _In_z_ const char* signing_public_key_filename);
 
     // Calls down to broker.
 

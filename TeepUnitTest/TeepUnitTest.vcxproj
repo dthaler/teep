@@ -184,6 +184,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)protocol/TeepTamLib;$(SolutionDir)protocol/TeepAgentBrokerLib;$(SolutionDir)external/qcbor/inc;$(SolutionDir)protocol\TeepTamBrokerLib;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\ms</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

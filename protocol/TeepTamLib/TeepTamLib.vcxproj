@@ -69,6 +69,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TEEP_USE_TEE</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -80,8 +81,9 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;./win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)protocol/TeepCommonLib/win32</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -96,6 +98,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TEEP_USE_TEE</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -105,21 +108,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="TamKeys.cpp" />
     <ClCompile Include="Manifest.cpp" />
     <ClCompile Include="RequestedComponentInfo.cpp" />
     <ClCompile Include="TeepTam.cpp" />
     <ClCompile Include="TeepTamMessageHandler.cpp" />
-    <ClCompile Include="win32\dirent.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="TamKeys.h" />
     <ClInclude Include="Manifest.h" />
     <ClInclude Include="RequestedComponentInfo.h" />
     <ClInclude Include="TeepTamEcallHandler.h" />
     <ClInclude Include="TeepTamLib.h" />
-    <ClInclude Include="win32\dirent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

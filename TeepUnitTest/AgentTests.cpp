@@ -7,6 +7,6 @@
 #define TEEP_AGENT_DATA_DIRECTORY "../../../agent"
 
 TEST_CASE("Start-Stop Agent Broker", "[agent]") {
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
     StopAgentBroker();
 }

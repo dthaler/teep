@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
-#include <stdio.h>
+#include <dirent.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,40 +17,7 @@
 #include "RequestedComponentInfo.h"
 #include "TeepTamLib.h"
 #include <sstream>
-
-#define TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME "./tam/tam-private-key-pair.pem"
-
-static teep_error_code_t TamGetSigningKeyPair(struct t_cose_key* key_pair)
-{
-    return teep_get_signing_key_pair(key_pair, TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME, TAM_SIGNING_PUBLIC_KEY_FILENAME);
-}
-
-/* Get the TEEP Agent's public key to verify an incoming message against. */
-/* TODO: support multiple TEEP Agents */
-teep_error_code_t TamGetTeepAgentKey(_Out_ struct t_cose_key* key_pair)
-{
-    return teep_get_verifying_key_pair(key_pair, TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME);
-}
-
-const unsigned char* g_TamDerCertificate = nullptr;
-size_t g_TamDerCertificateSize = 0;
-
-const unsigned char* GetTamDerCertificate(size_t *pCertLen)
-{
-    if (g_TamDerCertificate == nullptr) {
-        // Construct a self-signed DER certificate based on the COSE key.
-        t_cose_key key_pair;
-        teep_error_code_t teep_error = TamGetSigningKeyPair(&key_pair);
-        if (teep_error != TEEP_ERR_SUCCESS) {
-            return nullptr;
-        }
-
-        g_TamDerCertificate = GetDerCertificate(&key_pair, &g_TamDerCertificateSize);
-    }
-
-    *pCertLen = g_TamDerCertificateSize;
-    return g_TamDerCertificate;
-}
+#include "TamKeys.h"
 
 /* Compose a raw QueryRequest message to be signed. */
 static teep_error_code_t TamComposeCborQueryRequest(
@@ -143,7 +110,8 @@ TamSendCborMessage(
 
 #ifdef TEEP_USE_COSE
     if (signMessage) {
-        Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 300);
+        const size_t max_cose_message_size = 3000;
+        Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, max_cose_message_size);
         teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
         if (error != TEEP_ERR_SUCCESS) {
             return error;
@@ -186,7 +154,7 @@ static teep_error_code_t TamProcessTeepConnect(
     HexPrintBuffer(encodedC.ptr, encodedC.len);
 
     printf("Sending QueryRequest...\n");
-    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, false);
+    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, true);
     return teep_error;
 }
 
@@ -697,6 +665,26 @@ teep_error_code_t TamHandleCborError(
     return TEEP_ERR_SUCCESS;
 }
 
+static teep_error_code_t TamVerifyMessageSignature(
+    _In_ void* sessionHandle,
+    _In_reads_(messageLength) const char* message,
+    size_t messageLength,
+    _Out_ UsefulBufC* pencoded)
+{
+    UsefulBufC signed_cose;
+    signed_cose.ptr = message;
+    signed_cose.len = messageLength;
+    for (auto key_pair : TamGetTeepAgentKeys()) {
+        teep_error_code_t teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, pencoded);
+        if (teeperr == TEEP_ERR_SUCCESS) {
+            // TODO: save key_pair in session
+            return TEEP_ERR_SUCCESS;
+        }
+    }
+    printf("TAM key verification failed\n");
+    return TEEP_ERR_PERMANENT_ERROR;
+}
+
 /* Handle an incoming message from a TEEP Agent. */
 teep_error_code_t TamHandleCborMessage(
     _In_ void* sessionHandle,
@@ -707,21 +695,9 @@ teep_error_code_t TamHandleCborMessage(
     HexPrintBuffer(message, messageLength);
     printf("\n");
 
-    teep_error_code_t teeperr = TEEP_ERR_SUCCESS;
-    struct t_cose_key key_pair;
-    teeperr = TamGetTeepAgentKey(&key_pair);
-    if (teeperr != TEEP_ERR_SUCCESS) {
-        return teeperr;
-    }
-
-    std::ostringstream errorMessage;
-    QCBORDecodeContext context;
-    QCBORItem item;
+    // Verify signature and save which signing key was used.
     UsefulBufC encoded;
-    UsefulBufC signed_cose;
-    signed_cose.ptr = message;
-    signed_cose.len = messageLength;
-    teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, &encoded);
+    teep_error_code_t teeperr = TamVerifyMessageSignature(sessionHandle, message, messageLength, &encoded);
     if (teeperr != TEEP_ERR_SUCCESS) {
         return teeperr;
     }
@@ -729,8 +705,11 @@ teep_error_code_t TamHandleCborMessage(
     printf("Received CBOR message: ");
     HexPrintBuffer(encoded.ptr, encoded.len);
 
+    QCBORDecodeContext context;
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
+    std::ostringstream errorMessage;
+    QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
         REPORT_TYPE_ERROR(errorMessage, "TYPE", QCBOR_TYPE_ARRAY, item);

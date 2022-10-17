@@ -30,6 +30,10 @@ Protocol:
 
 * protocol/TeepTamLib: TEEP TAM in a static lib.
 
+* protocol/WindowsHttpClientLib: HTTP client module for Windows.
+
+* protocol/WindowsHttpServerLib: HTTP server module for Windows.
+
 TAs:
 
 * ta/TeepAgentTABrokerLib: Static lib containing a TEEP Agent Broker for communicating with TeepAgentTA.
@@ -56,6 +60,8 @@ Apps:
 * DeviceHost: Sample host app to run a TEEP Agent Broker.
 
 * TamHost: Sample host app to run a TEEP TAM Broker.
+
+* TeepUnitTest: Standalone unit tests to test the TEEP implementation.
 
 ## Prerequisites
 
@@ -102,6 +108,22 @@ Usage: TamHost [-s] <TAM URI>
 
 Currently the <TAM URI> must end in /TEEP
 ```
+
+### Keys
+
+Before the TAM and the TEEP Agent can fully communicate, they must be configured to trust each other.
+The `trusted` directory under `tam` and `agent` contain a set of `.pem` files
+of public keys that that entity considers trusted.
+
+This can be done as follows:
+
+* The first time that TamHost is run it will generate `tam-public-key.pem` and `tam-private-key-pair.pem`
+  under the `tam` directory.
+* The first time that DeviceHost is run it will generate `agent-public-key.pem` and `agent-private-key-pair.pem`
+  under the `agent` directory.
+* Copy `tam/tam-public-key.pem` to `agent/trusted/tam-public-key.pem`.
+* Copy `agent/agent-public-key.pem` to `tam/trusted/agent-public-key.pem`.
+* Restart the TamHost and DeviceHost.
 
 ## Configurations
 

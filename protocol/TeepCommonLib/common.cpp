@@ -204,10 +204,10 @@ teep_error_code_t teep_get_verifying_key_pair(
     return TEEP_ERR_SUCCESS;
 }
 
-int TeepInitialize(void)
+teep_error_code_t TeepInitialize(_In_z_ const char* signing_private_key_pair_filename, _In_z_ const char* signing_public_key_filename)
 {
-    // TODO: create/load key here, for efficiency.
-    return 0;
+    struct t_cose_key key_pair;
+    return teep_get_signing_key_pair(&key_pair, signing_private_key_pair_filename, signing_public_key_filename);
 }
 
 teep_error_code_t
@@ -263,7 +263,6 @@ teep_verify_cbor_message(
         encoded,             /* Payload from signed_cose */
         NULL);               /* Don't return parameters */
     if (return_value != T_COSE_SUCCESS) {
-        printf("TAM key verification failed\n");
         return TEEP_ERR_PERMANENT_ERROR;
     }
 

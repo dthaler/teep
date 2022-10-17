@@ -30,7 +30,7 @@
     <ClInclude Include="TeepTamLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="win32\dirent.h">
+    <ClInclude Include="TamKeys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -47,7 +47,7 @@
     <ClCompile Include="TeepTam.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="win32\dirent.c">
+    <ClCompile Include="TamKeys.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

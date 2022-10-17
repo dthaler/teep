@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     const char* defaultTamUri = argv[1];
     printf("Using default TAM URI: %s\n", defaultTamUri);
 
-    int err = StartAgentBroker(DEFAULT_DATA_DIRECTORY, simulated_tee);
+    int err = StartAgentBroker(DEFAULT_DATA_DIRECTORY, simulated_tee, NULL);
     if (err != 0) {
         return err;
     }

@@ -535,7 +535,7 @@ teep_error_code_t TamHandleCborQueryResponse(
             break;
         }
         case TEEP_LABEL_ATTESTATION_PAYLOAD:
-            if (attestationPayloadFormat == "application/eat-cwt; profile=https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-09") {
+            if (attestationPayloadFormat == "application/eat-cwt; eat_profile=https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-10") {
                 // We have Attestation Results.
 #ifdef _DEBUG
                 printf("Got attestation results in the TEEP profile\n");

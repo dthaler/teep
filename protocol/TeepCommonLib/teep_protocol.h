@@ -3,7 +3,7 @@
 #pragma once
 
 // The values in this file are taken from
-// https://tools.ietf.org/html/draft-ietf-teep-protocol
+// https://datatracker.ietf.org/doc/draft-ietf-teep-protocol/
 
 #define TEEP_CBOR_MEDIA_TYPE "application/teep+cbor"
 

@@ -34,9 +34,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <EdlItem Include="..\TeepAgentTA\TeepAgent.edl" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <EdlItem Include="..\TeepAgentTA\TeepAgent.edl">
+      <Filter>Source Files</Filter>
+    </EdlItem>
   </ItemGroup>
 </Project>

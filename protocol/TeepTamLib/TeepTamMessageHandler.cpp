@@ -16,11 +16,14 @@
 #include "TeepTamEcallHandler.h"
 #include "RequestedComponentInfo.h"
 #include "TeepTamLib.h"
+#include <optional>
 #include <sstream>
 #include "TamKeys.h"
 
 /* Compose a raw QueryRequest message to be signed. */
-static teep_error_code_t TamComposeCborQueryRequest(
+teep_error_code_t TamComposeCborQueryRequest(
+    std::optional<int> minVersion,
+    std::optional<int> maxVersion,
     _Out_ UsefulBufC* bufferToSend)
 {
     QCBOREncodeContext context;
@@ -47,8 +50,15 @@ static teep_error_code_t TamComposeCborQueryRequest(
             // Add challenge if needed.
 
             // Add versions if needed.
-
-            // Add ocsp-data if needed.
+            if (maxVersion) {
+                QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_VERSIONS);
+                {
+                    for (int i = minVersion.value(); i <= maxVersion.value(); i++) {
+                        QCBOREncode_AddInt64(&context, i);
+                    }
+                }
+                QCBOREncode_CloseArray(&context);
+            }
         }
         QCBOREncode_CloseMap(&context);
 
@@ -141,7 +151,7 @@ static teep_error_code_t TamProcessTeepConnect(
     Q_USEFUL_BUF_MAKE_STACK_UB(encoded, 4096);
     UsefulBufC encodedC = UsefulBuf_Const(encoded);
 
-    teep_error = TamComposeCborQueryRequest(&encodedC);
+    teep_error = TamComposeCborQueryRequest({}, {}, &encodedC);
     if (teep_error != TEEP_ERR_SUCCESS) {
         return teep_error;
     }

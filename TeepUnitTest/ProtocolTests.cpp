@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
 #include <filesystem>
+#include <optional>
+#include "qcbor/UsefulBuf.h"
 #include "catch.hpp"
 #include "MockHttpTransport.h"
 #include "TeepAgentBrokerLib.h"
@@ -252,4 +254,55 @@ TEST_CASE("Agent receives bad TEEP message", "[protocol]")
     REQUIRE(counter2 == counter1 + 1);
 
     StopAgentBroker();
+}
+
+teep_error_code_t TamComposeCborQueryRequest(
+    std::optional<int> minVersion,
+    std::optional<int> maxVersion,
+    _Out_ UsefulBufC* bufferToSend);
+
+void test_version(int min_version, int max_version, teep_error_code_t expected_result, uint64_t expected_message_count)
+{
+    ConfigureKeys();
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+
+    uint64_t counter1 = GetOutboundMessagesSent();
+
+    // Compose a TEEP QueryRequest with an unsupported version.
+    UsefulBuf_MAKE_STACK_UB(encoded, 4096);
+    UsefulBufC unsignedMessage = UsefulBuf_Const(encoded);
+    teep_error_code_t teep_error = TamComposeCborQueryRequest(min_version, max_version, &unsignedMessage);
+    UsefulBufC signedMessage;
+    UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
+    teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
+    REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    void* sessionHandle = nullptr;
+    teep_error = TeepAgentProcessTeepMessage(
+        sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)signedMessage.ptr, signedMessage.len);
+    REQUIRE(teep_error == expected_result);
+
+    // Verify that the right number of messages were sent.
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + expected_message_count);
+
+    StopAgentBroker();
+}
+
+TEST_CASE("Agent receives QueryRequest with supported version", "[protocol]")
+{
+    const uint64_t expected_message_count = 3; // QueryResponse, Update, Success.
+    test_version(0, 0, TEEP_ERR_SUCCESS, expected_message_count);
+}
+
+TEST_CASE("Agent receives QueryRequest with supported and unsupported version", "[protocol]")
+{
+    const uint64_t expected_message_count = 3; // QueryResponse, Update, Success.
+    test_version(0, 1, TEEP_ERR_SUCCESS, expected_message_count);
+}
+
+TEST_CASE("Agent receives QueryRequest with unsupported version", "[protocol]")
+{
+    const uint64_t expected_message_count = 1; // Error.
+    test_version(1, 1, TEEP_ERR_UNSUPPORTED_MSG_VERSION, 1);
 }

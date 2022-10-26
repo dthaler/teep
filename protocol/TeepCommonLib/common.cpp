@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation
+// Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
 //
 // This file contains trusted code in common between the TAM and TEEP Agent.

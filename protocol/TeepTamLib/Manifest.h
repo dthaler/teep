@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation
+// Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
 #pragma once
 #include "qcbor/UsefulBuf.h"

@@ -1,5 +1,5 @@
-/* Copyright (c) Microsoft Corporation. All rights reserved. */
-/* Licensed under the MIT License. */
+// Copyright (c) TEEP contributors
+// SPDX-License-Identifier: MIT
 #pragma once
 
 #define TA_UUID /* 213acb9d-9134-4bc8-aa44-b01e13df0c88 */ \

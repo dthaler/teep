@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation
+// Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
 #ifdef OE_BUILD_ENCLAVE
 #include <openenclave/enclave.h>

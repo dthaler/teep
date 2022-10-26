@@ -21,7 +21,7 @@
 #include "TamKeys.h"
 
 /* Compose a raw QueryRequest message to be signed. */
-teep_error_code_t TamComposeCborQueryRequest(
+teep_error_code_t TamComposeQueryRequest(
     std::optional<int> minVersion,
     std::optional<int> maxVersion,
     _Out_ UsefulBufC* bufferToSend)
@@ -151,7 +151,7 @@ static teep_error_code_t TamProcessTeepConnect(
     Q_USEFUL_BUF_MAKE_STACK_UB(encoded, 4096);
     UsefulBufC encodedC = UsefulBuf_Const(encoded);
 
-    teep_error = TamComposeCborQueryRequest({}, {}, &encodedC);
+    teep_error = TamComposeQueryRequest({}, {}, &encodedC);
     if (teep_error != TEEP_ERR_SUCCESS) {
         return teep_error;
     }
@@ -360,7 +360,7 @@ teep_error_code_t TamHandleCborQueryResponse(
             }
             if (item.val.uint64 != 0) {
                 printf("Unrecognized protocol version %lld\n", item.val.uint64);
-                return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
+                return TEEP_ERR_UNSUPPORTED_MSG_VERSION;
             }
             break;
 
@@ -748,11 +748,11 @@ teep_error_code_t TamHandleCborMessage(
         teeperr = TEEP_ERR_PERMANENT_ERROR;
         break;
     }
+
+    QCBORError err = QCBORDecode_Finish(&context);
     if (teeperr != TEEP_ERR_SUCCESS) {
         return teeperr;
     }
-
-    QCBORError err = QCBORDecode_Finish(&context);
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 

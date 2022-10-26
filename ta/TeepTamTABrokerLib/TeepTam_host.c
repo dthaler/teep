@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation
+// Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
 #define _CRT_SECURE_NO_WARNINGS
 #include <openenclave/host.h>

@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: MIT
 #include <filesystem>
 #include <optional>
-#include "qcbor/UsefulBuf.h"
+#include <sstream>
 #include "catch.hpp"
 #include "MockHttpTransport.h"
+#include "qcbor/qcbor_decode.h"
+#include "qcbor/qcbor_encode.h"
+#include "qcbor/UsefulBuf.h"
 #include "TeepAgentBrokerLib.h"
 #include "TeepAgentLib.h"
 #include "TeepTamBrokerLib.h"
@@ -218,8 +221,6 @@ TEST_CASE("Agent receives bad COSE message", "[protocol]")
     StopAgentBroker();
 }
 
-#include "..\external\qcbor\inc\UsefulBuf.h"
-
 teep_error_code_t
 TamSignCborMessage(
     _In_ const UsefulBufC* unsignedMessage,
@@ -256,12 +257,23 @@ TEST_CASE("Agent receives bad TEEP message", "[protocol]")
     StopAgentBroker();
 }
 
-teep_error_code_t TamComposeCborQueryRequest(
+teep_error_code_t TamComposeQueryRequest(
     std::optional<int> minVersion,
     std::optional<int> maxVersion,
     _Out_ UsefulBufC* bufferToSend);
 
-void test_version(int min_version, int max_version, teep_error_code_t expected_result, uint64_t expected_message_count)
+teep_error_code_t
+TeepAgentSignCborMessage(
+    _In_ const UsefulBufC* unsignedMessage,
+    _In_ UsefulBuf signedMessageBuffer,
+    _Out_ UsefulBufC* signedMessage);
+
+teep_error_code_t TeepAgentComposeQueryResponse(
+    _In_ QCBORDecodeContext* decodeContext,
+    _Out_ UsefulBufC* encodedResponse,
+    _Out_ UsefulBufC* errorResponse);
+
+static void TestQueryRequestVersion(int min_version, int max_version, teep_error_code_t expected_result, uint64_t expected_message_count)
 {
     ConfigureKeys();
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
@@ -271,7 +283,7 @@ void test_version(int min_version, int max_version, teep_error_code_t expected_r
     // Compose a TEEP QueryRequest with an unsupported version.
     UsefulBuf_MAKE_STACK_UB(encoded, 4096);
     UsefulBufC unsignedMessage = UsefulBuf_Const(encoded);
-    teep_error_code_t teep_error = TamComposeCborQueryRequest(min_version, max_version, &unsignedMessage);
+    teep_error_code_t teep_error = TamComposeQueryRequest(min_version, max_version, &unsignedMessage);
     UsefulBufC signedMessage;
     UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
     teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
@@ -292,17 +304,97 @@ void test_version(int min_version, int max_version, teep_error_code_t expected_r
 TEST_CASE("Agent receives QueryRequest with supported version", "[protocol]")
 {
     const uint64_t expected_message_count = 3; // QueryResponse, Update, Success.
-    test_version(0, 0, TEEP_ERR_SUCCESS, expected_message_count);
+    TestQueryRequestVersion(0, 0, TEEP_ERR_SUCCESS, expected_message_count);
 }
 
 TEST_CASE("Agent receives QueryRequest with supported and unsupported version", "[protocol]")
 {
     const uint64_t expected_message_count = 3; // QueryResponse, Update, Success.
-    test_version(0, 1, TEEP_ERR_SUCCESS, expected_message_count);
+    TestQueryRequestVersion(0, 1, TEEP_ERR_SUCCESS, expected_message_count);
 }
 
 TEST_CASE("Agent receives QueryRequest with unsupported version", "[protocol]")
 {
     const uint64_t expected_message_count = 1; // Error.
-    test_version(1, 1, TEEP_ERR_UNSUPPORTED_MSG_VERSION, 1);
+    TestQueryRequestVersion(1, 1, TEEP_ERR_UNSUPPORTED_MSG_VERSION, expected_message_count);
+}
+
+static teep_error_code_t TestComposeQueryResponse(int version, _Out_ UsefulBufC* encodedResponse)
+{
+    UsefulBufC challenge = NULLUsefulBufC;
+    *encodedResponse = NULLUsefulBufC;
+    UsefulBufC errorToken = NULLUsefulBufC;
+    std::ostringstream errorMessage;
+
+    size_t maxBufferLength = 4096;
+    char* rawBuffer = (char*)malloc(maxBufferLength);
+    if (rawBuffer == nullptr) {
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+
+    QCBOREncodeContext context;
+    UsefulBuf buffer{ rawBuffer, maxBufferLength };
+    QCBOREncode_Init(&context, buffer);
+
+    QCBOREncode_OpenArray(&context);
+    {
+        // Add TYPE.
+        QCBOREncode_AddInt64(&context, TEEP_MESSAGE_QUERY_RESPONSE);
+
+        QCBOREncode_OpenMap(&context);
+        {
+            QCBOREncode_AddInt64ToMapN(&context, TEEP_LABEL_SELECTED_VERSION, version);
+        }
+        QCBOREncode_CloseMap(&context);
+    }
+    QCBOREncode_CloseArray(&context);
+
+    UsefulBufC const_buffer = UsefulBuf_Const(buffer);
+    QCBORError err = QCBOREncode_Finish(&context, &const_buffer);
+    if (err != QCBOR_SUCCESS) {
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+
+    *encodedResponse = const_buffer;
+    return TEEP_ERR_SUCCESS;
+}
+
+static void TestQueryResponseVersion(int version, teep_error_code_t expected_result, uint64_t expected_message_count)
+{
+    ConfigureKeys();
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+
+    uint64_t counter1 = GetOutboundMessagesSent();
+
+    // Compose a TEEP QueryResponse with an unsupported version.
+    UsefulBuf_MAKE_STACK_UB(encoded, 4096);
+    UsefulBufC unsignedMessage = UsefulBuf_Const(encoded);
+    teep_error_code_t teep_error = TestComposeQueryResponse(version, &unsignedMessage);
+    UsefulBufC signedMessage;
+    UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
+    teep_error = TeepAgentSignCborMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
+    REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    void* sessionHandle = nullptr;
+    teep_error = TamProcessTeepMessage(
+        sessionHandle, TEEP_CBOR_MEDIA_TYPE, (const char*)signedMessage.ptr, signedMessage.len);
+    REQUIRE(teep_error == expected_result);
+
+    // Verify that the right number of messages were sent.
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + expected_message_count);
+
+    StopAgentBroker();
+}
+
+TEST_CASE("TAM receives QueryResponse with supported version", "[protocol]")
+{
+    const uint64_t expected_message_count = 0;
+    TestQueryResponseVersion(0, TEEP_ERR_SUCCESS, expected_message_count);
+}
+
+TEST_CASE("TAM receives QueryResponse with unsupported version", "[protocol]")
+{
+    const uint64_t expected_message_count = 0;
+    TestQueryResponseVersion(1, TEEP_ERR_UNSUPPORTED_MSG_VERSION, expected_message_count);
 }

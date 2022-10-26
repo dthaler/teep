@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation
 // SPDX-License-Identifier: MIT
 
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -19,7 +20,6 @@
 #include "t_cose/t_cose_sign1_verify.h"
 #include "TeepDeviceEcallHandler.h"
 #include "SuitParser.h"
-#include <sstream>
 #include "AgentKeys.h"
 
 static teep_error_code_t TeepAgentComposeError(UsefulBufC token, teep_error_code_t errorCode, const std::string& errorMessage, UsefulBufC* encoded);
@@ -473,6 +473,9 @@ static teep_error_code_t TeepAgentComposeError(UsefulBufC token, teep_error_code
     QCBOREncode_CloseArray(&context);
 
     QCBORError err = QCBOREncode_Finish(&context, encoded);
+
+    // On success we return the original errorCode here, which the caller
+    // can propogate.
     return (err == QCBOR_SUCCESS) ? errorCode : TEEP_ERR_TEMPORARY_ERROR;
 }
 
@@ -737,11 +740,11 @@ static teep_error_code_t TeepAgentHandleCborMessage(
         teeperr = TeepAgentHandleInvalidMessage(sessionHandle, &context);
         break;
     }
+
+    QCBORError err = QCBORDecode_Finish(&context);
     if (teeperr != TEEP_ERR_SUCCESS) {
         return teeperr;
     }
-
-    QCBORError err = QCBORDecode_Finish(&context);
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 

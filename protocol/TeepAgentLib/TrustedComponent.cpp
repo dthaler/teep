@@ -1,9 +1,5 @@
 // Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
-#ifdef OE_BUILD_ENCLAVE
-#include <openenclave/enclave.h>
-#define sprintf_s(dest, len, ...) sprintf(dest, __VA_ARGS__)
-#endif
 #include <stdio.h>
 #include <string.h>
 #include "TrustedComponent.h"

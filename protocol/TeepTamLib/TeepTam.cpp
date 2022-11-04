@@ -12,8 +12,6 @@
 #define TRUE 1
 #define FALSE 0
 #ifdef TEEP_USE_TEE
-#define sprintf_s(dest, sz, ...) sprintf(dest, __VA_ARGS__)
-#define _strdup strdup
 int StartTamTABroker(const char* manifestDirectory, int simulate_tee);
 void StopTamTABroker(void);
 #define MAX_PATH 256

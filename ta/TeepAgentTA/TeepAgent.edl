@@ -8,24 +8,40 @@ enclave {
     trusted {
         /* define ECALLs here. */
 
-        public int ecall_RequestTA(
+        public int ecall_TeepAgentRequestTA(
             oe_uuid_t requestedTaid,
             [in, string] const char* tamUri);
 
-        public int ecall_UnrequestTA(
+        public int ecall_TeepAgentUnrequestTA(
             oe_uuid_t unneededTaid,
             [in, string] const char* tamUri);
 
-        public int ecall_ProcessError([user_check] void* sessionHandle);
+        public int ecall_TeepAgentProcessError([user_check] void* sessionHandle);
 
-        public int ecall_RequestPolicyCheck();
+        public int ecall_TeepAgentRequestPolicyCheck();
+
+        public int ecall_TeepAgentProcessTeepMessage(
+            [user_check] void* sessionHandle,
+            [in, string] const char* mediaType,
+            [in, size=messageLength] const char* message, 
+            size_t messageLength);
+
+        public int ecall_TeepAgentLoadConfiguration([in, string] const char* dataDirectory);
+
+        public int ecall_TeepAgentInitializeKeys([in, string] const char* dataDirectory, [out] char publicKeyFilename[256]);
     };
 
     untrusted {
         /* define OCALLs here. */
 
-        int ocall_Connect(
+        int ocall_TeepAgentConnect(
             [in, string] const char* tamUri,
             [in, string] const char* acceptMediaType);
+
+        int ocall_TeepAgentQueueOutboundTeepMessage(
+            [user_check] void* sessionHandle,
+            [in, string] const char* mediaType,
+            [in, size=messageLength] const char* message,
+            size_t messageLength);
     };
 };

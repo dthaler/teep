@@ -6,72 +6,90 @@
 
 // TODO: investigate why it links with this line
 // but has undefined symbols without it.
-#define ecall_RequestTA TeepAgent_ecall_RequestTA
+#define ecall_TeepAgentRequestTA TeepAgent_ecall_TeepAgentRequestTA
 #include "TeepAgent_u.h"
 
 #define ASSERT(x) if (!(x)) { DebugBreak(); }
 
 oe_enclave_t* g_ta_eid = NULL;
 
-int TeepAgentRequestTA(
-    int useCbor,
+teep_error_code_t TeepAgentRequestTA(
     teep_uuid_t requestedTaid,
     _In_z_ const char* tamUri)
 {
-    int err;
+    teep_error_code_t err;
     oe_uuid_t oeTaid = *(oe_uuid_t*)&requestedTaid;
-    oe_result_t result = ecall_RequestTA(g_ta_eid, &err, useCbor, oeTaid, tamUri);
+    oe_result_t result = ecall_TeepAgentRequestTA(g_ta_eid, (int*)&err, oeTaid, tamUri);
     if (result != OE_OK) {
         return result;
     }
     return err;
 }
 
-int TeepAgentUnrequestTA(
-    int useCbor,
+teep_error_code_t TeepAgentUnrequestTA(
     teep_uuid_t unneededTaid,
     _In_z_ const char* tamUri)
 {
-    int err;
+    teep_error_code_t err;
     oe_uuid_t oeTaid = *(oe_uuid_t*)&unneededTaid;
-    oe_result_t result = ecall_UnrequestTA(g_ta_eid, &err, useCbor, oeTaid, tamUri);
+    oe_result_t result = ecall_TeepAgentUnrequestTA(g_ta_eid, (int*)&err, oeTaid, tamUri);
     if (result != OE_OK) {
         return result;
     }
     return err;
 }
 
-int ProcessTeepMessage(
-    TeepSession* session,
-    const char* inboundMediaType,
-    const char* inboundMessage,
-    size_t inboundMessageLength)
+teep_error_code_t TeepAgentProcessTeepMessage(
+    _In_ void* sessionHandle,
+    _In_z_ const char* mediaType,
+    _In_reads_(messageLength) const char* message,
+    size_t messageLength)
 {
-    int err;
-    oe_result_t result = ecall_ProcessTeepMessage(
+    teep_error_code_t err;
+    oe_result_t result = ecall_TeepAgentProcessTeepMessage(
         g_ta_eid,
-        &err,
-        session,
-        inboundMediaType,
-        inboundMessage,
-        inboundMessageLength);
+        (int*)&err,
+        sessionHandle,
+        mediaType,
+        message,
+        messageLength);
     if (result != OE_OK) {
-        return result;
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    return err;
+}
+
+teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
+{
+    teep_error_code_t err;
+    oe_result_t result = ecall_TeepAgentLoadConfiguration(g_ta_eid, (int*)&err, dataDirectory);
+    if (result != OE_OK) {
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+    return err;
+}
+
+teep_error_code_t TeepAgentInitializeKeys(_In_z_ const char* dataDirectory, _Out_writes_opt_z_(256) char* publicKeyFilename)
+{
+    teep_error_code_t err;
+    oe_result_t result = ecall_TeepAgentInitializeKeys(g_ta_eid, (int*)&err, dataDirectory, publicKeyFilename);
+    if (result != OE_OK) {
+        return TEEP_ERR_PERMANENT_ERROR;
     }
     return err;
 }
 
 int TeepInitialize(void)
 {
-    return ecall_Initialize(g_ta_eid);
+    return ecall_TeepInitialize(g_ta_eid);
 }
 
-int ocall_Connect(const char* tamUri, const char* acceptMediaType)
+int ocall_TeepAgentConnect(const char* tamUri, const char* acceptMediaType)
 {
-    return Connect(tamUri, acceptMediaType);
+    return TeepAgentConnect(tamUri, acceptMediaType);
 }
 
-int ocall_QueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
+int ocall_TeepAgentQueueOutboundTeepMessage(void* sessionHandle, const char* mediaType, const char* message, size_t messageLength)
 {
-    return QueueOutboundTeepMessage(sessionHandle, mediaType, message, messageLength);
+    return TeepAgentQueueOutboundTeepMessage(sessionHandle, mediaType, message, messageLength);
 }

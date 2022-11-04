@@ -67,8 +67,9 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)LibEay32;$(SolutionDir)openssl/include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/jansson/src;$(SolutionDir)jansson;$(SolutionDir)external/t_cose/inc</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PreprocessorDefinitions>TEEP_USE_TEE</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

@@ -81,7 +81,7 @@
       <PreprocessorDefinitions>TEEP_USE_TEE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol\TeepCommonLib;$(SolutionDir)external/qcbor/inc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol\TeepCommonLib;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external\openssl\ms</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

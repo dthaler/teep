@@ -9,7 +9,7 @@
 #include "t_cose/t_cose_sign1_verify.h"
 #include "common.h"
 extern "C" {
-#ifdef OE_BUILD_ENCLAVE
+#ifdef TEEP_USE_TEE
 #define _countof(x) OE_COUNTOF(x)
 #define sprintf_s(dest, len, ...) sprintf(dest, __VA_ARGS__)
 #endif

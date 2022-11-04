@@ -67,9 +67,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/qcbor/inc/qcbor</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TEEP_USE_TEE</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

@@ -67,7 +67,7 @@ TeepAgentSignCborMessage(
 }
 
 // Process a transport error.
-teep_error_code_t TeepAgentProcessError(void* sessionHandle)
+teep_error_code_t TeepAgentProcessError(_In_ void* sessionHandle)
 {
     (void)sessionHandle;
 
@@ -491,8 +491,9 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
     free((void*)reply.ptr);
 }
 
-static teep_error_code_t TeepAgentHandleInvalidMessage(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TeepAgentHandleInvalidMessage(_In_ void* sessionHandle, _In_ QCBORDecodeContext* context)
 {
+    TEEP_UNUSED(context);
     TeepLogMessage("TeepAgentHandleInvalidMessage\n");
 
     UsefulBufC errorResponse;
@@ -644,8 +645,8 @@ static teep_error_code_t TeepAgentVerifyMessageSignature(
     _In_reads_(messageLength) const char* message,
     size_t messageLength,
     _Out_ UsefulBufC* pencoded)
-
 {
+    TEEP_UNUSED(sessionHandle);
     UsefulBufC signed_cose;
     signed_cose.ptr = message;
     signed_cose.len = messageLength;
@@ -874,5 +875,6 @@ teep_error_code_t TeepAgentUnrequestTA(
 
 teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
 {
+    TEEP_UNUSED(dataDirectory);
     return TEEP_ERR_SUCCESS;
 }

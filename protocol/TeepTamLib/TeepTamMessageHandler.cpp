@@ -145,7 +145,7 @@ static teep_error_code_t TamProcessTeepConnect(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType)
 {
-    printf("Received client connection\n");
+    TeepLogMessage("Received client connection\n");
 
     teep_error_code_t teep_error = TEEP_ERR_SUCCESS;
     Q_USEFUL_BUF_MAKE_STACK_UB(encoded, 4096);
@@ -160,10 +160,9 @@ static teep_error_code_t TamProcessTeepConnect(
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
-    printf("Sending CBOR message: ");
-    HexPrintBuffer(encodedC.ptr, encodedC.len);
+    HexPrintBuffer("Sending CBOR message: ", encodedC.ptr, encodedC.len);
 
-    printf("Sending QueryRequest...\n");
+    TeepLogMessage("Sending QueryRequest...\n");
     teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, true);
     return teep_error;
 }
@@ -321,7 +320,7 @@ teep_error_code_t TamHandleCborQueryResponse(
     void* sessionHandle,
     QCBORDecodeContext* context)
 {
-    printf("TamHandleCborQueryResponse\n");
+    TeepLogMessage("TamHandleCborQueryResponse\n");
 
     QCBORItem item;
     std::ostringstream errorMessage;
@@ -359,7 +358,7 @@ teep_error_code_t TamHandleCborQueryResponse(
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             if (item.val.uint64 != 0) {
-                printf("Unrecognized protocol version %lld\n", item.val.uint64);
+                TeepLogMessage("Unrecognized protocol version %lld\n", item.val.uint64);
                 return TEEP_ERR_UNSUPPORTED_MSG_VERSION;
             }
             break;
@@ -387,7 +386,7 @@ teep_error_code_t TamHandleCborQueryResponse(
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             if (item.val.int64 != CBOR_TAG_COSE_SIGN1) {
-                printf("Unrecognized COSE type %lld\n", item.val.uint64);
+                TeepLogMessage("Unrecognized COSE type %lld\n", item.val.uint64);
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid cipher suite */
             }
             QCBORDecode_GetNext(context, &item);
@@ -396,7 +395,7 @@ teep_error_code_t TamHandleCborQueryResponse(
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             if (item.val.int64 != T_COSE_ALGORITHM_ES256) {
-                printf("Unrecognized COSE algorithm %lld\n", item.val.uint64);
+                TeepLogMessage("Unrecognized COSE algorithm %lld\n", item.val.uint64);
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid cipher suite */
             }
             break;
@@ -456,7 +455,7 @@ teep_error_code_t TamHandleCborQueryResponse(
                         currentRci->HaveBinary = (item.val.uint64 != 0);
                         break;
                     default:
-                        printf("Unrecognized option label %d\n", label);
+                        TeepLogMessage("Unrecognized option label %d\n", label);
                         return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
                     }
                 }
@@ -528,7 +527,7 @@ teep_error_code_t TamHandleCborQueryResponse(
                         break;
                     default:
 #ifdef _DEBUG
-                        printf("Unrecognized option label %d\n", label);
+                        TeepLogMessage("Unrecognized option label %d\n", label);
 #endif
                         return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
                     }
@@ -548,18 +547,18 @@ teep_error_code_t TamHandleCborQueryResponse(
             if (attestationPayloadFormat == "application/eat-cwt; eat_profile=https://datatracker.ietf.org/doc/html/draft-ietf-teep-protocol-10") {
                 // We have Attestation Results.
 #ifdef _DEBUG
-                printf("Got attestation results in the TEEP profile\n");
+                TeepLogMessage("Got attestation results in the TEEP profile\n");
 #endif
             } else {
                 // We have Evidence that we need to send to a verifier.
 #ifdef _DEBUG
-                printf("Got Evidence in format: %s\n", attestationPayloadFormat.c_str());
+                TeepLogMessage("Got Evidence in format: %s\n", attestationPayloadFormat.c_str());
 #endif
             }
             break;
         default:
 #ifdef _DEBUG
-            printf("Unrecognized option label %d\n", label);
+            TeepLogMessage("Unrecognized option label %d\n", label);
 #endif
             return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
         }
@@ -578,10 +577,9 @@ teep_error_code_t TamHandleCborQueryResponse(
                 return TEEP_ERR_TEMPORARY_ERROR;
             }
 
-            printf("Sending CBOR message: ");
-            HexPrintBuffer(update.ptr, update.len);
+            HexPrintBuffer("Sending CBOR message: ", update.ptr, update.len);
 
-            printf("Sending Update message...\n");
+            TeepLogMessage("Sending Update message...\n");
 
             err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, true);
             free((void*)update.ptr);
@@ -599,7 +597,7 @@ teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* 
     (void)sessionHandle;
     (void)context;
 
-    printf("Received Success message...\n");
+    TeepLogMessage("Received Success message...\n");
 
     QCBORItem item;
     std::ostringstream errorMessage;
@@ -629,10 +627,10 @@ teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* 
 
         case TEEP_LABEL_MSG: {
             if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
-                printf("Wrong msg data type %d\n", item.uDataType);
+                TeepLogMessage("Wrong msg data type %d\n", item.uDataType);
                 return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
             }
-            printf("MSG: %hs\n", std::string((const char*)item.val.string.ptr, item.val.string.len).c_str());
+            TeepLogMessage("MSG: %hs\n", std::string((const char*)item.val.string.ptr, item.val.string.len).c_str());
             break;
         }
 
@@ -655,7 +653,7 @@ teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* 
         }
         default:
 #ifdef _DEBUG
-            printf("Unrecognized option label %d\n", label);
+            TeepLogMessage("Unrecognized option label %d\n", label);
 #endif
             return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
         }
@@ -671,7 +669,7 @@ teep_error_code_t TamHandleCborError(
     (void)sessionHandle;
     (void)context;
 
-    printf("Received Error message...\n");
+    TeepLogMessage("Received Error message...\n");
     return TEEP_ERR_SUCCESS;
 }
 
@@ -691,7 +689,7 @@ static teep_error_code_t TamVerifyMessageSignature(
             return TEEP_ERR_SUCCESS;
         }
     }
-    printf("TAM key verification failed\n");
+    TeepLogMessage("TAM key verification failed\n");
     return TEEP_ERR_PERMANENT_ERROR;
 }
 
@@ -701,9 +699,8 @@ teep_error_code_t TamHandleCborMessage(
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
 {
-    printf("TeepHandleCborMessage got COSE message:\n");
-    HexPrintBuffer(message, messageLength);
-    printf("\n");
+    HexPrintBuffer("TeepHandleCborMessage got COSE message:\n", message, messageLength);
+    TeepLogMessage("\n");
 
     // Verify signature and save which signing key was used.
     UsefulBufC encoded;
@@ -712,8 +709,7 @@ teep_error_code_t TamHandleCborMessage(
         return teeperr;
     }
 
-    printf("Received CBOR message: ");
-    HexPrintBuffer(encoded.ptr, encoded.len);
+    HexPrintBuffer("Received CBOR message: ", encoded.ptr, encoded.len);
 
     QCBORDecodeContext context;
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
@@ -733,7 +729,7 @@ teep_error_code_t TamHandleCborMessage(
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
-    printf("Received CBOR TEEP message type=%d\n", messageType);
+    TeepLogMessage("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_RESPONSE:
         teeperr = TamHandleCborQueryResponse(sessionHandle, &context);
@@ -764,7 +760,7 @@ teep_error_code_t TamProcessTeepMessage(
 {
     teep_error_code_t err = TEEP_ERR_SUCCESS;
 
-    printf("Received contentType='%s' messageLength=%zd\n", mediaType, messageLength);
+    TeepLogMessage("Received contentType='%s' messageLength=%zd\n", mediaType, messageLength);
 
     if (messageLength < 1) {
         return TEEP_ERR_PERMANENT_ERROR;

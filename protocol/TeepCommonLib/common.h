@@ -32,7 +32,9 @@ typedef struct _teep_uuid_t
 #endif
 
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength);
-void HexPrintBuffer(const void* buffer, size_t length);
+void HexPrintBuffer(_In_opt_z_ const char* label, const void* buffer, size_t length);
+
+void TeepLogMessage(_In_ const char* format, ...);
 
 teep_error_code_t teep_get_signing_key_pair(
     _Out_ struct t_cose_key* key_pair,

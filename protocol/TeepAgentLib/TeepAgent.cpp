@@ -86,7 +86,7 @@ teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri)
 
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
-        printf("Sending an empty message...\n");
+        TeepLogMessage("Sending an empty message...\n");
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
         teep_error_code_t error = TeepAgentConnect(tamUri, acceptMediaType);
         if (error != TEEP_ERR_SUCCESS) {
@@ -177,7 +177,7 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
                         }
                         if (item.val.int64 == TEEP_FRESHNESS_MECHANISM_NONCE) {
                             isNonceSupported = true;
-                            printf("Choosing Nonce freshness mechanism\n");
+                            TeepLogMessage("Choosing Nonce freshness mechanism\n");
                         }
                     }
                     if (!isNonceSupported) {
@@ -485,8 +485,7 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
         return;
     }
 
-    printf("Sending CBOR message: ");
-    HexPrintBuffer(reply.ptr, reply.len);
+    HexPrintBuffer("Sending CBOR message: ", reply.ptr, reply.len);
 
     (void)TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
     free((void*)reply.ptr);
@@ -494,7 +493,7 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
 
 static teep_error_code_t TeepAgentHandleInvalidMessage(void* sessionHandle, QCBORDecodeContext* context)
 {
-    printf("TeepAgentHandleInvalidMessage\n");
+    TeepLogMessage("TeepAgentHandleInvalidMessage\n");
 
     UsefulBufC errorResponse;
     UsefulBufC errorToken = NULLUsefulBufC;
@@ -507,7 +506,7 @@ static teep_error_code_t TeepAgentHandleInvalidMessage(void* sessionHandle, QCBO
 
 static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
-    printf("TeepAgentHandleCborQueryRequest\n");
+    TeepLogMessage("TeepAgentHandleCborQueryRequest\n");
 
     /* 3. Compose a raw response. */
     UsefulBufC queryResponse;
@@ -521,10 +520,9 @@ static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QC
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
-    printf("Sending CBOR message: ");
-    HexPrintBuffer(queryResponse.ptr, queryResponse.len);
+    HexPrintBuffer("Sending CBOR message: ", queryResponse.ptr, queryResponse.len);
 
-    printf("Sending QueryResponse...\n");
+    TeepLogMessage("Sending QueryResponse...\n");
 
     errorCode = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &queryResponse);
     free((void*)queryResponse.ptr);
@@ -533,7 +531,7 @@ static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QC
 
 teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
 {
-    printf("TeepAgentHandleCborUpdate\n");
+    TeepLogMessage("TeepAgentHandleCborUpdate\n");
 
     std::ostringstream errorMessage;
     QCBORItem item;
@@ -577,7 +575,7 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
             }
             uint16_t arrayEntryCount = item.val.uCount;
 #ifdef _DEBUG
-            printf("Parsing %d manifest-list entries...\n", item.val.uCount);
+            TeepLogMessage("Parsing %d manifest-list entries...\n", item.val.uCount);
 #endif
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
@@ -634,8 +632,7 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
         return TEEP_ERR_TEMPORARY_ERROR;
     }
 
-    printf("Sending CBOR message: ");
-    HexPrintBuffer(reply.ptr, reply.len);
+    HexPrintBuffer("Sending CBOR message: ", reply.ptr, reply.len);
 
     teep_error = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
     free((void*)reply.ptr);
@@ -659,7 +656,7 @@ static teep_error_code_t TeepAgentVerifyMessageSignature(
             return TEEP_ERR_SUCCESS;
         }
     }
-    printf("TAM key verification failed\n");
+    TeepLogMessage("TAM key verification failed\n");
     return TEEP_ERR_PERMANENT_ERROR;
 
 #if 0
@@ -710,8 +707,7 @@ static teep_error_code_t TeepAgentHandleCborMessage(
         return teeperr;
     }
 
-    printf("Received CBOR message: ");
-    HexPrintBuffer(encoded.ptr, encoded.len);
+    HexPrintBuffer("Received CBOR message: ", encoded.ptr, encoded.len);
 
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
@@ -728,7 +724,7 @@ static teep_error_code_t TeepAgentHandleCborMessage(
     }
 
     teep_message_type_t messageType = (teep_message_type_t)item.val.uint64;
-    printf("Received CBOR TEEP message type=%d\n", messageType);
+    TeepLogMessage("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_REQUEST:
         teeperr = TeepAgentHandleCborQueryRequest(sessionHandle, &context);
@@ -756,7 +752,7 @@ teep_error_code_t TeepAgentProcessTeepMessage(
 {
     teep_error_code_t err = TEEP_ERR_SUCCESS;
 
-    printf("Received contentType='%s' messageLength=%zd\n", mediaType, messageLength);
+    TeepLogMessage("Received contentType='%s' messageLength=%zd\n", mediaType, messageLength);
 
     if (messageLength < 1) {
         return TEEP_ERR_PERMANENT_ERROR;
@@ -810,7 +806,7 @@ teep_error_code_t TeepAgentRequestTA(
 
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
-        printf("Sending an empty message...\n");
+        TeepLogMessage("Sending an empty message...\n");
         const char* acceptMediaType = TEEP_CBOR_MEDIA_TYPE;
         err = TeepAgentConnect(tamUri, acceptMediaType);
         if (err != TEEP_ERR_SUCCESS) {
@@ -863,7 +859,7 @@ teep_error_code_t TeepAgentUnrequestTA(
 
     if (!haveTrustedTamCert) {
         // Pass back a TAM URI with no buffer.
-        printf("Sending an empty message...\n");
+        TeepLogMessage("Sending an empty message...\n");
         teep_error = TeepAgentConnect(tamUri, TEEP_CBOR_MEDIA_TYPE);
         if (teep_error != TEEP_ERR_SUCCESS) {
             return teep_error;

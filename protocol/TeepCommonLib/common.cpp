@@ -240,7 +240,7 @@ teep_sign_cbor_message(
          */
         signedMessage);
     if (return_value != T_COSE_SUCCESS) {
-        printf("COSE Sign1 failed with error %d\n", return_value);
+        TeepLogMessage("COSE Sign1 failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
@@ -309,10 +309,13 @@ const unsigned char* GetDerCertificate(
     return cert;
 }
 
-void HexPrintBuffer(const void* buffer, size_t length)
+void HexPrintBuffer(_In_opt_z_ const char* label, const void* buffer, size_t length)
 {
     const unsigned char* charbuffer = (const unsigned char*)buffer;
 
+    if (label) {
+        printf(label);
+    }
     for (size_t i = 0; i < length; i++) {
         printf("%02x ", charbuffer[i]);
     }
@@ -336,3 +339,10 @@ teep_error_code_t teep_random(
     return TEEP_ERR_SUCCESS;
 }
 #endif
+
+void TeepLogMessage(_In_ const char* format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    vprintf(format, ap);
+}

@@ -238,7 +238,7 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
                     }
                 }
                 if (!found) {
-                    // TODO: include teep-cipher-suite-sign1-es256.
+                    // TODO: include teep-cipher-suite-sign1-es256 or eddsa depending on configuration.
                     return TEEP_ERR_UNSUPPORTED_CIPHER_SUITES;
                 }
                 // Add selected-cipher-suite to the QueryResponse.
@@ -272,6 +272,7 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
                 // Add tc-list.  Currently we populate this from the list of
                 // "unneeded" components since most TEEs (like SGX) can't enumerate
                 // any others anyway.
+                // TODO(#116): enumerate installed manifests.
                 QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
                 {
                     for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {

@@ -120,7 +120,11 @@ static teep_error_code_t ConfigureManifest(
                 component_id.b[i] = uuid[i];
             }
 
-            Manifest::AddManifest(component_id, manifest, manifest_size, is_required);
+            if (manifest_size > 2 && manifest[0] == 0xd8 && manifest[1] == 0x6b) {
+                Manifest::AddManifest(component_id, manifest + 2, manifest_size - 2, is_required);
+            } else {
+                Manifest::AddManifest(component_id, manifest, manifest_size, is_required);
+            }
             result = TEEP_ERR_SUCCESS;
         }
         free(basename);

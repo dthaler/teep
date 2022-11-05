@@ -97,6 +97,9 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded, std::ostream& error
 // Parse a SUIT_Envelope out of a decode context and try to install it.
 teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded, std::ostream& errorMessage)
 {
+    // Save manifest.
+    // TODO(#116): extract component ID out of manifest to get a filename.
+
     QCBORDecodeContext context;
 
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);

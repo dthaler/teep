@@ -51,20 +51,21 @@ static void CopyFile(
     copy(sourceFilename, destinationPath, std::filesystem::copy_options::overwrite_existing);
 }
 
-static void ConfigureKeys()
+static void TestConfigureKeys(teep_signature_kind_t signatureKind)
 {
-    // Provision TAM key in TAM if not already done.
-    char tam_public_key_filename[256];
-    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE, tam_public_key_filename) == 0);
+    // Provision TAM keys in TAM if not already done.
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
 
     // Provision Agent key in agent if not already done.
     char agent_public_key_filename[256];
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, agent_public_key_filename) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, signatureKind, agent_public_key_filename) == 0);
 
     // Copy Agent keys to TAM
     CopyFile(agent_public_key_filename, TAM_DATA_DIRECTORY "/trusted");
 
     // Copy TAM keys to Agent
+    char tam_public_key_filename[256];
+    TamGetPublicKey(signatureKind, tam_public_key_filename);
     CopyFile(tam_public_key_filename, TEEP_AGENT_DATA_DIRECTORY "/trusted");
 
     StopAgentBroker();
@@ -73,9 +74,9 @@ static void ConfigureKeys()
 
 TEST_CASE("UnrequestTA", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE, nullptr) == 0);
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -95,9 +96,9 @@ TEST_CASE("UnrequestTA", "[protocol]")
 
 TEST_CASE("RequestTA", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE, nullptr) == 0);
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -117,9 +118,9 @@ TEST_CASE("RequestTA", "[protocol]")
 
 TEST_CASE("PolicyCheck with no policy change", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE, nullptr) == 0);
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -138,9 +139,9 @@ TEST_CASE("PolicyCheck with no policy change", "[protocol]")
 
 TEST_CASE("Unexpected ProcessError", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE, nullptr) == 0);
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -157,9 +158,9 @@ TEST_CASE("Unexpected ProcessError", "[protocol]")
 
 TEST_CASE("RequestPolicyCheck errors", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE, nullptr) == 0);
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     // Schedule a transport error during each of the 3 operations:
     // Connect, QueryRequest, QueryResponse.
@@ -181,8 +182,8 @@ TEST_CASE("RequestPolicyCheck errors", "[protocol]")
 
 TEST_CASE("Agent receives bad media type", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -202,8 +203,8 @@ TEST_CASE("Agent receives bad media type", "[protocol]")
 
 TEST_CASE("Agent receives bad COSE message", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -224,13 +225,14 @@ TEST_CASE("Agent receives bad COSE message", "[protocol]")
 teep_error_code_t
 TamSignCborMessage(
     _In_ const UsefulBufC* unsignedMessage,
-    _In_ UsefulBuf signedMessageBuffer,
-    _Out_ UsefulBufC* signedMessage);
+    _In_ UsefulBuf signed_message_buffer,
+    teep_signature_kind_t signatureKind,
+    _Out_ UsefulBufC* signed_message);
 
 TEST_CASE("Agent receives bad TEEP message", "[protocol]")
 {
-    ConfigureKeys();
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -241,7 +243,7 @@ TEST_CASE("Agent receives bad TEEP message", "[protocol]")
     unsignedMessage.len = message.size();
     UsefulBufC signedMessage;
     UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
-    teep_error_code_t teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
+    teep_error_code_t teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, TEEP_SIGNATURE_ES256, &signedMessage);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
 
     // Try bad COSE message.
@@ -275,8 +277,8 @@ teep_error_code_t TeepAgentComposeQueryResponse(
 
 static void TestQueryRequestVersion(int min_version, int max_version, teep_error_code_t expected_result, uint64_t expected_message_count)
 {
-    ConfigureKeys();
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -286,7 +288,7 @@ static void TestQueryRequestVersion(int min_version, int max_version, teep_error
     teep_error_code_t teep_error = TamComposeQueryRequest(min_version, max_version, &unsignedMessage);
     UsefulBufC signedMessage;
     UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
-    teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
+    teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, TEEP_SIGNATURE_BOTH, &signedMessage);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
 
     void* sessionHandle = nullptr;
@@ -359,10 +361,11 @@ static teep_error_code_t TestComposeQueryResponse(int version, _Out_ UsefulBufC*
     return TEEP_ERR_SUCCESS;
 }
 
-static void TestQueryResponseVersion(int version, teep_error_code_t expected_result, uint64_t expected_message_count)
+static void TestQueryResponseVersion(int version, teep_signature_kind_t signatureKind, teep_error_code_t expected_result, uint64_t expected_message_count)
 {
-    ConfigureKeys();
-    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    TestConfigureKeys(signatureKind);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, signatureKind, nullptr) == 0);
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
@@ -387,14 +390,20 @@ static void TestQueryResponseVersion(int version, teep_error_code_t expected_res
     StopAgentBroker();
 }
 
-TEST_CASE("TAM receives QueryResponse with supported version", "[protocol]")
+TEST_CASE("TAM receives QueryResponse with supported version and ES256", "[protocol]")
 {
     const uint64_t expected_message_count = 0;
-    TestQueryResponseVersion(0, TEEP_ERR_SUCCESS, expected_message_count);
+    TestQueryResponseVersion(0, TEEP_SIGNATURE_ES256, TEEP_ERR_SUCCESS, expected_message_count);
 }
 
 TEST_CASE("TAM receives QueryResponse with unsupported version", "[protocol]")
 {
     const uint64_t expected_message_count = 0;
-    TestQueryResponseVersion(1, TEEP_ERR_UNSUPPORTED_MSG_VERSION, expected_message_count);
+    TestQueryResponseVersion(1, TEEP_SIGNATURE_ES256, TEEP_ERR_UNSUPPORTED_MSG_VERSION, expected_message_count);
+}
+
+TEST_CASE("TAM receives QueryResponse with supported version and EdDSA", "[protocol]")
+{
+    const uint64_t expected_message_count = 0;
+    TestQueryResponseVersion(0, TEEP_SIGNATURE_EDDSA, TEEP_ERR_SUCCESS, expected_message_count);
 }

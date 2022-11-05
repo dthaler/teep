@@ -4,8 +4,6 @@
 
 #include "TrustedComponent.h"
 
-const unsigned char* GetAgentDerCertificate(size_t *pCertLen);
-
 extern TrustedComponent* g_RequestedComponentList;
 
 extern "C" {

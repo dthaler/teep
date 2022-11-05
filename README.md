@@ -52,7 +52,7 @@ Configuration:
   directory is read by the TeepTamBrokerLib and used to populate the TAM's
   repository of manifests.  A sample SUIT manifest is included by default.
   The files must be named as `<UUID>.cbor` where UUID is the TA ID.
-  The project at https://github.com/ARMmbed/suit-manifest-generator
+  The project at https://gitlab.arm.com/research/ietf-suit/suit-tool
   can be used to generate SUIT manifest files.
 
 Apps:

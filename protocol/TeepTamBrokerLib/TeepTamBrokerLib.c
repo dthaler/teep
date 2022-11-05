@@ -45,8 +45,7 @@ int TamBrokerProcess(_In_z_ const wchar_t* tamUri)
     return err;
 }
 
-int StartTamBroker(_In_z_ const char* dataDirectory, int simulatedTee,
-    _Out_writes_opt_z_(256) char* publicKeyFilename)
+int StartTamBroker(_In_z_ const char* dataDirectory, int simulatedTee)
 {
     // Create data directory if it doesn't already exist.
     _mkdir(dataDirectory);
@@ -69,7 +68,7 @@ int StartTamBroker(_In_z_ const char* dataDirectory, int simulatedTee,
         return result;
     }
 
-    return TamInitializeKeys(dataDirectory, publicKeyFilename);
+    return TamInitializeKeys(dataDirectory);
 #endif
 }
 

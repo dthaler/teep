@@ -15,7 +15,7 @@ int AgentBrokerUnrequestTA(
 extern "C" {
 #endif
 
-int StartAgentBroker(_In_z_ const char* data_directory, int simulated_tee, _Out_writes_opt_z_(256) char* public_key_filename);
+int StartAgentBroker(_In_z_ const char* data_directory, int simulated_tee, teep_signature_kind_t signatureKind, _Out_writes_opt_z_(256) char* public_key_filename);
 void StopAgentBroker(void);
 
 #ifdef __cplusplus

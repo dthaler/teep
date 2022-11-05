@@ -6,6 +6,6 @@
 #define TAM_DATA_DIRECTORY "../../../tam"
 
 TEST_CASE("Start-Stop TAM Broker", "[tam]") {
-    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE, nullptr) == 0);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     StopTamBroker();
 }

@@ -30,7 +30,7 @@ int wmain(int argc, wchar_t** argv)
     const wchar_t* tamUri = argv[1];
     printf("Listening on TAM URI: %ls\n", tamUri);
 
-    int err = StartTamBroker(DEFAULT_DATA_DIRECTORY, simulated_tee, NULL);
+    int err = StartTamBroker(DEFAULT_DATA_DIRECTORY, simulated_tee);
     if (err != 0) {
         return err;
     }

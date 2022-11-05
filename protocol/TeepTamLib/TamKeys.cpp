@@ -11,35 +11,18 @@ using namespace std;
 using namespace std::__fs;
 #endif
 
-#define TAM_SIGNING_PUBLIC_KEY_FILENAME "tam-public-key.pem"
-#define TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME "tam-private-key-pair.pem"
+#define TAM_ES256_SIGNING_PUBLIC_KEY_FILENAME "tam-es256-public-key.pem"
+#define TAM_ES256_SIGNING_PRIVATE_KEY_PAIR_FILENAME "tam-es256-private-key-pair.pem"
 
-struct t_cose_key g_tam_signing_key_pair;
+#define TAM_EDDSA_SIGNING_PUBLIC_KEY_FILENAME "tam-eddsa-public-key.pem"
+#define TAM_EDDSA_SIGNING_PRIVATE_KEY_PAIR_FILENAME "tam-eddsa-private-key-pair.pem"
 
-teep_error_code_t TamGetSigningKeyPair(_Out_ struct t_cose_key* key_pair)
+std::map<teep_signature_kind_t, struct t_cose_key> g_tam_signing_key_pairs;
+
+teep_error_code_t TamGetSigningKeyPairs(_Out_ std::map<teep_signature_kind_t, struct t_cose_key>& key_pairs)
 {
-    *key_pair = g_tam_signing_key_pair;
+    key_pairs = g_tam_signing_key_pairs;
     return TEEP_ERR_SUCCESS;
-}
-
-const unsigned char* g_TamDerCertificate = nullptr;
-size_t g_TamDerCertificateSize = 0;
-
-const unsigned char* GetTamDerCertificate(_Out_ size_t* pCertLen)
-{
-    if (g_TamDerCertificate == nullptr) {
-        // Construct a self-signed DER certificate based on the COSE key.
-        t_cose_key key_pair;
-        teep_error_code_t teep_error = TamGetSigningKeyPair(&key_pair);
-        if (teep_error != TEEP_ERR_SUCCESS) {
-            return nullptr;
-        }
-
-        g_TamDerCertificate = GetDerCertificate(&key_pair, &g_TamDerCertificateSize);
-    }
-
-    *pCertLen = g_TamDerCertificateSize;
-    return g_TamDerCertificate;
 }
 
 vector<struct t_cose_key> g_agent_key_pairs;
@@ -81,6 +64,8 @@ teep_error_code_t TamConfigureAgentKeys(_In_z_ const char* directory_name)
             break;
         }
         g_agent_key_pairs.emplace_back(key_pair);
+
+        TeepLogMessage("TAM loaded TEEP agent key from %s\n", keyfile.c_str());
     }
     closedir(dir);
     return result;
@@ -92,25 +77,71 @@ vector<struct t_cose_key> TamGetTeepAgentKeys()
     return g_agent_key_pairs;
 }
 
-teep_error_code_t TamInitializeKeys(_In_z_ const char* dataDirectory, _Out_writes_opt_z_(256) char* publicKeyFilename)
+filesystem::path g_data_directory;
+
+void TamGetPublicKey(teep_signature_kind_t kind, _Out_writes_opt_z_(256) char* publicKeyFilename)
 {
-    filesystem::path privateKeyPairFilenamePath = dataDirectory;
-    privateKeyPairFilenamePath.append(TAM_SIGNING_PRIVATE_KEY_PAIR_FILENAME);
+    filesystem::path publicKeyFilenamePath = g_data_directory;
 
-    filesystem::path publicKeyFilenamePath = dataDirectory;
-    publicKeyFilenamePath.append(TAM_SIGNING_PUBLIC_KEY_FILENAME);
+    switch (kind) {
+    case TEEP_SIGNATURE_ES256:
+        publicKeyFilenamePath.append(TAM_ES256_SIGNING_PUBLIC_KEY_FILENAME);
+        break;
+    case TEEP_SIGNATURE_EDDSA:
+        publicKeyFilenamePath.append(TAM_EDDSA_SIGNING_PUBLIC_KEY_FILENAME);
+        break;
+    default:
+        assert(FALSE);
+    }
 
-    teep_error_code_t result = teep_get_signing_key_pair(&g_tam_signing_key_pair,
+    strcpy_s(publicKeyFilename, 256, publicKeyFilenamePath.string().c_str());
+}
+
+static teep_error_code_t
+_InitializeKey(teep_signature_kind_t signatureKind)
+{
+    filesystem::path privateKeyPairFilenamePath = g_data_directory;
+    filesystem::path publicKeyFilenamePath = g_data_directory;
+
+    switch (signatureKind) {
+    case TEEP_SIGNATURE_ES256:
+        privateKeyPairFilenamePath.append(TAM_ES256_SIGNING_PRIVATE_KEY_PAIR_FILENAME);
+        publicKeyFilenamePath.append(TAM_ES256_SIGNING_PUBLIC_KEY_FILENAME);
+        break;
+    case TEEP_SIGNATURE_EDDSA:
+        privateKeyPairFilenamePath.append(TAM_EDDSA_SIGNING_PRIVATE_KEY_PAIR_FILENAME);
+        publicKeyFilenamePath.append(TAM_EDDSA_SIGNING_PUBLIC_KEY_FILENAME);
+        break;
+    default:
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    struct t_cose_key key_pair;
+    teep_error_code_t result = teep_load_signing_key_pair(&key_pair,
         privateKeyPairFilenamePath.string().c_str(),
-        publicKeyFilenamePath.string().c_str());
+        publicKeyFilenamePath.string().c_str(),
+        signatureKind);
     if (result != TEEP_ERR_SUCCESS) {
         return result;
     }
-    if (publicKeyFilename) {
-        strcpy_s(publicKeyFilename, 256, publicKeyFilenamePath.string().c_str());
+    g_tam_signing_key_pairs[signatureKind] = key_pair;
+    return TEEP_ERR_SUCCESS;
+}
+
+teep_error_code_t TamInitializeKeys(_In_z_ const char* dataDirectory)
+{
+    g_data_directory = dataDirectory;
+
+    teep_error_code_t result = _InitializeKey(TEEP_SIGNATURE_ES256);
+    if (result != TEEP_ERR_SUCCESS) {
+        return result;
+    }
+    result = _InitializeKey(TEEP_SIGNATURE_EDDSA);
+    if (result != TEEP_ERR_SUCCESS) {
+        return result;
     }
 
-    filesystem::path trustedKeysFilenamePath = dataDirectory;
+    filesystem::path trustedKeysFilenamePath = g_data_directory;
     trustedKeysFilenamePath.append("trusted");
 
     result = TamConfigureAgentKeys(trustedKeysFilenamePath.string().c_str());

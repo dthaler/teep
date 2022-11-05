@@ -47,9 +47,15 @@ int main(int argc, char** argv)
     const char* requestedTa = DEFAULT_TA_ID;
     const char* unneededTa = NULL;
     int simulated_tee = 0;
+    teep_signature_kind_t signatureKind = TEEP_SIGNATURE_ES256;
 
     if ((argc > 1) && (strcmp(argv[1], "-s") == 0)) {
         simulated_tee = 1;
+        argc--;
+        argv++;
+    }
+    if ((argc > 1) && (strcmp(argv[1], "-e") == 0)) {
+        signatureKind = TEEP_SIGNATURE_EDDSA;
         argc--;
         argv++;
     }
@@ -66,8 +72,9 @@ int main(int argc, char** argv)
     }
 
     if (argc < 2) {
-        printf("Usage: DeviceHost [-s] [-r <TA ID>] [-u <TA ID>] <TAM URI>\n");
+        printf("Usage: DeviceHost [-s] [-e] [-r <TA ID>] [-u <TA ID>] <TAM URI>\n");
         printf("       where -s if present means to only simulate a TEE\n");
+        printf("             -e if present means to use EdDSA instead of ES256\n");
         printf("             -r <TA ID> if present is a TA ID to request (%s if absent)\n", DEFAULT_TA_ID);
         printf("             -u <TA ID> if present is a TA ID that is no longer needed by any normal app\n");
         printf("             <TAM URI> is the default TAM URI to use\n");
@@ -77,7 +84,7 @@ int main(int argc, char** argv)
     const char* defaultTamUri = argv[1];
     printf("Using default TAM URI: %s\n", defaultTamUri);
 
-    int err = StartAgentBroker(DEFAULT_DATA_DIRECTORY, simulated_tee, NULL);
+    int err = StartAgentBroker(DEFAULT_DATA_DIRECTORY, simulated_tee, signatureKind, NULL);
     if (err != 0) {
         return err;
     }

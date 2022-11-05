@@ -1,5 +1,6 @@
 // Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
+#ifndef TEEP_USE_TEE
 #include <stdio.h>
 #include "dirent.h"
 
@@ -71,3 +72,4 @@ int closedir(_In_ DIR* dirp)
     free(dirp);
     return 0;
 }
+#endif

@@ -5,10 +5,7 @@
 // This file has defines that are in common between
 // the TAM and the TEEP Agent.
 
-#define TEEP_USE_COSE 1
-
-#include "teep_protocol.h"
-#include "qcbor/UsefulBuf.h"
+#define TEEP_USE_COSE 1 // If undefined, messages will be sent in the clear for debugging.
 
 #define UUID_LENGTH 16 // Size in bytes of a UUID (RFC 4122)
 
@@ -20,6 +17,15 @@ typedef oe_uuid_t teep_uuid_t;
 #define _In_
 #define _In_z_
 #define _In_reads_(x)
+#define _Out_
+#define _Out_writes_(x)
+#define _Out_writes_opt_z_(x)
+#define _Ret_writes_bytes_(x)
+#define _Ret_writes_bytes_maybenull_(x)
+#define _Return_type_success_(x)
+#define strcpy_s(dest, dest_sz, src) strcpy(dest, src)
+#define sprintf_s(dest, sz, ...) sprintf(dest, __VA_ARGS__)
+#define _strdup strdup
 #else
 #include <assert.h>
 #include <stdint.h>
@@ -30,6 +36,10 @@ typedef struct _teep_uuid_t
 } teep_uuid_t;
 #define TEEP_ASSERT(x) assert(x)
 #endif
+#define TEEP_UNUSED(x) (void)(x)
+
+#include "teep_protocol.h"
+#include "qcbor/UsefulBuf.h"
 
 teep_error_code_t TeepHandleCborMessage(void* sessionHandle, const char* message, size_t messageLength);
 void HexPrintBuffer(_In_opt_z_ const char* label, const void* buffer, size_t length);

@@ -68,13 +68,13 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ta/TeepCommonTALib;$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)protocol/TeepAgentLib;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>jansson;jose;jose_openssl;t_cose;LibEay32_t;qcbor;TeepCommonTALib;TeepAgentLib;TeepCommonLib</AdditionalDependencies>
+      <AdditionalDependencies>t_cose;qcbor;TeepCommonTALib;TeepAgentLib;TeepCommonLib;opensslcrypto</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">
@@ -110,7 +110,7 @@
     <ClCompile Include="TeepAgent_t.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="TeepDeviceEcallHandler.cpp" />
+    <ClCompile Include="TeepAgentEcallHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TeepAgent_t.h" />
@@ -130,10 +130,6 @@
     <Xml Include="TeepAgentTA.config.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libeay32\LibEay32_t.vcxproj">
-      <Project>{275fac8b-b49c-4c91-b708-5abfb9e24215}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
     <ProjectReference Include="..\TeepCommonTALib\TeepCommonTALib.vcxproj">
       <Project>{213acb9d-9134-4bc8-aa44-b01e13df0c88}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

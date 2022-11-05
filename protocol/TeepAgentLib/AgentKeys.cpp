@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: MIT
 #include <dirent.h>
 #include <filesystem>
+#include <vector>
 #include "t_cose/t_cose_common.h"
 #include "TeepAgentLib.h"
 #include "AgentKeys.h"
+using namespace std;
+#ifdef TEEP_USE_TEE
+using namespace std::__fs;
+#endif
 
 #define TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME "agent-private-key-pair.pem"
 #define TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME "agent-public-key.pem"
@@ -17,7 +22,7 @@ teep_error_code_t TeepAgentGetSigningKeyPair(struct t_cose_key* key_pair)
     return TEEP_ERR_SUCCESS;
 }
 
-std::vector<struct t_cose_key> g_tam_key_pairs;
+vector<struct t_cose_key> g_tam_key_pairs;
 
 /* TODO: This is just a placeholder for a real implementation.
  * Currently we provide untrusted keys into the TAM.
@@ -47,7 +52,7 @@ teep_error_code_t TeepAgentConfigureTamKeys(_In_z_ const char* directory_name)
             strcmp(filename + filename_length - 4, ".pem") != 0) {
             continue;
         }
-        std::string keyfile = std::string(directory_name) + "/" + filename;
+        string keyfile = string(directory_name) + "/" + filename;
 
         // Load public key from file.
         struct t_cose_key key_pair;
@@ -62,17 +67,17 @@ teep_error_code_t TeepAgentConfigureTamKeys(_In_z_ const char* directory_name)
 }
 
 /* Get the TEEP Agents' public keys to verify an incoming message against. */
-std::vector<struct t_cose_key> TeepAgentGetTamKeys()
+vector<struct t_cose_key> TeepAgentGetTamKeys()
 {
     return g_tam_key_pairs;
 }
 
 teep_error_code_t TeepAgentInitializeKeys(_In_z_ const char* dataDirectory, _Out_writes_opt_z_(256) char* publicKeyFilename)
 {
-    std::filesystem::path privateKeyPairFilenamePath = dataDirectory;
+    filesystem::path privateKeyPairFilenamePath = dataDirectory;
     privateKeyPairFilenamePath.append(TEEP_AGENT_SIGNING_PRIVATE_KEY_PAIR_FILENAME);
 
-    std::filesystem::path publicKeyFilenamePath = dataDirectory;
+    filesystem::path publicKeyFilenamePath = dataDirectory;
     publicKeyFilenamePath.append(TEEP_AGENT_SIGNING_PUBLIC_KEY_FILENAME);
 
     teep_error_code_t result = teep_get_signing_key_pair(&g_teep_agent_signing_key_pair,
@@ -85,7 +90,7 @@ teep_error_code_t TeepAgentInitializeKeys(_In_z_ const char* dataDirectory, _Out
         strcpy_s(publicKeyFilename, 256, publicKeyFilenamePath.string().c_str());
     }
 
-    std::filesystem::path trustedKeysFilenamePath = dataDirectory;
+    filesystem::path trustedKeysFilenamePath = dataDirectory;
     trustedKeysFilenamePath.append("trusted");
 
     result = TeepAgentConfigureTamKeys(trustedKeysFilenamePath.string().c_str());

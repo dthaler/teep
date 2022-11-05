@@ -35,7 +35,7 @@ extern "C" {
         teep_uuid_t unneededTaid,
         _In_z_ const char* tamUri);
 
-    teep_error_code_t TeepAgentProcessError(void* sessionHandle);
+    teep_error_code_t TeepAgentProcessError(_In_ void* sessionHandle);
     teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri);
 
 #ifdef __cplusplus

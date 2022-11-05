@@ -67,7 +67,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)jansson;$(SolutionDir)external\jansson\src;$(SolutionDir)external\jose;$(SolutionDir)openssl/include;$(SolutionDir)LibEay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>TEEP_USE_TEE</PreprocessorDefinitions>
     </ClCompile>
     <Link>

@@ -74,7 +74,7 @@
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>TeepTamLib;TeepCommonLib;jansson;jose;jose_openssl;t_cose;LibEay32_t;qcbor;TeepCommonTALib</AdditionalDependencies>
+      <AdditionalDependencies>TeepTamLib;TeepCommonLib;t_cose;qcbor;TeepCommonTALib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugStandalone|x64'">
@@ -89,7 +89,7 @@
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>TeepTamLib;TeepCommonLib;jansson;jose;jose_openssl;t_cose;LibEay32_t;qcbor;TeepCommonTALib</AdditionalDependencies>
+      <AdditionalDependencies>TeepTamLib;TeepCommonLib;t_cose;LibEay32_t;qcbor;TeepCommonTALib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -105,7 +105,7 @@
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalDependencies>TeepTamLib;TeepCommonLib;jansson;jose;jose_openssl;LibEay32_t;TeepCommonTALib;UntrustedTimeTALib</AdditionalDependencies>
+      <AdditionalDependencies>TeepTamLib;TeepCommonLib;LibEay32_t;TeepCommonTALib;UntrustedTimeTALib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -132,10 +132,6 @@
     <Xml Include="TeepTamTA.config.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libeay32\LibEay32_t.vcxproj">
-      <Project>{275fac8b-b49c-4c91-b708-5abfb9e24215}</Project>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
     <ProjectReference Include="..\TeepCommonTALib\TeepCommonTALib.vcxproj">
       <Project>{213acb9d-9134-4bc8-aa44-b01e13df0c88}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

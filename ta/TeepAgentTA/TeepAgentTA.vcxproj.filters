@@ -21,7 +21,7 @@
     <ClCompile Include="TeepAgent_t.c">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="TeepDeviceEcallHandler.cpp">
+    <ClCompile Include="TeepAgentEcallHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

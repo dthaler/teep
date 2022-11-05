@@ -1,14 +1,13 @@
 // Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
-#ifdef OE_BUILD_ENCLAVE
+#ifdef TEEP_USE_TEE
 #include <openenclave/enclave.h>
 #endif
 #include <stdlib.h>
+#include "common.h"
 extern "C" {
-#include "teep_protocol.h"
 #include "suit_manifest.h"
 };
-#include "common.h"
 #include "qcbor/qcbor_decode.h"
 #include "SuitParser.h"
 

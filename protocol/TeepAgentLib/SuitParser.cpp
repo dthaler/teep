@@ -44,6 +44,44 @@ teep_error_code_t TryProcessSuitCommon(UsefulBufC encoded, std::ostream& errorMe
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
+static teep_error_code_t SuitSaveManifest(
+    _Inout_ QCBORDecodeContext* context,
+    _Inout_ QCBORItem* item,
+    _In_ UsefulBufC encoded,
+    _Inout_ std::ostream& errorMessage)
+{
+    if (item->uDataType != QCBOR_TYPE_ARRAY) {
+        REPORT_TYPE_ERROR(errorMessage, "suit-manifest-component-id", QCBOR_TYPE_ARRAY, *item);
+        return TEEP_ERR_MANIFEST_PROCESSING_FAILED;
+    }
+
+    // Get array size.
+    uint16_t componentIdEntryCount = item->val.uCount;
+    if (componentIdEntryCount < 1) {
+        return TEEP_ERR_MANIFEST_PROCESSING_FAILED;
+    }
+
+    for (uint16_t i = 0; i < componentIdEntryCount; i++) {
+        // Read bstr from component id array.
+        QCBORDecode_GetNext(context, item);
+        if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+            REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, *item);
+            return TEEP_ERR_MANIFEST_PROCESSING_FAILED;
+        }
+    }
+
+    // Return the last bstr as the suffix.
+    char filename[80];
+    TeepAgentMakeManifestFilename(filename, sizeof(filename), (const char*)item->val.string.ptr, item->val.string.len);
+    FILE* fp = fopen(filename, "wb");
+    if (fp == nullptr) {
+        return TEEP_ERR_MANIFEST_PROCESSING_FAILED;
+    }
+    fwrite(encoded.ptr, 1, encoded.len, fp);
+    fclose(fp);
+    return TEEP_ERR_SUCCESS;
+}
+
 // Parse a SUIT_Manifest out of a decode context and try to install it.
 teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded, std::ostream& errorMessage)
 {
@@ -86,6 +124,17 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded, std::ostream& error
             break;
         case SUIT_MANIFEST_LABEL_REFERENCE_URI:
             errorCode = TEEP_ERR_TEMPORARY_ERROR;
+            break;
+        case SUIT_MANIFEST_LABEL_COMPONENT_ID:
+            errorCode = SuitSaveManifest(&context, &item, encoded, errorMessage);
+            if (errorCode != TEEP_ERR_SUCCESS) {
+                return errorCode;
+            }
+            // Use last bstr in the list as a filename.
+            {
+
+            }
+            // XXX
             break;
         default:
             errorCode = TEEP_ERR_PERMANENT_ERROR;

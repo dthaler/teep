@@ -16,6 +16,7 @@ typedef enum {
     SUIT_MANIFEST_LABEL_SEQUENCE_NUMBER = 2,
     SUIT_MANIFEST_LABEL_COMMON = 3,
     SUIT_MANIFEST_LABEL_REFERENCE_URI = 4,
+    SUIT_MANIFEST_LABEL_COMPONENT_ID = 5,
 } suit_manifest_label_t;
 
 typedef enum {

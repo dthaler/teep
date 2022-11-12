@@ -9,7 +9,7 @@
 #include "t_cose/t_cose_sign1_verify.h"
 #include "common.h"
 extern "C" {
-#ifdef OE_BUILD_ENCLAVE
+#ifdef TEEP_USE_TEE
 #define _countof(x) OE_COUNTOF(x)
 #define sprintf_s(dest, len, ...) sprintf(dest, __VA_ARGS__)
 #endif
@@ -170,18 +170,34 @@ Done:
     return return_value;
 }
 
-teep_error_code_t teep_get_signing_key_pair(
+static int get_cose_algorithm(teep_signature_kind_t signature_kind)
+{
+    switch (signature_kind) {
+    case TEEP_SIGNATURE_ES256: return T_COSE_ALGORITHM_ES256;
+    case TEEP_SIGNATURE_EDDSA: return T_COSE_ALGORITHM_EDDSA;
+    default: return TEEP_ERR_PERMANENT_ERROR;
+    }
+}
+
+teep_error_code_t teep_load_signing_key_pair(
     _Out_ struct t_cose_key* key_pair,
     _In_z_ const char* private_file_name,
-    _In_z_ const char* public_file_name)
+    _In_z_ const char* public_file_name,
+    teep_signature_kind_t signature_kind)
 {
+    int cose_algorithm = get_cose_algorithm(signature_kind);
+
     if (_load_signing_key_pair(key_pair, private_file_name) == TEEP_ERR_PERMANENT_ERROR) {
-        enum t_cose_err_t return_value = _make_ossl_key_pair(T_COSE_ALGORITHM_ES256, key_pair);
+        TeepLogMessage("Creating new key in %s\n", public_file_name);
+        enum t_cose_err_t return_value = _make_ossl_key_pair(cose_algorithm, key_pair);
         if (return_value != T_COSE_SUCCESS) {
             return TEEP_ERR_TEMPORARY_ERROR;
         }
 
-        return _save_signing_key_pair(key_pair, private_file_name, public_file_name);
+        teep_error_code_t result = _save_signing_key_pair(key_pair, private_file_name, public_file_name);
+        if (result != TEEP_ERR_SUCCESS) {
+            return result;
+        }
     }
 
     return TEEP_ERR_SUCCESS;
@@ -204,41 +220,65 @@ teep_error_code_t teep_get_verifying_key_pair(
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TeepInitialize(_In_z_ const char* signing_private_key_pair_filename, _In_z_ const char* signing_public_key_filename)
+teep_error_code_t TeepInitialize(_In_z_ const char* signing_private_key_pair_filename, _In_z_ const char* signing_public_key_filename, teep_signature_kind_t signature_kind)
 {
     struct t_cose_key key_pair;
-    return teep_get_signing_key_pair(&key_pair, signing_private_key_pair_filename, signing_public_key_filename);
+    return teep_load_signing_key_pair(&key_pair, signing_private_key_pair_filename, signing_public_key_filename, signature_kind);
 }
 
 teep_error_code_t
-teep_sign_cbor_message(
-    _In_ struct t_cose_key key_pair,
-    _In_ const UsefulBufC* unsignedMessage,
-    _In_ UsefulBuf signedMessageBuffer,
-    _Out_ UsefulBufC* signedMessage)
+teep_sign1_cbor_message(
+    _In_ const struct t_cose_key* key_pair,
+    _In_ const UsefulBufC* unsigned_message,
+    _In_ UsefulBuf signed_message_buffer,
+    teep_signature_kind_t signature_kind,
+    _Out_ UsefulBufC* signed_message)
 {
     // Initialize for signing.
     struct t_cose_sign1_sign_ctx sign_ctx;
-    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
-    t_cose_sign1_set_signing_key(&sign_ctx, key_pair, NULL_Q_USEFUL_BUF_C);
+    t_cose_sign1_sign_init(&sign_ctx, 0, get_cose_algorithm(signature_kind));
+    t_cose_sign1_set_signing_key(&sign_ctx, *key_pair, NULL_Q_USEFUL_BUF_C);
+
+    // Compute the size of the output and auxiliary buffers.
+    struct q_useful_buf null_buff { NULL, SIZE_MAX };
+    struct q_useful_buf_c signed_cose;
+    enum t_cose_err_t return_value = t_cose_sign1_sign(&sign_ctx,
+        *unsigned_message,
+        null_buff,
+        &signed_cose);
+
+    // Allocate buffers of the right size.
+    if (signed_cose.len > signed_message_buffer.len) {
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+    struct q_useful_buf auxiliary_buffer = {};
+    auxiliary_buffer.len = t_cose_sign1_sign_auxiliary_buffer_size(&sign_ctx);
+    if (auxiliary_buffer.len > 0) {
+        auxiliary_buffer.ptr = malloc(auxiliary_buffer.len);
+        if (auxiliary_buffer.ptr == NULL) {
+            return TEEP_ERR_TEMPORARY_ERROR;
+        }
+    }
 
     // Sign.
-    enum t_cose_err_t return_value = t_cose_sign1_sign(
+    t_cose_sign1_sign_set_auxiliary_buffer(&sign_ctx, auxiliary_buffer);
+    return_value = t_cose_sign1_sign(
         &sign_ctx,
-        *unsignedMessage,
+        *unsigned_message,
         /* Non-const pointer and length of the
          * buffer where the completed output is
          * written to. The length here is that
          * of the whole buffer.
          */
-        signedMessageBuffer,
+        signed_message_buffer,
         /* Const pointer and actual length of
          * the completed, signed and encoded
          * COSE_Sign1 message. This points
          * into the output buffer and has the
          * lifetime of the output buffer.
          */
-        signedMessage);
+        signed_message);
+    free(auxiliary_buffer.ptr);
     if (return_value != T_COSE_SUCCESS) {
         TeepLogMessage("COSE Sign1 failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
@@ -248,28 +288,70 @@ teep_sign_cbor_message(
 }
 
 teep_error_code_t
+teep_sign_cbor_message(
+    _In_ std::map<teep_signature_kind_t, struct t_cose_key>& key_pairs,
+    _In_ const UsefulBufC* unsigned_message,
+    _In_ UsefulBuf signed_message_buffer,
+    teep_signature_kind_t signature_kind,
+    _Out_ UsefulBufC* signed_message)
+{
+    // TODO(#104): t_cose 2.0 should support Sign.
+    // Switch to it once it's ready and supports EdDSA.
+    // In the meantime, we just use Sign1.
+
+    return teep_sign1_cbor_message(&key_pairs[TEEP_SIGNATURE_ES256],
+        unsigned_message,
+        signed_message_buffer,
+        TEEP_SIGNATURE_ES256,
+        signed_message);
+}
+
+teep_error_code_t
 teep_verify_cbor_message(
     _In_ const struct t_cose_key* key_pair,
     _In_ const UsefulBufC* signed_cose,
     _Out_ UsefulBufC* encoded)
 {
     struct t_cose_sign1_verify_ctx verify_ctx;
+
+    t_cose_sign1_verify_init(&verify_ctx, T_COSE_OPT_DECODE_ONLY);
+    int return_value = t_cose_sign1_verify(&verify_ctx, *signed_cose, NULL, NULL);
+    if (return_value != T_COSE_SUCCESS) {
+        TeepLogMessage("First t_cose_sign1_verify failed with error %d\n", return_value);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    // Allocate an auxiliary buffer of the right size.
+    struct q_useful_buf auxiliary_buffer = {};
+    auxiliary_buffer.len = t_cose_sign1_verify_auxiliary_buffer_size(&verify_ctx);
+    if (auxiliary_buffer.len > 0) {
+        auxiliary_buffer.ptr = malloc(auxiliary_buffer.len);
+        if (auxiliary_buffer.ptr == NULL) {
+            TeepLogMessage("teep_verify_cbor_message could not allocate %d bytes\n", auxiliary_buffer.len);
+            return TEEP_ERR_TEMPORARY_ERROR;
+        }
+    }
+
     t_cose_sign1_verify_init(&verify_ctx, 0);
 
     t_cose_sign1_set_verification_key(&verify_ctx, *key_pair);
+    t_cose_sign1_verify_set_auxiliary_buffer(&verify_ctx, auxiliary_buffer);
 
-    int return_value = t_cose_sign1_verify(&verify_ctx,
+    return_value = t_cose_sign1_verify(&verify_ctx,
         *signed_cose,        /* COSE to verify */
         encoded,             /* Payload from signed_cose */
         NULL);               /* Don't return parameters */
+    free(auxiliary_buffer.ptr);
     if (return_value != T_COSE_SUCCESS) {
+        TeepLogMessage("Second t_cose_sign1_verify failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
     return TEEP_ERR_SUCCESS;
 }
 
-_Ret_writes_bytes_(*pCertificateSize)
+#ifdef TEEP_USE_CERTIFICATES // Currently unused.
+_Ret_writes_bytes_maybenull_(*pCertificateSize)
 const unsigned char* GetDerCertificate(
     _In_ const struct t_cose_key* key_pair,
     _Out_ size_t *pCertificateSize)
@@ -282,6 +364,10 @@ const unsigned char* GetDerCertificate(
 
     // Create a certificate.
     X509* x509 = X509_new();
+    if (x509 == nullptr) {
+        *pCertificateSize = 0;
+        return nullptr;
+    }
     ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
     X509_gmtime_adj(X509_get_notBefore(x509), 0); // Current time
     X509_gmtime_adj(X509_get_notAfter(x509), 31536000L); // 1 year from now
@@ -308,6 +394,7 @@ const unsigned char* GetDerCertificate(
 
     return cert;
 }
+#endif
 
 void HexPrintBuffer(_In_opt_z_ const char* label, const void* buffer, size_t length)
 {

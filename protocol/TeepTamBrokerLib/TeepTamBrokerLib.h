@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
     int TamBrokerProcess(_In_z_ const wchar_t* tamUri);
-    int StartTamBroker(_In_z_ const char* manifestDirectory, int simulated_tee, _Out_writes_opt_z_(256) char* public_key_filename);
+    int StartTamBroker(_In_z_ const char* manifestDirectory, int simulated_tee);
     void StopTamBroker(void);
 
 #ifdef __cplusplus

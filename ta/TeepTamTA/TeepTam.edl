@@ -7,10 +7,21 @@ enclave {
 
     trusted {
         /* define ECALLs here. */
-        public int ecall_ProcessTeepConnect([user_check] void* sessionHandle, [in, string] const char* acceptMediaType);
+        public int ecall_TamProcessConnect([user_check] void* sessionHandle, [in, string] const char* acceptMediaType);
+    
+        public int ecall_TamProcessTeepMessage(
+            [user_check] void* sessionHandle,
+            [in, string] const char* mediaType,
+            [in, size=messageLength] const char* message, 
+            size_t messageLength);    
     };
 
     untrusted {
         /* define OCALLs here. */
+        int ocall_TamQueueOutboundTeepMessage(
+            [user_check] void* sessionHandle,
+            [in, string] const char* mediaType,
+            [in, size=messageLength] const char* message,
+            size_t messageLength);
     };
 };

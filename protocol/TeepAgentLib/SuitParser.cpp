@@ -1,14 +1,13 @@
 // Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
-#ifdef OE_BUILD_ENCLAVE
+#ifdef TEEP_USE_TEE
 #include <openenclave/enclave.h>
 #endif
 #include <stdlib.h>
+#include "common.h"
 extern "C" {
-#include "teep_protocol.h"
 #include "suit_manifest.h"
 };
-#include "common.h"
 #include "qcbor/qcbor_decode.h"
 #include "SuitParser.h"
 
@@ -98,6 +97,9 @@ teep_error_code_t TryProcessSuitManifest(UsefulBufC encoded, std::ostream& error
 // Parse a SUIT_Envelope out of a decode context and try to install it.
 teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded, std::ostream& errorMessage)
 {
+    // Save manifest.
+    // TODO(#116): extract component ID out of manifest to get a filename.
+
     QCBORDecodeContext context;
 
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);

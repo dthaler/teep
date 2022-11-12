@@ -24,9 +24,6 @@
     <ClCompile Include="TeepCommonOcallWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TeepCommonEcallWrapper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="optee/user_ta_header_defines.h">

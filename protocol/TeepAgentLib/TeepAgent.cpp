@@ -30,27 +30,6 @@ TrustedComponent* g_RequestedComponentList = nullptr;
 // List of unneeded Trusted Components.
 TrustedComponent* g_UnneededComponentList = nullptr;
 
-const unsigned char* g_AgentDerCertificate = nullptr;
-size_t g_AgentDerCertificateSize = 0;
-
-_Ret_writes_bytes_maybenull_(pCertLen)
-const unsigned char* GetAgentDerCertificate(size_t* pCertLen)
-{
-    if (g_AgentDerCertificate == nullptr) {
-        // Construct a self-signed DER certificate based on the COSE key.
-        t_cose_key key_pair;
-        teep_error_code_t teep_error = TeepAgentGetSigningKeyPair(&key_pair);
-        if (teep_error != TEEP_ERR_SUCCESS) {
-            return nullptr;
-        }
-
-        g_AgentDerCertificate = GetDerCertificate(&key_pair, &g_AgentDerCertificateSize);
-    }
-
-    *pCertLen = g_AgentDerCertificateSize;
-    return g_AgentDerCertificate;
-}
-
 teep_error_code_t
 TeepAgentSignCborMessage(
     _In_ const UsefulBufC* unsignedMessage,
@@ -58,16 +37,14 @@ TeepAgentSignCborMessage(
     _Out_ UsefulBufC* signedMessage)
 {
     struct t_cose_key key_pair;
-    teep_error_code_t err = TeepAgentGetSigningKeyPair(&key_pair);
-    if (err != TEEP_ERR_SUCCESS) {
-        return err;
-    }
+    teep_signature_kind_t signatureKind;
+    TeepAgentGetSigningKeyPair(&key_pair, &signatureKind);
 
-    return teep_sign_cbor_message(key_pair, unsignedMessage, signedMessageBuffer, signedMessage);
+    return teep_sign1_cbor_message(&key_pair, unsignedMessage, signedMessageBuffer, signatureKind, signedMessage);
 }
 
 // Process a transport error.
-teep_error_code_t TeepAgentProcessError(void* sessionHandle)
+teep_error_code_t TeepAgentProcessError(_In_ void* sessionHandle)
 {
     (void)sessionHandle;
 
@@ -261,7 +238,7 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
                     }
                 }
                 if (!found) {
-                    // TODO: include teep-cipher-suite-sign1-es256.
+                    // TODO: include teep-cipher-suite-sign1-es256 or eddsa depending on configuration.
                     return TEEP_ERR_UNSUPPORTED_CIPHER_SUITES;
                 }
                 // Add selected-cipher-suite to the QueryResponse.
@@ -295,6 +272,7 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
                 // Add tc-list.  Currently we populate this from the list of
                 // "unneeded" components since most TEEs (like SGX) can't enumerate
                 // any others anyway.
+                // TODO(#116): enumerate installed manifests.
                 QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
                 {
                     for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
@@ -491,8 +469,9 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
     free((void*)reply.ptr);
 }
 
-static teep_error_code_t TeepAgentHandleInvalidMessage(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TeepAgentHandleInvalidMessage(_In_ void* sessionHandle, _In_ QCBORDecodeContext* context)
 {
+    TEEP_UNUSED(context);
     TeepLogMessage("TeepAgentHandleInvalidMessage\n");
 
     UsefulBufC errorResponse;
@@ -644,19 +623,19 @@ static teep_error_code_t TeepAgentVerifyMessageSignature(
     _In_reads_(messageLength) const char* message,
     size_t messageLength,
     _Out_ UsefulBufC* pencoded)
-
 {
+    TEEP_UNUSED(sessionHandle);
     UsefulBufC signed_cose;
     signed_cose.ptr = message;
     signed_cose.len = messageLength;
     for (auto key_pair : TeepAgentGetTamKeys()) {
         teep_error_code_t teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, pencoded);
         if (teeperr == TEEP_ERR_SUCCESS) {
-            // TODO: save key_pair in session
+            // TODO(#114): save key_pair in session
             return TEEP_ERR_SUCCESS;
         }
     }
-    TeepLogMessage("TAM key verification failed\n");
+    TeepLogMessage("TEEP agent failed verification of TAM key\n");
     return TEEP_ERR_PERMANENT_ERROR;
 
 #if 0
@@ -699,6 +678,9 @@ static teep_error_code_t TeepAgentHandleCborMessage(
     QCBORDecodeContext context;
     QCBORItem item;
     std::ostringstream errorMessage;
+
+    HexPrintBuffer("TeepAgentHandleCborMessage got COSE message:\n", message, messageLength);
+    TeepLogMessage("\n");
 
     // Verify signature and save which signing key was used.
     UsefulBufC encoded;
@@ -874,5 +856,6 @@ teep_error_code_t TeepAgentUnrequestTA(
 
 teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
 {
+    TEEP_UNUSED(dataDirectory);
     return TEEP_ERR_SUCCESS;
 }

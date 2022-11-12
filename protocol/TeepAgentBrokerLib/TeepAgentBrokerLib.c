@@ -84,7 +84,7 @@ int AgentBrokerUnrequestTA(
     return HandleMessages();
 }
 
-int StartAgentBroker(_In_z_ const char* dataDirectory, int simulatedTee, _Out_writes_opt_z_(256) char* publicKeyFilename)
+int StartAgentBroker(_In_z_ const char* dataDirectory, int simulatedTee, teep_signature_kind_t signatureKind, _Out_writes_opt_z_(256) char* publicKeyFilename)
 {
     // Create data directory if it doesn't already exist.
     _mkdir(dataDirectory);
@@ -107,7 +107,7 @@ int StartAgentBroker(_In_z_ const char* dataDirectory, int simulatedTee, _Out_wr
         return result;
     }
 
-    return TeepAgentInitializeKeys(dataDirectory, publicKeyFilename);
+    return TeepAgentInitializeKeys(dataDirectory, signatureKind, publicKeyFilename);
 #endif
 }
 

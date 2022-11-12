@@ -86,7 +86,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor;$(SolutionDir)openssl/include;$(SolutionDir)libeay32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\t_cose\inc;$(SolutionDir)external\t_cose\src;$(SolutionDir)external\qcbor\inc;$(SolutionDir)external\qcbor\inc\qcbor</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>T_COSE_USE_OPENSSL_CRYPTO</PreprocessorDefinitions>
     </ClCompile>
     <Link>

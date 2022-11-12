@@ -19,7 +19,10 @@ extern "C" {
 
     // Calls up from broker.
     teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory);
-    teep_error_code_t TeepAgentInitializeKeys(_In_z_ const char* dataDirectory, _Out_writes_opt_z_(256) char* publicKeyFilename);
+    teep_error_code_t TeepAgentInitializeKeys(
+        _In_z_ const char* dataDirectory,
+        teep_signature_kind_t signatureKind,
+        _Out_writes_opt_z_(256) char* publicKeyFilename);
 
     teep_error_code_t TeepAgentProcessTeepMessage(
         _In_ void* sessionHandle,
@@ -35,7 +38,7 @@ extern "C" {
         teep_uuid_t unneededTaid,
         _In_z_ const char* tamUri);
 
-    teep_error_code_t TeepAgentProcessError(void* sessionHandle);
+    teep_error_code_t TeepAgentProcessError(_In_ void* sessionHandle);
     teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri);
 
 #ifdef __cplusplus

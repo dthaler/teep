@@ -16,6 +16,7 @@
 #include "TeepTamEcallHandler.h"
 #include "RequestedComponentInfo.h"
 #include "TeepTamLib.h"
+#include <map>
 #include <optional>
 #include <sstream>
 #include "TamKeys.h"
@@ -79,7 +80,17 @@ teep_error_code_t TamComposeQueryRequest(
             QCBOREncode_CloseArray(&context);
 
             // Add teep-cipher-suite-sign1-eddsa.
-            // TODO: t_cose does not yet support eddsa.
+            QCBOREncode_OpenArray(&context);
+            {
+                // Add teep-operation-sign1-eddsa.
+                QCBOREncode_OpenArray(&context);
+                {
+                    QCBOREncode_AddInt64(&context, CBOR_TAG_COSE_SIGN1);
+                    QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_EDDSA);
+                }
+                QCBOREncode_CloseArray(&context);
+            }
+            QCBOREncode_CloseArray(&context);
         }
         QCBOREncode_CloseArray(&context);
 
@@ -96,15 +107,20 @@ teep_error_code_t
 TamSignCborMessage(
     _In_ const UsefulBufC* unsignedMessage,
     _In_ UsefulBuf signedMessageBuffer,
+    teep_signature_kind_t signatureKind,
     _Out_ UsefulBufC* signedMessage)
 {
-    struct t_cose_key key_pair;
-    teep_error_code_t err = TamGetSigningKeyPair(&key_pair);
+    std::map<teep_signature_kind_t, struct t_cose_key> key_pairs;
+    teep_error_code_t err = TamGetSigningKeyPairs(key_pairs);
     if (err != TEEP_ERR_SUCCESS) {
         return err;
     }
 
-    return teep_sign_cbor_message(key_pair, unsignedMessage, signedMessageBuffer, signedMessage);
+    if (signatureKind == TEEP_SIGNATURE_BOTH) {
+        return teep_sign_cbor_message(key_pairs, unsignedMessage, signedMessageBuffer, signatureKind, signedMessage);
+    } else {
+        return teep_sign1_cbor_message(&key_pairs[signatureKind], unsignedMessage, signedMessageBuffer, signatureKind, signedMessage);
+    }
 }
 
 static teep_error_code_t
@@ -112,17 +128,17 @@ TamSendCborMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
     _In_ const UsefulBufC* unsignedMessage,
-    bool signMessage)
+    teep_signature_kind_t signatureKind)
 {
     UsefulBufC signedMessage;
     const char* output_buffer;
     size_t output_buffer_length;
 
 #ifdef TEEP_USE_COSE
-    if (signMessage) {
+    if (signatureKind != TEEP_SIGNATURE_NONE) {
         const size_t max_cose_message_size = 3000;
         Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, max_cose_message_size);
-        teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
+        teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, signatureKind, &signedMessage);
         if (error != TEEP_ERR_SUCCESS) {
             return error;
         }
@@ -163,7 +179,7 @@ static teep_error_code_t TamProcessTeepConnect(
     HexPrintBuffer("Sending CBOR message: ", encodedC.ptr, encodedC.len);
 
     TeepLogMessage("Sending QueryRequest...\n");
-    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, true);
+    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, TEEP_SIGNATURE_BOTH);
     return teep_error;
 }
 
@@ -581,7 +597,7 @@ teep_error_code_t TamHandleCborQueryResponse(
 
             TeepLogMessage("Sending Update message...\n");
 
-            err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, true);
+            err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
             free((void*)update.ptr);
             if (err != TEEP_ERR_SUCCESS) {
                 return err;
@@ -685,11 +701,11 @@ static teep_error_code_t TamVerifyMessageSignature(
     for (auto key_pair : TamGetTeepAgentKeys()) {
         teep_error_code_t teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, pencoded);
         if (teeperr == TEEP_ERR_SUCCESS) {
-            // TODO: save key_pair in session
+            // TODO(#114): save key_pair in session
             return TEEP_ERR_SUCCESS;
         }
     }
-    TeepLogMessage("TAM key verification failed\n");
+    TeepLogMessage("TAM failed verification of agent key\n");
     return TEEP_ERR_PERMANENT_ERROR;
 }
 
@@ -699,7 +715,7 @@ teep_error_code_t TamHandleCborMessage(
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
 {
-    HexPrintBuffer("TeepHandleCborMessage got COSE message:\n", message, messageLength);
+    HexPrintBuffer("TamHandleCborMessage got COSE message:\n", message, messageLength);
     TeepLogMessage("\n");
 
     // Verify signature and save which signing key was used.

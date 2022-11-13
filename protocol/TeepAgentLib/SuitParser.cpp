@@ -3,7 +3,6 @@
 #ifdef TEEP_USE_TEE
 #include <openenclave/enclave.h>
 #endif
-#include <filesystem>
 #include <stdlib.h>
 #include "common.h"
 extern "C" {
@@ -12,11 +11,12 @@ extern "C" {
 #include "qcbor/qcbor_decode.h"
 #include "SuitParser.h"
 
-static teep_error_code_t GetFilenameFromSuitDigest(_Out_ filesystem::path& filename, UsefulBufC envelope)
+// Construct a filename from a SUIT_Digest.
+static teep_error_code_t GetFilenameFromSuitDigest(_Out_ filesystem::path& filename, UsefulBufC encoded)
 {
     teep_error_code_t errorCode = TEEP_ERR_PERMANENT_ERROR;
     QCBORDecodeContext context;
-    QCBORDecode_Init(&context, envelope, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
@@ -32,11 +32,12 @@ static teep_error_code_t GetFilenameFromSuitDigest(_Out_ filesystem::path& filen
     return errorCode;
 }
 
-static teep_error_code_t GetFilenameFromSuitAuthentication(_Out_ filesystem::path& filename, UsefulBufC envelope)
+// Construct a filename from a SUIT_Authentication.
+static teep_error_code_t GetFilenameFromSuitAuthentication(_Out_ filesystem::path& filename, UsefulBufC encoded)
 {
     teep_error_code_t errorCode = TEEP_ERR_PERMANENT_ERROR;
     QCBORDecodeContext context;
-    QCBORDecode_Init(&context, envelope, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
@@ -50,6 +51,7 @@ static teep_error_code_t GetFilenameFromSuitAuthentication(_Out_ filesystem::pat
     return errorCode;
 }
 
+// Construct a filename from a SUIT_Component_Identifier.
 static teep_error_code_t GetFilenameFromSuitComponentIdentifier(_Out_ filesystem::path& filename, QCBORDecodeContext* context, QCBORItem* item, ostream& errorMessage)
 {
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
@@ -77,11 +79,12 @@ static teep_error_code_t GetFilenameFromSuitComponentIdentifier(_Out_ filesystem
     return TEEP_ERR_SUCCESS;
 }
 
-static teep_error_code_t GetFilenameFromSuitCommon(_Out_ filesystem::path& filename, UsefulBufC envelope, std::ostream& errorMessage)
+// Construct a filename from a SUIT_Common.
+static teep_error_code_t GetFilenameFromSuitCommon(_Out_ filesystem::path& filename, UsefulBufC encoded, std::ostream& errorMessage)
 {
     teep_error_code_t errorCode = TEEP_ERR_PERMANENT_ERROR;
     QCBORDecodeContext context;
-    QCBORDecode_Init(&context, envelope, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
@@ -110,11 +113,12 @@ static teep_error_code_t GetFilenameFromSuitCommon(_Out_ filesystem::path& filen
     return errorCode;
 }
 
-static teep_error_code_t GetFilenameFromSuitManifest(_Out_ filesystem::path& filename, UsefulBufC envelope, std::ostream& errorMessage)
+// Construct a filename from a SUIT_Manifest.
+static teep_error_code_t GetFilenameFromSuitManifest(_Out_ filesystem::path& filename, UsefulBufC encoded, std::ostream& errorMessage)
 {
     teep_error_code_t errorCode = TEEP_ERR_PERMANENT_ERROR;
     QCBORDecodeContext context;
-    QCBORDecode_Init(&context, envelope, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
@@ -123,25 +127,31 @@ static teep_error_code_t GetFilenameFromSuitManifest(_Out_ filesystem::path& fil
         for (size_t entryIndex = 0; entryIndex < entryCount; entryIndex++) {
             QCBORDecode_GetNext(&context, &item);
             suit_envelope_label_t label = (suit_envelope_label_t)item.label.int64;
-            if (label != SUIT_MANIFEST_LABEL_COMMON) {
+            if (label == SUIT_MANIFEST_LABEL_COMMON) {
+                if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+                    break;
+                }
+                errorCode = GetFilenameFromSuitCommon(filename, item.val.string, errorMessage);
+
+                // Keep going in case we actually find a manifest component ID.
                 continue;
             }
-            if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+            if (label == SUIT_MANIFEST_LABEL_COMPONENT_ID) {
+                errorCode = GetFilenameFromSuitComponentIdentifier(filename, &context, &item, errorMessage);
                 break;
             }
-            errorCode = GetFilenameFromSuitCommon(filename, item.val.string, errorMessage);
-            break;
         }
     }
     QCBORDecode_Finish(&context);
     return errorCode;
 }
 
-static teep_error_code_t GetFilenameFromSuitEnvelope(_Out_ filesystem::path& filename, UsefulBufC envelope, std::ostream& errorMessage)
+// Construct a filename from a SUIT_Envelope.
+static teep_error_code_t GetFilenameFromSuitEnvelope(_Out_ filesystem::path& filename, UsefulBufC encoded, std::ostream& errorMessage)
 {
     teep_error_code_t errorCode = TEEP_ERR_PERMANENT_ERROR;
     QCBORDecodeContext context;
-    QCBORDecode_Init(&context, envelope, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORItem item;
     QCBORDecode_GetNext(&context, &item);
@@ -176,8 +186,10 @@ static teep_error_code_t GetFilenameFromSuitEnvelope(_Out_ filesystem::path& fil
     return errorCode;
 }
 
+#if 0
+// TODO(issue #7): implement SUIT processing.
 // Parse a SUIT_Common out of a decode context and try to install it.
-teep_error_code_t TryProcessSuitCommon(UsefulBufC encoded, std::ostream& errorMessage)
+static teep_error_code_t TryProcessSuitCommon(UsefulBufC encoded, std::ostream& errorMessage)
 {
     QCBORDecodeContext context;
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
@@ -208,6 +220,7 @@ teep_error_code_t TryProcessSuitCommon(UsefulBufC encoded, std::ostream& errorMe
     QCBORError err = QCBORDecode_Finish(&context);
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
+#endif
 
 static teep_error_code_t SuitSaveManifest(
     _In_ filesystem::path& filename,
@@ -225,8 +238,11 @@ static teep_error_code_t SuitSaveManifest(
 }
 
 // Parse a SUIT_Manifest out of a decode context and try to install it.
-teep_error_code_t TryProcessSuitManifest(_Out_ filesystem::path& filename, UsefulBufC encoded, std::ostream& errorMessage)
+static teep_error_code_t TryProcessSuitManifest(_Inout_ filesystem::path& filename, UsefulBufC encoded, std::ostream& errorMessage)
 {
+#if 1
+    return TEEP_ERR_SUCCESS;
+#else
     QCBORDecodeContext context;
     QCBORDecode_Init(&context, encoded, QCBOR_DECODE_MODE_NORMAL);
     QCBORItem item;
@@ -288,12 +304,13 @@ teep_error_code_t TryProcessSuitManifest(_Out_ filesystem::path& filename, Usefu
     }
 
     return errorCode;
+#endif
 }
 
 // Parse a SUIT_Envelope out of a decode context and try to install it.
 teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded, std::ostream& errorMessage)
 {
-    // Extract a filename out of the SUIT envelope.
+    // Try to extract a filename out of the SUIT envelope.
     filesystem::path filename;
     teep_error_code_t errorCode = GetFilenameFromSuitEnvelope(filename, encoded, errorMessage);
     if (errorCode != TEEP_ERR_SUCCESS) {

@@ -98,6 +98,10 @@ int StartAgentBroker(_In_z_ const char* dataDirectory, int simulatedTee, teep_si
     sprintf_s(directory, sizeof(directory), "%s/untrusted", dataDirectory);
     _mkdir(directory);
 
+    // Make "manifests" directory if it doesn't already exist.
+    sprintf_s(directory, sizeof(directory), "%s/manifests", dataDirectory);
+    _mkdir(directory);
+
 #ifdef TEEP_USE_TEE
     int result = StartAgentTABroker(simulatedTee);
     return result;

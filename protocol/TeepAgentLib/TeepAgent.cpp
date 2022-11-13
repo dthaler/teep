@@ -854,8 +854,40 @@ teep_error_code_t TeepAgentUnrequestTA(
     return teep_error;
 }
 
+filesystem::path g_agent_data_directory;
+
 teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
 {
-    TEEP_UNUSED(dataDirectory);
+    g_agent_data_directory = std::filesystem::current_path();
+    g_agent_data_directory /= dataDirectory;
     return TEEP_ERR_SUCCESS;
+}
+
+#define TOXDIGIT(x) ("0123456789abcde"[x])
+
+void TeepAgentMakeManifestFilename(_Out_ filesystem::path& manifestPath, _In_reads_(buffer_len) const char* buffer, size_t buffer_len)
+{
+    manifestPath = g_agent_data_directory;
+    manifestPath /= "manifests";
+
+    char filename[_MAX_PATH];
+#if 1
+    // Hex encode buffer.
+    for (int i = 0; i < buffer_len; i++) {
+        uint8_t ch = buffer[i];
+        filename[i * 2] = TOXDIGIT(ch >> 4);
+        filename[i * 2 + 1] = TOXDIGIT(ch & 0xf);
+    }
+    filename[buffer_len * 2] = 0;
+#else
+    // Escape illegal characters.
+    size_t i;
+    for (i = 0; (i < buffer_len) && (i < filename_len - 1) && buffer[i]; i++) {
+        filename[i] = (isalnum(buffer[i]) || (strchr("-_", buffer[i]) != nullptr)) ? buffer[i] : '-';
+    }
+    filename[i] = 0;
+#endif
+
+    manifestPath /= filename;
+    manifestPath += ".cbor";
 }

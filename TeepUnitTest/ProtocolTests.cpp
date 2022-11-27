@@ -15,7 +15,9 @@
 #define TRUE 1
 #define TAM_DATA_DIRECTORY "../../../tam"
 #define TEEP_AGENT_DATA_DIRECTORY "../../../agent"
-#define DEFAULT_TA_ID "38b08738-227d-4f6a-b1f0-b208bc02a781"
+#define REQUIRED_TA_ID "f1a2c3bb-7c62-4b19-a030-5d9f1758f10a"
+#define OPTIONAL_TA_ID "38b08738-227d-4f6a-b1f0-b208bc02a781"
+#define UNKNOWN_TA_ID "6a19a9c1-8d44-4cdb-b56e-6157a1f4ef1e"
 #define DEFAULT_TAM_URI "http://example.com/tam"
 
 // Returns 0 on success, error on failure.
@@ -72,8 +74,43 @@ static void TestConfigureKeys(teep_signature_kind_t signatureKind)
     StopTamBroker();
 }
 
-TEST_CASE("UnrequestTA", "[protocol]")
+static void TestUninstallComponent(_In_ const char* taId)
 {
+    std::filesystem::path destinationPath = std::filesystem::path(TEEP_AGENT_DATA_DIRECTORY) / "manifests";
+    destinationPath /= taId + std::string(".cbor");
+    std::filesystem::remove(destinationPath);
+}
+
+static void TestUninstallAllComponents()
+{
+    TestUninstallComponent(REQUIRED_TA_ID);
+    TestUninstallComponent(OPTIONAL_TA_ID);
+    TestUninstallComponent(UNKNOWN_TA_ID);
+}
+
+static void TestInstallComponent(_In_ const char* type, _In_ const char* taId)
+{
+    std::filesystem::path sourcePath = std::filesystem::path(TAM_DATA_DIRECTORY) / "manifests";
+    sourcePath /= type;
+    sourcePath /= taId + std::string(".cbor");
+
+    std::filesystem::path destinationPath = std::filesystem::path(TEEP_AGENT_DATA_DIRECTORY) / "manifests";
+    CopyFile(sourcePath.string().c_str(), destinationPath.string().c_str());
+}
+
+static void TestVerifyComponentInstalled(_In_ const char* taId, bool expected_result)
+{
+    std::filesystem::path destinationPath = std::filesystem::path(TEEP_AGENT_DATA_DIRECTORY) / "manifests";
+    destinationPath /= taId + std::string(".cbor");
+    REQUIRE(std::filesystem::exists(destinationPath) == expected_result);
+}
+
+TEST_CASE("UnrequestTA with required TA", "[protocol]")
+{
+    // Manually "install" required TA.
+    TestUninstallAllComponents();
+    TestInstallComponent("required", REQUIRED_TA_ID);
+
     TestConfigureKeys(TEEP_SIGNATURE_ES256);
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
@@ -81,7 +118,7 @@ TEST_CASE("UnrequestTA", "[protocol]")
     uint64_t counter1 = GetOutboundMessagesSent();
 
     teep_uuid_t unneededTaid;
-    int err = ConvertStringToUUID(&unneededTaid, DEFAULT_TA_ID);
+    int err = ConvertStringToUUID(&unneededTaid, REQUIRED_TA_ID);
     REQUIRE(err == 0);
     teep_error_code_t teep_error = TeepAgentUnrequestTA(unneededTaid, DEFAULT_TAM_URI);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
@@ -92,9 +129,11 @@ TEST_CASE("UnrequestTA", "[protocol]")
 
     StopAgentBroker();
     StopTamBroker();
+    TestVerifyComponentInstalled(REQUIRED_TA_ID, true);
+    TestUninstallAllComponents();
 }
 
-TEST_CASE("RequestTA", "[protocol]")
+static void TestUnrequestNonRequiredComponent(_In_ const char* taId)
 {
     TestConfigureKeys(TEEP_SIGNATURE_ES256);
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
@@ -102,8 +141,48 @@ TEST_CASE("RequestTA", "[protocol]")
 
     uint64_t counter1 = GetOutboundMessagesSent();
 
+    teep_uuid_t unneededTaid;
+    int err = ConvertStringToUUID(&unneededTaid, taId);
+    REQUIRE(err == 0);
+    teep_error_code_t teep_error = TeepAgentUnrequestTA(unneededTaid, DEFAULT_TAM_URI);
+    REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    // Verify 4 messages sent (QueryRequest, QueryResponse, Update, Success).
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + 4);
+
+    StopAgentBroker();
+    StopTamBroker();
+    TestVerifyComponentInstalled(taId, false);
+    TestUninstallAllComponents();
+}
+
+TEST_CASE("UnrequestTA with optional TA", "[protocol]")
+{
+    // Manually "install" optional TA.
+    TestUninstallAllComponents();
+    TestInstallComponent("optional", OPTIONAL_TA_ID);
+
+    TestUnrequestNonRequiredComponent(OPTIONAL_TA_ID);
+}
+
+TEST_CASE("UnrequestTA with unknown TA", "[protocol]")
+{
+    TestUninstallAllComponents();
+    TestUnrequestNonRequiredComponent(UNKNOWN_TA_ID);
+}
+
+static void TestRequestAllowedComponent(_In_ const char* taId)
+{
+    TestUninstallAllComponents();
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
+
+    uint64_t counter1 = GetOutboundMessagesSent();
+
     teep_uuid_t requestedTaid;
-    int err = ConvertStringToUUID(&requestedTaid, DEFAULT_TA_ID);
+    int err = ConvertStringToUUID(&requestedTaid, taId);
     REQUIRE(err == 0);
     teep_error_code_t teep_error = TeepAgentRequestTA(requestedTaid, DEFAULT_TAM_URI);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
@@ -111,6 +190,41 @@ TEST_CASE("RequestTA", "[protocol]")
     // Verify 4 messages sent (QueryRequest, QueryResponse, Update, Success).
     uint64_t counter2 = GetOutboundMessagesSent();
     REQUIRE(counter2 == counter1 + 4);
+
+    StopAgentBroker();
+    StopTamBroker();
+    TestVerifyComponentInstalled(taId, true);
+    TestUninstallAllComponents();
+}
+
+TEST_CASE("RequestTA for required TA", "[protocol]")
+{
+    TestRequestAllowedComponent(REQUIRED_TA_ID);
+}
+
+TEST_CASE("RequestTA for optional TA", "[protocol]")
+{
+    TestRequestAllowedComponent(OPTIONAL_TA_ID);
+}
+
+TEST_CASE("RequestTA for unknown TA", "[protocol]")
+{
+    TestUninstallAllComponents();
+    TestConfigureKeys(TEEP_SIGNATURE_ES256);
+    REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
+    REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
+
+    uint64_t counter1 = GetOutboundMessagesSent();
+
+    teep_uuid_t requestedTaid;
+    int err = ConvertStringToUUID(&requestedTaid, UNKNOWN_TA_ID);
+    REQUIRE(err == 0);
+    teep_error_code_t teep_error = TeepAgentRequestTA(requestedTaid, DEFAULT_TAM_URI);
+    REQUIRE(teep_error == TEEP_ERR_SUCCESS);
+
+    // Verify 2 messages sent (QueryRequest, QueryResponse).
+    uint64_t counter2 = GetOutboundMessagesSent();
+    REQUIRE(counter2 == counter1 + 2);
 
     StopAgentBroker();
     StopTamBroker();
@@ -265,7 +379,7 @@ teep_error_code_t TamComposeQueryRequest(
     _Out_ UsefulBufC* bufferToSend);
 
 teep_error_code_t
-TeepAgentSignCborMessage(
+TeepAgentSignMessage(
     _In_ const UsefulBufC* unsignedMessage,
     _In_ UsefulBuf signedMessageBuffer,
     _Out_ UsefulBufC* signedMessage);
@@ -375,7 +489,7 @@ static void TestQueryResponseVersion(int version, teep_signature_kind_t signatur
     teep_error_code_t teep_error = TestComposeQueryResponse(version, &unsignedMessage);
     UsefulBufC signedMessage;
     UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
-    teep_error = TeepAgentSignCborMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
+    teep_error = TeepAgentSignMessage(&unsignedMessage, signedMessageBuffer, &signedMessage);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
 
     void* sessionHandle = nullptr;

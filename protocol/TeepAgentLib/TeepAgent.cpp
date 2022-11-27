@@ -27,11 +27,14 @@ static teep_error_code_t TeepAgentComposeError(UsefulBufC token, teep_error_code
 // List of requested Trusted Components.
 TrustedComponent* g_RequestedComponentList = nullptr;
 
+// List of installed Trusted Components.
+TrustedComponent* g_InstalledComponentList = nullptr;
+
 // List of unneeded Trusted Components.
 TrustedComponent* g_UnneededComponentList = nullptr;
 
 teep_error_code_t
-TeepAgentSignCborMessage(
+TeepAgentSignMessage(
     _In_ const UsefulBufC* unsignedMessage,
     _In_ UsefulBuf signedMessageBuffer,
     _Out_ UsefulBufC* signedMessage)
@@ -312,8 +315,8 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
 
             if (g_UnneededComponentList != nullptr)
             {
-                // Add unneeded-tc-list.
-                QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_UNNEEDED_TC_LIST);
+                // Add unneeded-manifest-list.
+                QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_UNNEEDED_MANIFEST_LIST);
                 {
                     for (TrustedComponent* tc = g_UnneededComponentList; tc != nullptr; tc = tc->Next) {
                         QCBOREncode_OpenArray(&context);
@@ -349,7 +352,7 @@ teep_error_code_t TeepAgentSendCborMessage(
 #ifdef TEEP_USE_COSE
     UsefulBufC signedMessage;
     Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, 1000);
-    teep_error_code_t error = TeepAgentSignCborMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
+    teep_error_code_t error = TeepAgentSignMessage(unsignedMessage, signed_cose_buffer, &signedMessage);
     if (error != TEEP_ERR_SUCCESS) {
         return error;
     }
@@ -483,9 +486,9 @@ static teep_error_code_t TeepAgentHandleInvalidMessage(_In_ void* sessionHandle,
     return TEEP_ERR_PERMANENT_ERROR;
 }
 
-static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TeepAgentHandleQueryRequest(void* sessionHandle, QCBORDecodeContext* context)
 {
-    TeepLogMessage("TeepAgentHandleCborQueryRequest\n");
+    TeepLogMessage("TeepAgentHandleQueryRequest\n");
 
     /* 3. Compose a raw response. */
     UsefulBufC queryResponse;
@@ -508,9 +511,40 @@ static teep_error_code_t TeepAgentHandleCborQueryRequest(void* sessionHandle, QC
     return errorCode;
 }
 
-teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TeepAgentParseComponentId(
+    _Inout_ QCBORDecodeContext* context,
+    _In_ const QCBORItem* arrayItem,
+    _Out_ UsefulBufC* componentId,
+    _Out_ std::ostringstream& errorMessage)
 {
-    TeepLogMessage("TeepAgentHandleCborUpdate\n");
+    if (arrayItem->uDataType != QCBOR_TYPE_ARRAY) {
+        REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_ARRAY, *arrayItem);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    // Get array size.
+    uint16_t componentIdEntryCount = arrayItem->val.uCount;
+    if (componentIdEntryCount != 1) {
+        // TODO: support more general component ids.
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    // Read bstr from component id array.
+    QCBORItem item;
+    QCBORDecode_GetNext(context, &item);
+
+    if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
+        REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, item);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    *componentId = item.val.string;
+    return TEEP_ERR_SUCCESS;
+}
+
+static teep_error_code_t TeepAgentHandleUpdate(void* sessionHandle, QCBORDecodeContext* context)
+{
+    TeepLogMessage("TeepAgentHandleUpdate\n");
 
     std::ostringstream errorMessage;
     QCBORItem item;
@@ -544,6 +578,37 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
             token = item.val.string;
             break;
         }
+        case TEEP_LABEL_UNNEEDED_MANIFEST_LIST:
+        {
+            if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                REPORT_TYPE_ERROR(errorMessage, "unneeded-manifest-list", QCBOR_TYPE_ARRAY, item);
+                teep_error = TeepAgentComposeError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                TeepAgentSendError(errorResponse, sessionHandle);
+                return teep_error;
+            }
+            uint16_t arrayEntryCount = item.val.uCount;
+#ifdef _DEBUG
+            TeepLogMessage("Parsing %d unneeded-manifest-list entries...\n", item.val.uCount);
+#endif
+            for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
+                QCBORDecode_GetNext(context, &item);
+                UsefulBufC componentId;
+                teep_error = TeepAgentParseComponentId(context, &item, &componentId, errorMessage);
+                if (teep_error != TEEP_ERR_SUCCESS) {
+                    teep_error = TeepAgentComposeError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                    TeepAgentSendError(errorResponse, sessionHandle);
+                    return teep_error;
+                }
+#if 0
+                // TODO(issue #7): SUIT manifest support
+                errorCode = SuitUninstallComponent(componentId);
+                if (errorCode != TEEP_ERR_SUCCESS) {
+                    break;
+                }
+#endif
+            }
+            break;
+        }
         case TEEP_LABEL_MANIFEST_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
@@ -567,6 +632,9 @@ teep_error_code_t TeepAgentHandleCborUpdate(void* sessionHandle, QCBORDecodeCont
                 if (errorCode == TEEP_ERR_SUCCESS) {
                     // Try until we hit the first error.
                     errorCode = TryProcessSuitEnvelope(item.val.string, errorMessage);
+                    if (errorCode != TEEP_ERR_SUCCESS) {
+                        break;
+                    }
                 }
             }
             break;
@@ -709,10 +777,10 @@ static teep_error_code_t TeepAgentHandleCborMessage(
     TeepLogMessage("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_REQUEST:
-        teeperr = TeepAgentHandleCborQueryRequest(sessionHandle, &context);
+        teeperr = TeepAgentHandleQueryRequest(sessionHandle, &context);
         break;
     case TEEP_MESSAGE_UPDATE:
-        teeperr = TeepAgentHandleCborUpdate(sessionHandle, &context);
+        teeperr = TeepAgentHandleUpdate(sessionHandle, &context);
         break;
     default:
         teeperr = TeepAgentHandleInvalidMessage(sessionHandle, &context);
@@ -808,7 +876,7 @@ teep_error_code_t TeepAgentUnrequestTA(
 {
     teep_error_code_t teep_error = TEEP_ERR_SUCCESS;
 
-    // TODO: See whether unneededTaid is installed.
+    // TODO(issue# 116): See whether unneededTaid is installed.
     // For now we skip this step and pretend it is.
     bool isInstalled = true;
 

@@ -7,6 +7,8 @@
 TrustedComponent::TrustedComponent(teep_uuid_t id)
 {
     this->ID = id;
+    ConvertUUIDToString(this->Name, sizeof(this->Name), id);
+    this->Next = nullptr;
 }
 
 TrustedComponent::~TrustedComponent()

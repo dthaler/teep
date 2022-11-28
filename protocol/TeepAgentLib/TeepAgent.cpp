@@ -344,7 +344,7 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TeepAgentSendCborMessage(
+static teep_error_code_t TeepAgentSendMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
     _In_ const UsefulBufC* unsignedMessage)
@@ -468,7 +468,7 @@ static void TeepAgentSendError(UsefulBufC reply, void* sessionHandle)
 
     HexPrintBuffer("Sending CBOR message: ", reply.ptr, reply.len);
 
-    (void)TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
+    (void)TeepAgentSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
     free((void*)reply.ptr);
 }
 
@@ -506,7 +506,7 @@ static teep_error_code_t TeepAgentHandleQueryRequest(void* sessionHandle, QCBORD
 
     TeepLogMessage("Sending QueryResponse...\n");
 
-    errorCode = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &queryResponse);
+    errorCode = TeepAgentSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &queryResponse);
     free((void*)queryResponse.ptr);
     return errorCode;
 }
@@ -681,7 +681,7 @@ static teep_error_code_t TeepAgentHandleUpdate(void* sessionHandle, QCBORDecodeC
 
     HexPrintBuffer("Sending CBOR message: ", reply.ptr, reply.len);
 
-    teep_error = TeepAgentSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
+    teep_error = TeepAgentSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &reply);
     free((void*)reply.ptr);
     return teep_error;
 }
@@ -736,9 +736,8 @@ static teep_error_code_t TeepAgentVerifyMessageSignature(
 #endif
 }
 
-
 /* Handle an incoming message from a TAM. */
-static teep_error_code_t TeepAgentHandleCborMessage(
+static teep_error_code_t TeepAgentHandleMessage(
     _In_ void* sessionHandle,
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
@@ -809,7 +808,7 @@ teep_error_code_t TeepAgentProcessTeepMessage(
     }
 
     if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
-        err = TeepAgentHandleCborMessage(sessionHandle, message, messageLength);
+        err = TeepAgentHandleMessage(sessionHandle, message, messageLength);
     } else {
         return TEEP_ERR_PERMANENT_ERROR;
     }

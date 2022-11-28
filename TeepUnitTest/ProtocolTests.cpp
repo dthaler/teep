@@ -337,7 +337,7 @@ TEST_CASE("Agent receives bad COSE message", "[protocol]")
 }
 
 teep_error_code_t
-TamSignCborMessage(
+TamSignMessage(
     _In_ const UsefulBufC* unsignedMessage,
     _In_ UsefulBuf signed_message_buffer,
     teep_signature_kind_t signatureKind,
@@ -357,7 +357,7 @@ TEST_CASE("Agent receives bad TEEP message", "[protocol]")
     unsignedMessage.len = message.size();
     UsefulBufC signedMessage;
     UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
-    teep_error_code_t teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, TEEP_SIGNATURE_ES256, &signedMessage);
+    teep_error_code_t teep_error = TamSignMessage(&unsignedMessage, signedMessageBuffer, TEEP_SIGNATURE_ES256, &signedMessage);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
 
     // Try bad COSE message.
@@ -402,7 +402,7 @@ static void TestQueryRequestVersion(int min_version, int max_version, teep_error
     teep_error_code_t teep_error = TamComposeQueryRequest(min_version, max_version, &unsignedMessage);
     UsefulBufC signedMessage;
     UsefulBuf_MAKE_STACK_UB(signedMessageBuffer, 300);
-    teep_error = TamSignCborMessage(&unsignedMessage, signedMessageBuffer, TEEP_SIGNATURE_BOTH, &signedMessage);
+    teep_error = TamSignMessage(&unsignedMessage, signedMessageBuffer, TEEP_SIGNATURE_BOTH, &signedMessage);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
 
     void* sessionHandle = nullptr;

@@ -104,7 +104,7 @@ teep_error_code_t TamComposeQueryRequest(
 }
 
 teep_error_code_t
-TamSignCborMessage(
+TamSignMessage(
     _In_ const UsefulBufC* unsignedMessage,
     _In_ UsefulBuf signedMessageBuffer,
     teep_signature_kind_t signatureKind,
@@ -124,7 +124,7 @@ TamSignCborMessage(
 }
 
 static teep_error_code_t
-TamSendCborMessage(
+TamSendMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
     _In_ const UsefulBufC* unsignedMessage,
@@ -138,7 +138,7 @@ TamSendCborMessage(
     if (signatureKind != TEEP_SIGNATURE_NONE) {
         const size_t max_cose_message_size = 3000;
         Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, max_cose_message_size);
-        teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, signatureKind, &signedMessage);
+        teep_error_code_t error = TamSignMessage(unsignedMessage, signed_cose_buffer, signatureKind, &signedMessage);
         if (error != TEEP_ERR_SUCCESS) {
             return error;
         }
@@ -179,7 +179,7 @@ static teep_error_code_t TamProcessTeepConnect(
     HexPrintBuffer("Sending CBOR message: ", encodedC.ptr, encodedC.len);
 
     TeepLogMessage("Sending QueryRequest...\n");
-    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, TEEP_SIGNATURE_BOTH);
+    teep_error = TamSendMessage(sessionHandle, mediaType, &encodedC, TEEP_SIGNATURE_BOTH);
     return teep_error;
 }
 
@@ -596,7 +596,7 @@ static teep_error_code_t TamHandleQueryResponse(
 
             TeepLogMessage("Sending Update message...\n");
 
-            err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
+            err = TamSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
             free((void*)update.ptr);
             if (err != TEEP_ERR_SUCCESS) {
                 return err;
@@ -709,7 +709,7 @@ static teep_error_code_t TamVerifyMessageSignature(
 }
 
 /* Handle an incoming message from a TEEP Agent. */
-teep_error_code_t TamHandleCborMessage(
+static teep_error_code_t TamHandleMessage(
     _In_ void* sessionHandle,
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
@@ -782,7 +782,7 @@ teep_error_code_t TamProcessTeepMessage(
     }
 
     if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
-        err = TamHandleCborMessage(sessionHandle, message, messageLength);
+        err = TamHandleMessage(sessionHandle, message, messageLength);
     } else {
         return TEEP_ERR_PERMANENT_ERROR;
     }

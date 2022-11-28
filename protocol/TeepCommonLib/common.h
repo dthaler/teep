@@ -15,8 +15,10 @@ typedef oe_uuid_t teep_uuid_t;
 #define TEEP_UUID_SIZE sizeof(oe_uuid_t)
 #define TEEP_ASSERT(x) oe_assert(x)
 #define _In_
-#define _In_z_
+#define _In_opt_z_
 #define _In_reads_(x)
+#define _In_z_
+#define _Inout_
 #define _Out_
 #define _Out_writes_(x)
 #define _Out_writes_opt_z_(x)

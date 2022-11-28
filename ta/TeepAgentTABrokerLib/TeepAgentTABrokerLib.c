@@ -69,10 +69,16 @@ teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
     return err;
 }
 
-teep_error_code_t TeepAgentInitializeKeys(_In_z_ const char* dataDirectory, _Out_writes_opt_z_(256) char* publicKeyFilename)
+void TeepAgentShutdown()
 {
     teep_error_code_t err;
-    oe_result_t result = ecall_TeepAgentInitializeKeys(g_ta_eid, (int*)&err, dataDirectory, publicKeyFilename);
+    (void)ecall_TeepAgentShutdown(g_ta_eid);
+}
+
+teep_error_code_t TeepAgentInitializeKeys(_In_z_ const char* dataDirectory, int signatureKind, _Out_writes_opt_z_(256) char* publicKeyFilename)
+{
+    teep_error_code_t err;
+    oe_result_t result = ecall_TeepAgentInitializeKeys(g_ta_eid, (int*)&err, dataDirectory, signatureKind, publicKeyFilename);
     if (result != OE_OK) {
         return TEEP_ERR_PERMANENT_ERROR;
     }

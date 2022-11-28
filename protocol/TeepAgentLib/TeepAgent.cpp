@@ -930,6 +930,23 @@ teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
     return TEEP_ERR_SUCCESS;
 }
 
+static void ClearComponentList(_Inout_ TrustedComponent** componentList)
+{
+    while (*componentList != nullptr) {
+        TrustedComponent* ta = *componentList;
+        *componentList = ta->Next;
+        ta->Next = nullptr;
+        delete ta;
+    }
+}
+
+void TeepAgentShutdown()
+{
+    ClearComponentList(&g_InstalledComponentList);
+    ClearComponentList(&g_UnneededComponentList);
+    ClearComponentList(&g_RequestedComponentList);
+}
+
 #define TOXDIGIT(x) ("0123456789abcde"[x])
 
 void TeepAgentMakeManifestFilename(_Out_ filesystem::path& manifestPath, _In_reads_(buffer_len) const char* buffer, size_t buffer_len)
@@ -940,7 +957,7 @@ void TeepAgentMakeManifestFilename(_Out_ filesystem::path& manifestPath, _In_rea
     char filename[_MAX_PATH];
 #if 1
     // Hex encode buffer.
-    for (int i = 0; i < buffer_len; i++) {
+    for (size_t i = 0; i < buffer_len; i++) {
         uint8_t ch = buffer[i];
         filename[i * 2] = TOXDIGIT(ch >> 4);
         filename[i * 2 + 1] = TOXDIGIT(ch & 0xf);

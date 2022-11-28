@@ -297,7 +297,7 @@ teep_sign_cbor_message(
 {
     // TODO(#104): t_cose 2.0 should support Sign.
     // Switch to it once it's ready and supports EdDSA.
-    // In the meantime, we just use Sign1.
+    // In the meantime, we just use Sign1 ES256.
 
     return teep_sign1_cbor_message(&key_pairs[TEEP_SIGNATURE_ES256],
         unsigned_message,

@@ -241,6 +241,9 @@ static teep_error_code_t SuitSaveManifest(
 static teep_error_code_t TryProcessSuitManifest(_Inout_ filesystem::path& filename, UsefulBufC encoded, std::ostream& errorMessage)
 {
 #if 1
+    TEEP_UNUSED(filename);
+    TEEP_UNUSED(encoded);
+    TEEP_UNUSED(errorMessage);
     return TEEP_ERR_SUCCESS;
 #else
     QCBORDecodeContext context;

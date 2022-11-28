@@ -105,7 +105,7 @@ static void TestVerifyComponentInstalled(_In_ const char* taId, bool expected_re
     REQUIRE(std::filesystem::exists(destinationPath) == expected_result);
 }
 
-TEST_CASE("UnrequestTA with required TA", "[protocol]")
+TEST_CASE("UnrequestTA with required TA", "[protocol][uninstall]")
 {
     // Manually "install" required TA.
     TestUninstallAllComponents();
@@ -157,7 +157,7 @@ static void TestUnrequestNonRequiredComponent(_In_ const char* taId)
     TestUninstallAllComponents();
 }
 
-TEST_CASE("UnrequestTA with optional TA", "[protocol]")
+TEST_CASE("UnrequestTA with optional TA", "[protocol][uninstall]")
 {
     // Manually "install" optional TA.
     TestUninstallAllComponents();
@@ -166,7 +166,7 @@ TEST_CASE("UnrequestTA with optional TA", "[protocol]")
     TestUnrequestNonRequiredComponent(OPTIONAL_TA_ID);
 }
 
-TEST_CASE("UnrequestTA with unknown TA", "[protocol]")
+TEST_CASE("UnrequestTA with unknown TA", "[protocol][uninstall]")
 {
     TestUninstallAllComponents();
     TestUnrequestNonRequiredComponent(UNKNOWN_TA_ID);
@@ -197,17 +197,17 @@ static void TestRequestAllowedComponent(_In_ const char* taId)
     TestUninstallAllComponents();
 }
 
-TEST_CASE("RequestTA for required TA", "[protocol]")
+TEST_CASE("RequestTA for required TA", "[protocol][install]")
 {
     TestRequestAllowedComponent(REQUIRED_TA_ID);
 }
 
-TEST_CASE("RequestTA for optional TA", "[protocol]")
+TEST_CASE("RequestTA for optional TA", "[protocol][install]")
 {
     TestRequestAllowedComponent(OPTIONAL_TA_ID);
 }
 
-TEST_CASE("RequestTA for unknown TA", "[protocol]")
+TEST_CASE("RequestTA for unknown TA", "[protocol][install]")
 {
     TestUninstallAllComponents();
     TestConfigureKeys(TEEP_SIGNATURE_ES256);

@@ -599,13 +599,10 @@ static teep_error_code_t TeepAgentHandleUpdate(void* sessionHandle, QCBORDecodeC
                     TeepAgentSendError(errorResponse, sessionHandle);
                     return teep_error;
                 }
-#if 0
-                // TODO(issue #7): SUIT manifest support
                 errorCode = SuitUninstallComponent(componentId);
                 if (errorCode != TEEP_ERR_SUCCESS) {
                     break;
                 }
-#endif
             }
             break;
         }
@@ -947,7 +944,7 @@ void TeepAgentShutdown()
     ClearComponentList(&g_RequestedComponentList);
 }
 
-#define TOXDIGIT(x) ("0123456789abcde"[x])
+#define TOXDIGIT(x) ("0123456789abcdef"[x])
 
 void TeepAgentMakeManifestFilename(_Out_ filesystem::path& manifestPath, _In_reads_(buffer_len) const char* buffer, size_t buffer_len)
 {
@@ -957,12 +954,15 @@ void TeepAgentMakeManifestFilename(_Out_ filesystem::path& manifestPath, _In_rea
     char filename[_MAX_PATH];
 #if 1
     // Hex encode buffer.
-    for (size_t i = 0; i < buffer_len; i++) {
+    for (size_t i = 0, fi = 0; i < buffer_len; i++) {
         uint8_t ch = buffer[i];
-        filename[i * 2] = TOXDIGIT(ch >> 4);
-        filename[i * 2 + 1] = TOXDIGIT(ch & 0xf);
+        if (i == 4 || i == 6 || i == 8 || i == 10) {
+            filename[fi++] = '-';
+        }
+        filename[fi++] = TOXDIGIT(ch >> 4);
+        filename[fi++] = TOXDIGIT(ch & 0xf);
+        filename[fi] = 0;
     }
-    filename[buffer_len * 2] = 0;
 #else
     // Escape illegal characters.
     size_t i;

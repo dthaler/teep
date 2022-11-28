@@ -24,7 +24,7 @@ static teep_error_code_t GetFilenameFromSuitDigest(_Out_ filesystem::path& filen
         QCBORDecode_GetNext(&context, &item);
         if (item.uDataType == QCBOR_TYPE_BYTE_STRING) {
             // Base16 encode item.val.string.
-            TeepAgentMakeManifestFilename(filename, (char*)item.val.string.ptr, item.val.string.len);
+            TeepAgentMakeManifestFilename(filename, (const char*)item.val.string.ptr, item.val.string.len);
             errorCode = TEEP_ERR_SUCCESS;
         }
     }
@@ -362,4 +362,13 @@ teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded, std::ostream& error
         errorCode = SuitSaveManifest(filename, encoded, errorMessage);
     }
     return errorCode;
+}
+
+teep_error_code_t SuitUninstallComponent(UsefulBufC componentId)
+{
+    // TODO(issue #7): SUIT manifest support
+    filesystem::path filename;
+    TeepAgentMakeManifestFilename(filename, (const char*)componentId.ptr, componentId.len);
+    _unlink(filename.string().c_str());
+    return TEEP_ERR_SUCCESS;
 }

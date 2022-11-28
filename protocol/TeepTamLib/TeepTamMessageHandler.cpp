@@ -192,6 +192,17 @@ teep_error_code_t TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char*
     }
 }
 
+static void AddComponentId(QCBOREncodeContext* context, const RequestedComponentInfo* tc)
+{
+    QCBOREncode_OpenArray(context);
+    {
+        // Currently we only support component IDs with one element.
+        // TODO: relax this.
+        QCBOREncode_AddBytes(context, tc->ComponentId);
+    }
+    QCBOREncode_CloseArray(context);
+}
+
 /* Compose a raw Update message to be signed. */
 static teep_error_code_t TamComposeUpdate(
     _Out_ UsefulBufC* encoded,
@@ -243,7 +254,7 @@ static teep_error_code_t TamComposeUpdate(
                         continue;
                     }
 
-                    QCBOREncode_AddBytes(&context, rci->ComponentId);
+                    AddComponentId(&context, rci);
                     (*count)++;
                 }
 
@@ -255,7 +266,7 @@ static teep_error_code_t TamComposeUpdate(
                     }
 
                     // The component is allowed but optional, so ok to delete on request.
-                    QCBOREncode_AddBytes(&context, rci->ComponentId);
+                    AddComponentId(&context, rci);
                     (*count)++;
                 }
 
@@ -579,7 +590,7 @@ static teep_error_code_t TamHandleQueryResponse(
         }
     }
 
-    if (requestedComponentList.Next != nullptr) {
+    if (requestedComponentList.Next != nullptr || unneededComponentList.Next != nullptr) {
         // 3. Compose an Update message.
         UsefulBufC update;
         int count;

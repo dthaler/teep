@@ -10,3 +10,4 @@ using namespace std::__fs;
 
 teep_error_code_t TryProcessSuitEnvelope(UsefulBufC encoded, std::ostream& errorMessage);
 void TeepAgentMakeManifestFilename(_Out_ filesystem::path& filename, _In_reads_(buffer_len) const char* buffer, size_t buffer_len);
+teep_error_code_t SuitUninstallComponent(UsefulBufC componentId);

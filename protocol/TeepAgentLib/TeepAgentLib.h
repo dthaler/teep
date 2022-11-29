@@ -40,6 +40,7 @@ extern "C" {
 
     teep_error_code_t TeepAgentProcessError(_In_ void* sessionHandle);
     teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri);
+    void TeepAgentShutdown();
 
 #ifdef __cplusplus
 };

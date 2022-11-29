@@ -27,8 +27,9 @@ enclave {
             size_t messageLength);
 
         public int ecall_TeepAgentLoadConfiguration([in, string] const char* dataDirectory);
+        public void ecall_TeepAgentShutdown();
 
-        public int ecall_TeepAgentInitializeKeys([in, string] const char* dataDirectory, [out] char publicKeyFilename[256]);
+        public int ecall_TeepAgentInitializeKeys([in, string] const char* dataDirectory, int signatureKind, [out] char publicKeyFilename[256]);
     };
 
     untrusted {

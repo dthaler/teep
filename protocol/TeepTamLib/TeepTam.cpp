@@ -19,6 +19,7 @@ void StopTamTABroker(void);
 
 teep_error_code_t TamLoadConfiguration(_In_z_ const char* dataDirectory)
 {
+    Manifest::ClearManifests();
     std::string requiredManifestPath = std::string(dataDirectory) + "/manifests/required";
     teep_error_code_t result = TamConfigureManifests(
         requiredManifestPath.c_str(),

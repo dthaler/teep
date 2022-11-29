@@ -103,31 +103,16 @@ static teep_error_code_t ConfigureManifest(
             break;
         }
 
-        char* basename = _strdup(filename);
-        if (basename != NULL) {
-            size_t len = strlen(basename);
-            if ((len > 5) && strcmp(basename + len - 5, ".cbor") == 0) {
-                basename[len - 5] = 0;
-            }
-
-            teep_uuid_t component_id;
-            int uuid[sizeof(teep_uuid_t)];
-            sscanf_s(basename,
-                "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-                &uuid[0], &uuid[1], &uuid[2], &uuid[3], &uuid[4], &uuid[5], &uuid[6], &uuid[7],
-                &uuid[8], &uuid[9], &uuid[10], &uuid[11], &uuid[12], &uuid[13], &uuid[14], &uuid[15]);
-            for (size_t i = 0; i < sizeof(teep_uuid_t); i++) {
-                component_id.b[i] = uuid[i];
-            }
-
+        teep_uuid_t component_id;
+        result = GetUuidFromFilename(filename, &component_id);
+        if (result == TEEP_ERR_SUCCESS) {
             if (manifest_size > 2 && manifest[0] == 0xd8 && manifest[1] == 0x6b) {
                 Manifest::AddManifest(component_id, manifest + 2, manifest_size - 2, is_required);
-            } else {
+            }
+            else {
                 Manifest::AddManifest(component_id, manifest, manifest_size, is_required);
             }
-            result = TEEP_ERR_SUCCESS;
         }
-        free(basename);
     } while (0);
 
     free(manifest);
@@ -140,13 +125,12 @@ static teep_error_code_t ConfigureManifest(
  * Currently we provide untrusted manifests into the TAM.
  * In a real implementation, the TAM would instead either load
  * manifests from a trusted location, or use sealed storage
- * (decrypting the contents inside the enclave).
+ * (decrypting the contents inside the TEE).
  */
 teep_error_code_t TamConfigureManifests(
     _In_z_ const char* directory_name,
     int is_required)
 {
-    Manifest::ClearManifests();
     teep_error_code_t result = TEEP_ERR_SUCCESS;
     DIR* dir = opendir(directory_name);
     if (dir == NULL) {

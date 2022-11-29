@@ -117,6 +117,7 @@ int StartAgentBroker(_In_z_ const char* dataDirectory, int simulatedTee, teep_si
 
 void StopAgentBroker(void)
 {
+    TeepAgentShutdown();
 #ifdef TEEP_USE_TEE
     StopAgentTABroker();
 #endif

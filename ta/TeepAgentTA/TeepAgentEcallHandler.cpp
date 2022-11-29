@@ -45,9 +45,14 @@ int ecall_TeepAgentLoadConfiguration(const char* dataDirectory)
     return TeepAgentLoadConfiguration(dataDirectory);
 }
 
-int ecall_TeepAgentInitializeKeys(const char* dataDirectory, char publicKeyFilename[256])
+void ecall_TeepAgentShutdown()
 {
-    return TeepAgentInitializeKeys(dataDirectory, publicKeyFilename);
+    return TeepAgentShutdown();
+}
+
+int ecall_TeepAgentInitializeKeys(const char* dataDirectory, teep_signature_kind_t signatureKind, char publicKeyFilename[256])
+{
+    return TeepAgentInitializeKeys(dataDirectory, signatureKind, publicKeyFilename);
 }
 
 teep_error_code_t TeepAgentConnect(

@@ -104,7 +104,7 @@ teep_error_code_t TamComposeQueryRequest(
 }
 
 teep_error_code_t
-TamSignCborMessage(
+TamSignMessage(
     _In_ const UsefulBufC* unsignedMessage,
     _In_ UsefulBuf signedMessageBuffer,
     teep_signature_kind_t signatureKind,
@@ -124,7 +124,7 @@ TamSignCborMessage(
 }
 
 static teep_error_code_t
-TamSendCborMessage(
+TamSendMessage(
     _In_ void* sessionHandle,
     _In_z_ const char* mediaType,
     _In_ const UsefulBufC* unsignedMessage,
@@ -138,7 +138,7 @@ TamSendCborMessage(
     if (signatureKind != TEEP_SIGNATURE_NONE) {
         const size_t max_cose_message_size = 3000;
         Q_USEFUL_BUF_MAKE_STACK_UB(signed_cose_buffer, max_cose_message_size);
-        teep_error_code_t error = TamSignCborMessage(unsignedMessage, signed_cose_buffer, signatureKind, &signedMessage);
+        teep_error_code_t error = TamSignMessage(unsignedMessage, signed_cose_buffer, signatureKind, &signedMessage);
         if (error != TEEP_ERR_SUCCESS) {
             return error;
         }
@@ -179,7 +179,7 @@ static teep_error_code_t TamProcessTeepConnect(
     HexPrintBuffer("Sending CBOR message: ", encodedC.ptr, encodedC.len);
 
     TeepLogMessage("Sending QueryRequest...\n");
-    teep_error = TamSendCborMessage(sessionHandle, mediaType, &encodedC, TEEP_SIGNATURE_BOTH);
+    teep_error = TamSendMessage(sessionHandle, mediaType, &encodedC, TEEP_SIGNATURE_BOTH);
     return teep_error;
 }
 
@@ -192,13 +192,24 @@ teep_error_code_t TamProcessConnect(_In_ void* sessionHandle, _In_z_ const char*
     }
 }
 
+static void AddComponentId(QCBOREncodeContext* context, const RequestedComponentInfo* tc)
+{
+    QCBOREncode_OpenArray(context);
+    {
+        // Currently we only support component IDs with one element.
+        // TODO: relax this.
+        QCBOREncode_AddBytes(context, tc->ComponentId);
+    }
+    QCBOREncode_CloseArray(context);
+}
+
 /* Compose a raw Update message to be signed. */
-static teep_error_code_t TamComposeCborUpdate(
+static teep_error_code_t TamComposeUpdate(
     _Out_ UsefulBufC* encoded,
-    _In_ const RequestedComponentInfo* currentComponentList,
-    _In_ const RequestedComponentInfo* requestedComponentList,
-    _In_ const RequestedComponentInfo* unneededComponentList,
-    _Out_ int* count)
+    _In_opt_ const RequestedComponentInfo* currentComponentList,
+    _In_opt_ const RequestedComponentInfo* requestedComponentList,
+    _In_opt_ const RequestedComponentInfo* unneededComponentList,
+    _Out_ int* count) // Non-zero if we actually have something to update.
 {
     *count = 0;
     *encoded = NULLUsefulBufC;
@@ -234,11 +245,42 @@ static teep_error_code_t TamComposeCborUpdate(
             QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_TOKEN, UsefulBuf_Const(token));
 #endif
 
+            QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_UNNEEDED_MANIFEST_LIST);
+            {
+                // List any installed components that are not in the required or optional list.
+                for (const RequestedComponentInfo* rci = currentComponentList; rci != nullptr; rci = rci->Next) {
+                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
+                    if (manifest != nullptr) {
+                        continue;
+                    }
+
+                    AddComponentId(&context, rci);
+                    (*count)++;
+                }
+
+                // List any additional optional components that are reported as unneeded.
+                for (const RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
+                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
+                    if ((manifest == nullptr) || manifest->IsRequired) {
+                        continue;
+                    }
+
+                    // The component is allowed but optional, so ok to delete on request.
+                    AddComponentId(&context, rci);
+                    (*count)++;
+                }
+
+            }
+            QCBOREncode_CloseArray(&context);
+
             QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_MANIFEST_LIST);
             {
                 // Any SUIT manifest for any required components that aren't reported to be present.
                 for (Manifest* manifest = Manifest::First(); manifest != nullptr; manifest = manifest->Next) {
                     bool found = false;
+                    if (!manifest->IsRequired) {
+                        continue;
+                    }
                     for (const RequestedComponentInfo* cci = currentComponentList; cci != nullptr; cci = cci->Next) {
                         if (manifest->HasComponentId(&cci->ComponentId)) {
                             found = true;
@@ -254,42 +296,13 @@ static teep_error_code_t TamComposeCborUpdate(
                 // Add SUIT manifest for any optional components that were requested.
                 for (const RequestedComponentInfo* rci = requestedComponentList; rci != nullptr; rci = rci->Next) {
                     Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
-                    if ((manifest == nullptr) || (manifest->IsRequired)) {
+                    if ((manifest == nullptr) || manifest->IsRequired) {
                         continue;
                     }
 
                     // The component is allowed and optional, so ok to install on request.
                     QCBOREncode_AddBytes(&context, manifest->ManifestContents);
                     (*count)++;
-                }
-
-                // Add a deletion manifest for any optional components that are reported as unneeded.
-                for (const RequestedComponentInfo* rci = unneededComponentList; rci != nullptr; rci = rci->Next) {
-                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
-                    if ((manifest == nullptr) || (manifest->IsRequired)) {
-                        continue;
-                    }
-
-                    // The component is allowed but optional, so ok to delete on request.
-                    // TODO: need a deletion manifest
-#if 0
-                    QCBOREncode_AddBytes(&context, manifest->DeletionManifestContents);
-                    (*count)++;
-#endif
-                }
-
-                // List any installed components that are not in the required or optional list.
-                for (const RequestedComponentInfo* rci = currentComponentList; rci != nullptr; rci = rci->Next) {
-                    Manifest* manifest = Manifest::FindManifest(&rci->ComponentId);
-                    if (manifest != nullptr) {
-                        continue;
-                    }
-
-                    // TODO: need a deletion manifest
-#if 0
-                    QCBOREncode_AddBytes(&context, manifest->DeletionManifestContents);
-                    (*count)++;
-#endif
                 }
             }
             QCBOREncode_CloseArray(&context);
@@ -332,11 +345,11 @@ teep_error_code_t ParseComponentId(
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TamHandleCborQueryResponse(
+static teep_error_code_t TamHandleQueryResponse(
     void* sessionHandle,
     QCBORDecodeContext* context)
 {
-    TeepLogMessage("TamHandleCborQueryResponse\n");
+    TeepLogMessage("TamHandleQueryResponse\n");
 
     QCBORItem item;
     std::ostringstream errorMessage;
@@ -478,10 +491,10 @@ teep_error_code_t TamHandleCborQueryResponse(
             }
             break;
         }
-        case TEEP_LABEL_UNNEEDED_TC_LIST:
+        case TEEP_LABEL_UNNEEDED_MANIFEST_LIST:
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                REPORT_TYPE_ERROR(errorMessage, "unneeded-tc-list", QCBOR_TYPE_ARRAY, item);
+                REPORT_TYPE_ERROR(errorMessage, "unneeded-manifest-list", QCBOR_TYPE_ARRAY, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
             uint16_t arrayEntryCount = item.val.uCount;
@@ -580,11 +593,11 @@ teep_error_code_t TamHandleCborQueryResponse(
         }
     }
 
-    if (requestedComponentList.Next != nullptr) {
+    {
         // 3. Compose an Update message.
         UsefulBufC update;
         int count;
-        teep_error_code_t err = TamComposeCborUpdate(&update, currentComponentList.Next, requestedComponentList.Next, unneededComponentList.Next, &count);
+        teep_error_code_t err = TamComposeUpdate(&update, currentComponentList.Next, requestedComponentList.Next, unneededComponentList.Next, &count);
         if (err != 0) {
             return err;
         }
@@ -597,7 +610,7 @@ teep_error_code_t TamHandleCborQueryResponse(
 
             TeepLogMessage("Sending Update message...\n");
 
-            err = TamSendCborMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
+            err = TamSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
             free((void*)update.ptr);
             if (err != TEEP_ERR_SUCCESS) {
                 return err;
@@ -608,7 +621,7 @@ teep_error_code_t TamHandleCborQueryResponse(
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TamHandleSuccess(void* sessionHandle, QCBORDecodeContext* context)
 {
     (void)sessionHandle;
     (void)context;
@@ -678,7 +691,7 @@ teep_error_code_t TamHandleCborSuccess(void* sessionHandle, QCBORDecodeContext* 
     return TEEP_ERR_SUCCESS;
 }
 
-teep_error_code_t TamHandleCborError(
+static teep_error_code_t TamHandleError(
     void* sessionHandle,
     QCBORDecodeContext* context)
 {
@@ -710,7 +723,7 @@ static teep_error_code_t TamVerifyMessageSignature(
 }
 
 /* Handle an incoming message from a TEEP Agent. */
-teep_error_code_t TamHandleCborMessage(
+static teep_error_code_t TamHandleMessage(
     _In_ void* sessionHandle,
     _In_reads_(messageLength) const char* message,
     size_t messageLength)
@@ -748,13 +761,13 @@ teep_error_code_t TamHandleCborMessage(
     TeepLogMessage("Received CBOR TEEP message type=%d\n", messageType);
     switch (messageType) {
     case TEEP_MESSAGE_QUERY_RESPONSE:
-        teeperr = TamHandleCborQueryResponse(sessionHandle, &context);
+        teeperr = TamHandleQueryResponse(sessionHandle, &context);
         break;
     case TEEP_MESSAGE_SUCCESS:
-        teeperr = TamHandleCborSuccess(sessionHandle, &context);
+        teeperr = TamHandleSuccess(sessionHandle, &context);
         break;
     case TEEP_MESSAGE_ERROR:
-        teeperr = TamHandleCborError(sessionHandle, &context);
+        teeperr = TamHandleError(sessionHandle, &context);
         break;
     default:
         teeperr = TEEP_ERR_PERMANENT_ERROR;
@@ -783,7 +796,7 @@ teep_error_code_t TamProcessTeepMessage(
     }
 
     if (strncmp(mediaType, TEEP_CBOR_MEDIA_TYPE, strlen(TEEP_CBOR_MEDIA_TYPE)) == 0) {
-        err = TamHandleCborMessage(sessionHandle, message, messageLength);
+        err = TamHandleMessage(sessionHandle, message, messageLength);
     } else {
         return TEEP_ERR_PERMANENT_ERROR;
     }

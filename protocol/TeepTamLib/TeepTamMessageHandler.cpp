@@ -278,6 +278,9 @@ static teep_error_code_t TamComposeUpdate(
                 // Any SUIT manifest for any required components that aren't reported to be present.
                 for (Manifest* manifest = Manifest::First(); manifest != nullptr; manifest = manifest->Next) {
                     bool found = false;
+                    if (!manifest->IsRequired) {
+                        continue;
+                    }
                     for (const RequestedComponentInfo* cci = currentComponentList; cci != nullptr; cci = cci->Next) {
                         if (manifest->HasComponentId(&cci->ComponentId)) {
                             found = true;
@@ -590,7 +593,7 @@ static teep_error_code_t TamHandleQueryResponse(
         }
     }
 
-    if (requestedComponentList.Next != nullptr || unneededComponentList.Next != nullptr) {
+    {
         // 3. Compose an Update message.
         UsefulBufC update;
         int count;

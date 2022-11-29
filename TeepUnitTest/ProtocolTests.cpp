@@ -210,6 +210,7 @@ TEST_CASE("RequestTA for optional TA", "[protocol][install]")
 TEST_CASE("RequestTA for unknown TA", "[protocol][install]")
 {
     TestUninstallAllComponents();
+    TestInstallComponent("required", REQUIRED_TA_ID);
     TestConfigureKeys(TEEP_SIGNATURE_ES256);
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
@@ -232,6 +233,8 @@ TEST_CASE("RequestTA for unknown TA", "[protocol][install]")
 
 TEST_CASE("PolicyCheck with no policy change", "[protocol]")
 {
+    TestUninstallAllComponents();
+    TestInstallComponent("required", REQUIRED_TA_ID);
     TestConfigureKeys(TEEP_SIGNATURE_ES256);
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
@@ -241,9 +244,9 @@ TEST_CASE("PolicyCheck with no policy change", "[protocol]")
     teep_error_code_t teep_error = TeepAgentRequestPolicyCheck(DEFAULT_TAM_URI);
     REQUIRE(teep_error == TEEP_ERR_SUCCESS);
 
-    // Verify 4 messages sent (QueryRequest, QueryResponse, Update, Success).
+    // Verify 2 messages sent (QueryRequest, QueryResponse).
     uint64_t counter2 = GetOutboundMessagesSent();
-    REQUIRE(counter2 == counter1 + 4);
+    REQUIRE(counter2 == counter1 + 2);
 
     StopAgentBroker();
     StopTamBroker();
@@ -391,6 +394,7 @@ teep_error_code_t TeepAgentComposeQueryResponse(
 
 static void TestQueryRequestVersion(int min_version, int max_version, teep_error_code_t expected_result, uint64_t expected_message_count)
 {
+    TestUninstallAllComponents();
     TestConfigureKeys(TEEP_SIGNATURE_ES256);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, TEEP_SIGNATURE_ES256, nullptr) == 0);
 
@@ -477,6 +481,7 @@ static teep_error_code_t TestComposeQueryResponse(int version, _Out_ UsefulBufC*
 
 static void TestQueryResponseVersion(int version, teep_signature_kind_t signatureKind, teep_error_code_t expected_result, uint64_t expected_message_count)
 {
+    TestUninstallAllComponents();
     TestConfigureKeys(signatureKind);
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, signatureKind, nullptr) == 0);
@@ -506,7 +511,7 @@ static void TestQueryResponseVersion(int version, teep_signature_kind_t signatur
 
 TEST_CASE("TAM receives QueryResponse with supported version and ES256", "[protocol]")
 {
-    const uint64_t expected_message_count = 0;
+    const uint64_t expected_message_count = 2;
     TestQueryResponseVersion(0, TEEP_SIGNATURE_ES256, TEEP_ERR_SUCCESS, expected_message_count);
 }
 
@@ -518,6 +523,6 @@ TEST_CASE("TAM receives QueryResponse with unsupported version", "[protocol]")
 
 TEST_CASE("TAM receives QueryResponse with supported version and EdDSA", "[protocol]")
 {
-    const uint64_t expected_message_count = 0;
+    const uint64_t expected_message_count = 2;
     TestQueryResponseVersion(0, TEEP_SIGNATURE_EDDSA, TEEP_ERR_SUCCESS, expected_message_count);
 }

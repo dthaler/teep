@@ -1,6 +1,7 @@
 // Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
 
+#include <dirent.h>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -272,13 +273,10 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* 
                 QCBOREncode_AddBytesToMapN(&context, TEEP_LABEL_ATTESTATION_PAYLOAD, evidence);
             }
             if (item.val.int64 & TEEP_TRUSTED_COMPONENTS) {
-                // Add tc-list.  Currently we populate this from the list of
-                // "unneeded" components since most TEEs (like SGX) can't enumerate
-                // any others anyway.
-                // TODO(#116): enumerate installed manifests.
+                // Add tc-list.
                 QCBOREncode_OpenArrayInMapN(&context, TEEP_LABEL_TC_LIST);
                 {
-                    for (TrustedComponent* ta = g_UnneededComponentList; ta != nullptr; ta = ta->Next) {
+                    for (TrustedComponent* ta = g_InstalledComponentList; ta != nullptr; ta = ta->Next) {
                         QCBOREncode_OpenMap(&context);
                         {
                             AddComponentIdToMap(&context, ta);
@@ -918,13 +916,60 @@ teep_error_code_t TeepAgentUnrequestTA(
     return teep_error;
 }
 
+/* TODO: This is just a placeholder for a real implementation.
+ * Currently we provide untrusted manifests into the TEEP Agent.
+ * In a real implementation, the TEEP Agent would instead either load
+ * manifests from a trusted location, or use sealed storage
+ * (decrypting the contents inside the TEE).
+ */
+teep_error_code_t TeepAgentConfigureManifests(
+    _In_z_ const char* directory_name)
+{
+    teep_error_code_t result = TEEP_ERR_SUCCESS;
+    DIR* dir = opendir(directory_name);
+    if (dir == NULL) {
+        return TEEP_ERR_TEMPORARY_ERROR;
+    }
+    for (;;) {
+        struct dirent* dirent = readdir(dir);
+        if (dirent == NULL) {
+            break;
+        }
+        char* filename = dirent->d_name;
+        size_t filename_length = strlen(filename);
+        if (filename_length < 6 ||
+            strcmp(filename + filename_length - 5, ".cbor") != 0) {
+            continue;
+        }
+
+        // Convert filename to a uuid.
+        teep_uuid_t component_id;
+        result = GetUuidFromFilename(filename, &component_id);
+        if (result != TEEP_ERR_SUCCESS) {
+            break;
+        }
+
+        TrustedComponent* tc = new TrustedComponent(component_id);
+        if (tc == nullptr) {
+            result = TEEP_ERR_TEMPORARY_ERROR;
+            break;
+        }
+        tc->Next = g_InstalledComponentList;
+        g_InstalledComponentList = tc;
+    }
+    closedir(dir);
+    return result;
+}
+
 filesystem::path g_agent_data_directory;
 
 teep_error_code_t TeepAgentLoadConfiguration(_In_z_ const char* dataDirectory)
 {
     g_agent_data_directory = std::filesystem::current_path();
     g_agent_data_directory /= dataDirectory;
-    return TEEP_ERR_SUCCESS;
+
+    std::filesystem::path manifest_path = g_agent_data_directory / "manifests";
+    return TeepAgentConfigureManifests(manifest_path.string().c_str());
 }
 
 static void ClearComponentList(_Inout_ TrustedComponent** componentList)

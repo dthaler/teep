@@ -122,6 +122,9 @@ extern "C" {
         _Out_writes_(length) void* buffer,
         size_t length);
 
+
+    teep_error_code_t GetUuidFromFilename(_In_z_ const char* filename, _Out_ teep_uuid_t* component_id);
+
 #ifdef __cplusplus
 }
 #endif

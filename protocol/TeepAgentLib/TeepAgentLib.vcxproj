@@ -81,7 +81,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/t_cose/inc;$(ProgramW6432)\openssl\include;$(SolutionDir)protocol/TeepCommonLib/win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)protocol/TeepCommonLib;$(ProgramW6432)\openssl\include;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)external/qcbor/inc;$(SolutionDir)external/t_cose/inc;$(SolutionDir)protocol/TeepCommonLib/win32</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>

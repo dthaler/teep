@@ -1,25 +1,25 @@
 // Copyright (c) TEEP contributors
 // SPDX-License-Identifier: MIT
 #include <dirent.h>
+#include <map>
+#include <optional>
+#include <sstream>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "common.h"
-#include "qcbor/qcbor_decode.h"
-#include "qcbor/qcbor_encode.h"
+#include "Manifest.h"
 #include "openssl/x509.h"
 #include "openssl/evp.h"
-#include "Manifest.h"
+#include "qcbor/qcbor_decode.h"
+#include "qcbor/qcbor_encode.h"
+#include "RequestedComponentInfo.h"
 #include "t_cose/q_useful_buf.h"
 #include "t_cose/t_cose_common.h"
 #include "t_cose/t_cose_sign1_sign.h"
-#include "TeepTamEcallHandler.h"
-#include "RequestedComponentInfo.h"
-#include "TeepTamLib.h"
-#include <map>
-#include <optional>
-#include <sstream>
 #include "TamKeys.h"
+#include "TeepTamEcallHandler.h"
+#include "TeepTamLib.h"
 
 /* Compose a raw QueryRequest message to be signed. */
 teep_error_code_t TamComposeQueryRequest(
@@ -106,7 +106,7 @@ teep_error_code_t TamComposeQueryRequest(
 teep_error_code_t
 TamSignMessage(
     _In_ const UsefulBufC* unsignedMessage,
-    _In_ UsefulBuf signedMessageBuffer,
+    _Inout_ UsefulBuf signedMessageBuffer,
     teep_signature_kind_t signatureKind,
     _Out_ UsefulBufC* signedMessage)
 {
@@ -209,12 +209,12 @@ static teep_error_code_t TamComposeUpdate(
     _In_opt_ const RequestedComponentInfo* currentComponentList,
     _In_opt_ const RequestedComponentInfo* requestedComponentList,
     _In_opt_ const RequestedComponentInfo* unneededComponentList,
-    _Out_ int* count) // Non-zero if we actually have something to update.
+    _Out_ int* count) // Returns non-zero if we actually have something to update.
 {
     *count = 0;
     *encoded = NULLUsefulBufC;
 
-    int maxBufferLength = 4096;
+    size_t maxBufferLength = 4096;
     char* rawBuffer = (char*)malloc(maxBufferLength);
     if (rawBuffer == nullptr) {
         return TEEP_ERR_TEMPORARY_ERROR; /* Error */
@@ -315,18 +315,18 @@ static teep_error_code_t TamComposeUpdate(
     return (err == QCBOR_SUCCESS) ? TEEP_ERR_SUCCESS : TEEP_ERR_TEMPORARY_ERROR;
 }
 
-teep_error_code_t ParseComponentId(
-    QCBORDecodeContext* context,
-    QCBORItem* item,
-    RequestedComponentInfo** currentRci,
-    std::ostringstream& errorMessage)
+static teep_error_code_t ParseComponentId(
+    _Inout_ QCBORDecodeContext* context,
+    _In_ const QCBORItem* item,
+    _Outptr_ RequestedComponentInfo** currentRci,
+    _Inout_ std::ostringstream& errorMessage)
 {
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
         REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_ARRAY, *item);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
-    // Get array size
+    // Get array size.
     uint16_t componentIdEntryCount = item->val.uCount;
     if (componentIdEntryCount != 1) {
         // TODO: support more general component ids.
@@ -334,20 +334,21 @@ teep_error_code_t ParseComponentId(
     }
 
     // Read bstr from component id array.
-    QCBORDecode_GetNext(context, item);
+    QCBORItem bstrItem;
+    QCBORDecode_GetNext(context, &bstrItem);
 
-    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-        REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, *item);
+    if (bstrItem.uDataType != QCBOR_TYPE_BYTE_STRING) {
+        REPORT_TYPE_ERROR(errorMessage, "component-id", QCBOR_TYPE_BYTE_STRING, bstrItem);
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
-    *currentRci = new RequestedComponentInfo(&item->val.string);
+    *currentRci = new RequestedComponentInfo(&bstrItem.val.string);
     return TEEP_ERR_SUCCESS;
 }
 
 static teep_error_code_t TamHandleQueryResponse(
-    void* sessionHandle,
-    QCBORDecodeContext* context)
+    _In_ void* sessionHandle,
+    _Inout_ QCBORDecodeContext* context)
 {
     TeepLogMessage("TamHandleQueryResponse\n");
 
@@ -405,7 +406,7 @@ static teep_error_code_t TamHandleQueryResponse(
 
             // Parse an array that specifies an operation.
             QCBORDecode_GetNext(context, &item);
-            if (item.uDataType != QCBOR_TYPE_ARRAY || item.val.uCount != 2) {
+            if ((item.uDataType != QCBOR_TYPE_ARRAY) || (item.val.uCount != 2)) {
                 REPORT_TYPE_ERROR(errorMessage, "cipher suite operation pair", QCBOR_TYPE_ARRAY, item);
                 return TEEP_ERR_PERMANENT_ERROR;
             }
@@ -555,9 +556,7 @@ static teep_error_code_t TamHandleQueryResponse(
                         currentRci->ManifestSequenceNumber = item.val.uint64;
                         break;
                     default:
-#ifdef _DEBUG
                         TeepLogMessage("Unrecognized option label %d\n", label);
-#endif
                         return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
                     }
                 }
@@ -586,15 +585,13 @@ static teep_error_code_t TamHandleQueryResponse(
             }
             break;
         default:
-#ifdef _DEBUG
             TeepLogMessage("Unrecognized option label %d\n", label);
-#endif
             return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
         }
     }
 
     {
-        // 3. Compose an Update message.
+        // Compose an Update message.
         UsefulBufC update;
         int count;
         teep_error_code_t err = TamComposeUpdate(&update, currentComponentList.Next, requestedComponentList.Next, unneededComponentList.Next, &count);
@@ -621,10 +618,10 @@ static teep_error_code_t TamHandleQueryResponse(
     return TEEP_ERR_SUCCESS;
 }
 
-static teep_error_code_t TamHandleSuccess(void* sessionHandle, QCBORDecodeContext* context)
+static teep_error_code_t TamHandleSuccess(_In_ void* sessionHandle, _Inout_ QCBORDecodeContext* context)
 {
-    (void)sessionHandle;
-    (void)context;
+    TEEP_UNUSED(sessionHandle);
+    TEEP_UNUSED(context);
 
     TeepLogMessage("Received Success message...\n");
 
@@ -681,9 +678,7 @@ static teep_error_code_t TamHandleSuccess(void* sessionHandle, QCBORDecodeContex
             break;
         }
         default:
-#ifdef _DEBUG
             TeepLogMessage("Unrecognized option label %d\n", label);
-#endif
             return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
         }
     }
@@ -692,11 +687,11 @@ static teep_error_code_t TamHandleSuccess(void* sessionHandle, QCBORDecodeContex
 }
 
 static teep_error_code_t TamHandleError(
-    void* sessionHandle,
-    QCBORDecodeContext* context)
+    _In_ void* sessionHandle,
+    _Inout_ QCBORDecodeContext* context)
 {
-    (void)sessionHandle;
-    (void)context;
+    TEEP_UNUSED(sessionHandle);
+    TEEP_UNUSED(context);
 
     TeepLogMessage("Received Error message...\n");
     return TEEP_ERR_SUCCESS;

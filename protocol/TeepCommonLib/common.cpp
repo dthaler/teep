@@ -427,7 +427,7 @@ teep_error_code_t teep_random(
 }
 #endif
 
-void TeepLogMessage(_In_ const char* format, ...)
+void TeepLogMessage(_In_z_ const char* format, ...)
 {
     va_list ap;
     va_start(ap, format);

@@ -81,7 +81,7 @@ teep_error_code_t TeepAgentRequestPolicyCheck(_In_z_ const char* tamUri)
     return err;
 }
 
-static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* tc)
+static void AddComponentIdToMap(_Inout_ QCBOREncodeContext* context, _In_ TrustedComponent* tc)
 {
     QCBOREncode_OpenArrayInMapN(context, TEEP_LABEL_COMPONENT_ID);
     {
@@ -92,7 +92,7 @@ static void AddComponentIdToMap(QCBOREncodeContext* context, TrustedComponent* t
 }
 
 // Parse QueryRequest and compose QueryResponse.
-static teep_error_code_t TeepAgentComposeQueryResponse(_In_ QCBORDecodeContext* decodeContext, _Out_ UsefulBufC* encodedResponse, _Out_ UsefulBufC* errorResponse)
+static teep_error_code_t TeepAgentComposeQueryResponse(_Inout_ QCBORDecodeContext* decodeContext, _Out_ UsefulBufC* encodedResponse, _Out_ UsefulBufC* errorResponse)
 {
     UsefulBufC challenge = NULLUsefulBufC;
     *encodedResponse = NULLUsefulBufC;
@@ -488,7 +488,7 @@ static teep_error_code_t TeepAgentHandleQueryRequest(void* sessionHandle, QCBORD
 {
     TeepLogMessage("TeepAgentHandleQueryRequest\n");
 
-    /* 3. Compose a raw response. */
+    /* Compose a raw response. */
     UsefulBufC queryResponse;
     UsefulBufC errorResponse;
     teep_error_code_t errorCode = TeepAgentComposeQueryResponse(context, &queryResponse, &errorResponse);
@@ -664,7 +664,7 @@ static teep_error_code_t TeepAgentHandleUpdate(void* sessionHandle, QCBORDecodeC
         }
     }
 
-    /* 3. Compose a Success reply. */
+    /* Compose a Success reply. */
     UsefulBufC reply;
     teep_error = TeepAgentComposeSuccess(token, &reply);
     if (teep_error != TEEP_ERR_SUCCESS) {
@@ -711,8 +711,7 @@ static teep_error_code_t TeepAgentVerifyMessageSignature(
         encoded.ptr = message;
         encoded.len = messageLength;
 #ifdef TEEP_USE_COSE
-    }
-    else {
+    } else {
         struct t_cose_key key_pair;
         teeperr = TeepAgentGetTamKey(&key_pair);
         if (teeperr != TEEP_ERR_SUCCESS) {
@@ -811,17 +810,25 @@ teep_error_code_t TeepAgentProcessTeepMessage(
     return err;
 }
 
+static _Ret_maybenull_ TrustedComponent* FindComponentInList(_In_opt_ TrustedComponent* head, teep_uuid_t taid)
+{
+    for (TrustedComponent* ta = head; ta != nullptr; ta = ta->Next) {
+        if (memcmp(&ta->ID, &taid, sizeof(taid)) == 0) {
+            return ta;
+        }
+    }
+    return nullptr;
+}
+
 teep_error_code_t TeepAgentRequestTA(
     teep_uuid_t requestedTaid,
     _In_z_ const char* tamUri)
 {
     teep_error_code_t err = TEEP_ERR_SUCCESS;
 
-    // TODO: See whether requestedTaid is already installed.
-    // For now we skip this step and pretend it's not.
-    bool isInstalled = false;
-
-    if (isInstalled) {
+    // See whether requestedTaid is already installed.
+    TrustedComponent* found = FindComponentInList(g_InstalledComponentList, requestedTaid);
+    if (found != nullptr) {
         // Already installed, nothing to do.
         // This counts as "pass no data back" in the broker spec.
         return TEEP_ERR_SUCCESS;
@@ -870,24 +877,20 @@ teep_error_code_t TeepAgentUnrequestTA(
 {
     teep_error_code_t teep_error = TEEP_ERR_SUCCESS;
 
-    // TODO(issue# 116): See whether unneededTaid is installed.
-    // For now we skip this step and pretend it is.
-    bool isInstalled = true;
-
-    if (!isInstalled) {
+    // See whether unneededTaid is installed.
+    TrustedComponent* found = FindComponentInList(g_InstalledComponentList, unneededTaid);
+    if (found == nullptr) {
         // Already not installed, nothing to do.
         // This counts as "pass no data back" in the broker spec.
         return TEEP_ERR_SUCCESS;
     }
 
     // See whether unneededTaid has already been notified to the TAM.
-    TrustedComponent* tc;
-    for (tc = g_UnneededComponentList; tc != nullptr; tc = tc->Next) {
-        if (memcmp(tc->ID.b, unneededTaid.b, TEEP_UUID_SIZE) == 0) {
-            // Already requested, nothing to do.
-            // This counts as "pass no data back" in the broker spec.
-            return TEEP_ERR_SUCCESS;
-        }
+    TrustedComponent* tc = FindComponentInList(g_UnneededComponentList, unneededTaid);
+    if (tc != nullptr) {
+        // Already requested, nothing to do.
+        // This counts as "pass no data back" in the broker spec.
+        return TEEP_ERR_SUCCESS;
     }
 
     // Add unneededTaid to the unneeded list.

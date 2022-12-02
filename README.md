@@ -81,6 +81,18 @@ However, the TeepAgentBrokerLib/HttpHelper.h API should already be
 platform-agnostic and one could replace the Windows HttpHelper.cpp with 
 a different implementation for other platforms.
 
+You must also have OpenSSL 3.0.7 or later installed to %ProgramW6432%\OpenSSL.
+You can do this either by running a pre-built installer such as the one from
+https://www.softpedia.com/get/Programming/Components-Libraries/OpenSSL.shtml
+or by building it yourself as follows:
+
+* cd external\openssl
+* mkdir _build
+* perl ..\Configure VC-WIN64A
+* perl configdata.pm --dump
+* nmake
+* nmake install
+
 ## Running the code
 
 Compiling on Windows will result in generating DeviceHost.exe and TamHost.exe.

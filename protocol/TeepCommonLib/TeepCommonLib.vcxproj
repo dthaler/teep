@@ -80,7 +80,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProgramW6432)\openssl\include;$(SolutionDir)external\openssl\include;$(SolutionDir)external\openssl\_build\include;$(SolutionDir)external/t_cose/inc;$(SolutionDir)external/qcbor/inc</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>

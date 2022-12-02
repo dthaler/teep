@@ -4,7 +4,7 @@
 class RequestedComponentInfo
 {
 public:
-    RequestedComponentInfo(UsefulBufC* componentId);
+    RequestedComponentInfo(_In_ const UsefulBufC* componentId);
     ~RequestedComponentInfo();
 
     RequestedComponentInfo* Next;

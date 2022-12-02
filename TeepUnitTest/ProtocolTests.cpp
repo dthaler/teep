@@ -133,7 +133,7 @@ TEST_CASE("UnrequestTA with required TA", "[protocol][uninstall]")
     TestUninstallAllComponents();
 }
 
-static void TestUnrequestNonRequiredComponent(_In_ const char* taId)
+static void TestUnrequestNonRequiredComponent(_In_z_ const char* taId)
 {
     TestConfigureKeys(TEEP_SIGNATURE_ES256);
     REQUIRE(StartTamBroker(TAM_DATA_DIRECTORY, TRUE) == 0);
@@ -169,10 +169,18 @@ TEST_CASE("UnrequestTA with optional TA", "[protocol][uninstall]")
 TEST_CASE("UnrequestTA with unknown TA", "[protocol][uninstall]")
 {
     TestUninstallAllComponents();
+
+    std::filesystem::path sourcePath = std::filesystem::path(TAM_DATA_DIRECTORY) / "manifests";
+    sourcePath /= "required";
+    sourcePath /= REQUIRED_TA_ID + std::string(".cbor");
+    std::filesystem::path destinationPath = std::filesystem::path(TEEP_AGENT_DATA_DIRECTORY) / "manifests";
+    destinationPath /= UNKNOWN_TA_ID + std::string(".cbor");
+    copy(sourcePath, destinationPath, std::filesystem::copy_options::overwrite_existing);
+
     TestUnrequestNonRequiredComponent(UNKNOWN_TA_ID);
 }
 
-static void TestRequestAllowedComponent(_In_ const char* taId)
+static void TestRequestAllowedComponent(_In_z_ const char* taId)
 {
     TestUninstallAllComponents();
     TestConfigureKeys(TEEP_SIGNATURE_ES256);
@@ -342,7 +350,7 @@ TEST_CASE("Agent receives bad COSE message", "[protocol]")
 teep_error_code_t
 TamSignMessage(
     _In_ const UsefulBufC* unsignedMessage,
-    _In_ UsefulBuf signed_message_buffer,
+    _Inout_ UsefulBuf signed_message_buffer,
     teep_signature_kind_t signatureKind,
     _Out_ UsefulBufC* signed_message);
 

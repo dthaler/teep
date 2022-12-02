@@ -3,7 +3,7 @@
 #include "qcbor/UsefulBuf.h"
 #include "RequestedComponentInfo.h"
 
-RequestedComponentInfo::RequestedComponentInfo(UsefulBufC* componentId)
+RequestedComponentInfo::RequestedComponentInfo(_In_ const UsefulBufC* componentId)
 {
     if (componentId != nullptr) {
         this->ComponentId = *componentId;

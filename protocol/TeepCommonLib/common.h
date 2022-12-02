@@ -45,7 +45,7 @@ typedef struct _teep_uuid_t
 
 void HexPrintBuffer(_In_opt_z_ const char* label, const void* buffer, size_t length);
 
-void TeepLogMessage(_In_ const char* format, ...);
+void TeepLogMessage(_In_z_ const char* format, ...);
 
 typedef enum {
     TEEP_SIGNATURE_NONE,  // For debugging only.

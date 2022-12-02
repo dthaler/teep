@@ -8,7 +8,11 @@
 
 Manifest* Manifest::g_FirstManifest = nullptr;
 
-Manifest::Manifest(teep_uuid_t component_id, const char* manifest, size_t manifest_size, int is_required)
+Manifest::Manifest(
+    teep_uuid_t component_id,
+    _In_reads_(manifest_size) const char* manifest,
+    size_t manifest_size,
+    int is_required)
 {
     this->ManifestContents.len  = 0;
     this->ManifestContents.ptr = nullptr;
@@ -24,12 +28,17 @@ Manifest::Manifest(teep_uuid_t component_id, const char* manifest, size_t manife
     }
 }
 
+_Ret_maybenull_
 Manifest* Manifest::First(void)
 {
     return g_FirstManifest;
 }
 
-void Manifest::AddManifest(teep_uuid_t component_id, const char* manifest_content, size_t manifest_content_size, int is_required)
+void Manifest::AddManifest(
+    teep_uuid_t component_id,
+    _In_reads_(manifest_content_size) const char* manifest_content,
+    size_t manifest_content_size,
+    int is_required)
 {
     Manifest* manifest = new Manifest(component_id, manifest_content, manifest_content_size, is_required);
     manifest->Next = g_FirstManifest;
@@ -47,6 +56,7 @@ bool Manifest::HasComponentId(_In_ const UsefulBufC* component_id)
     return true;
 }
 
+_Ret_maybenull_
 Manifest* Manifest::FindManifest(_In_ const UsefulBufC* component_id)
 {
     for (Manifest* manifest = g_FirstManifest; manifest != nullptr; manifest = manifest->Next) {

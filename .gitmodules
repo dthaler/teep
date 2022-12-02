@@ -11,3 +11,6 @@
 [submodule "external/ctoken"]
 	path = external/ctoken
 	url = https://github.com/laurencelundblade/ctoken.git
+[submodule "external/libcsuit"]
+	path = external/libcsuit
+	url = https://github.com/yuichitk/libcsuit.git

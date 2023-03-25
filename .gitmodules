@@ -13,4 +13,4 @@
 	url = https://github.com/laurencelundblade/ctoken.git
 [submodule "external/libcsuit"]
 	path = external/libcsuit
-	url = https://github.com/yuichitk/libcsuit.git
+	url = https://github.com/kentakayama/libcsuit.git

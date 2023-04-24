@@ -44,14 +44,14 @@ static teep_error_code_t _save_signing_key_pair(
     _In_z_ const char* private_file_name,
     _In_z_ const char* public_file_name)
 {
-    EVP_PKEY* pkey = (EVP_PKEY*)key_pair->k.key_ptr;
+    EVP_PKEY* pkey = (EVP_PKEY*)key_pair->key.ptr;
 
     // Write key pair with private key, for future use by the TAM.
     FILE* fp = fopen(private_file_name, "wb");
     if (fp == nullptr) {
         return TEEP_ERR_PERMANENT_ERROR;
     }
-    int succeeded = PEM_write_PrivateKey(fp, (EVP_PKEY*)key_pair->k.key_ptr,
+    int succeeded = PEM_write_PrivateKey(fp, (EVP_PKEY*)key_pair->key.ptr,
         NULL, NULL, 0, NULL, NULL);
     fclose(fp);
     if (!succeeded) {
@@ -80,10 +80,9 @@ static teep_error_code_t _load_signing_key_pair(
     if (fp == nullptr) {
         return TEEP_ERR_PERMANENT_ERROR;
     }
-    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
-    key_pair->k.key_ptr = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
+    key_pair->key.ptr = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
     fclose(fp);
-    if (key_pair->k.key_ptr == nullptr) {
+    if (key_pair->key.ptr == nullptr) {
         return TEEP_ERR_PERMANENT_ERROR;
     }
 
@@ -162,8 +161,7 @@ static enum t_cose_err_t _make_ossl_key_pair(
         goto Done;
     }
 
-    key_pair->k.key_ptr = pkey;
-    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
+    key_pair->key.ptr = pkey;
     return_value = T_COSE_SUCCESS;
 
 Done:
@@ -211,10 +209,9 @@ teep_error_code_t teep_get_verifying_key_pair(
     if (fp == nullptr) {
         return TEEP_ERR_PERMANENT_ERROR;
     }
-    key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
-    key_pair->k.key_ptr = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
+    key_pair->key.ptr = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
     fclose(fp);
-    if (key_pair->k.key_ptr == nullptr) {
+    if (key_pair->key.ptr == nullptr) {
         return TEEP_ERR_PERMANENT_ERROR;
     }
     return TEEP_ERR_SUCCESS;
@@ -315,7 +312,8 @@ teep_verify_cbor_message(
     struct t_cose_sign1_verify_ctx verify_ctx;
 
     t_cose_sign1_verify_init(&verify_ctx, T_COSE_OPT_DECODE_ONLY);
-    int return_value = t_cose_sign1_verify(&verify_ctx, *signed_cose, NULL, NULL);
+    UsefulBufC payload = {};
+    int return_value = t_cose_sign1_verify(&verify_ctx, *signed_cose, &payload, nullptr);
     if (return_value != T_COSE_SUCCESS) {
         TeepLogMessage("First t_cose_sign1_verify failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
@@ -360,7 +358,7 @@ const unsigned char* GetDerCertificate(
     // https://stackoverflow.com/questions/256405/programmatically-create-x509-certificate-using-openssl
 
     // Get the private key.
-    EVP_PKEY* pkey = (EVP_PKEY*)key_pair->k.key_ptr;
+    EVP_PKEY* pkey = (EVP_PKEY*)key_pair->key.ptr;
 
     // Create a certificate.
     X509* x509 = X509_new();

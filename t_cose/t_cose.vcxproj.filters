@@ -30,7 +30,31 @@
     <ClCompile Include="..\external\t_cose\crypto_adapters\t_cose_openssl_crypto.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\t_cose\src\t_cose_short_circuit.c">
+    <ClCompile Include="..\external\t_cose\src\t_cose_encrypt_dec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_encrypt_enc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_key.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_sign_sign.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_sign_verify.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_sign_eddsa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_sign_main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_verify_eddsa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_verify_main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

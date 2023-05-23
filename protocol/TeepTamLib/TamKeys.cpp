@@ -3,7 +3,7 @@
 #include <dirent.h>
 #include <filesystem>
 #include <vector>
-#include "t_cose/t_cose_common.h"
+#include "t_cose/t_cose_key.h"
 #include "TeepTamLib.h"
 #include "TamKeys.h"
 using namespace std;

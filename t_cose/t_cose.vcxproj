@@ -152,10 +152,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\external\t_cose\crypto_adapters\t_cose_openssl_crypto.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_encrypt_dec.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_encrypt_enc.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_key.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_parameters.c" />
-    <ClCompile Include="..\external\t_cose\src\t_cose_short_circuit.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_sign1_sign.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_sign1_verify.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_sign_eddsa.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_sign_main.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_verify_eddsa.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_signature_verify_main.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_sign_sign.c" />
+    <ClCompile Include="..\external\t_cose\src\t_cose_sign_verify.c" />
     <ClCompile Include="..\external\t_cose\src\t_cose_util.c" />
   </ItemGroup>
   <ItemGroup>

@@ -19,7 +19,8 @@ jobs:
     strategy:
       matrix:
         configurations: [DebugStandalone]
-    runs-on: windows-latest
+        os: [windows-2019, windows-2022]
+    runs-on: ${{matrix.os}}
     env:
       # Path to the solution file relative to the root of the project.
       SOLUTION_FILE_PATH: teep.sln

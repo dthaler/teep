@@ -72,7 +72,7 @@ git clone --recurse-submodules https://github.com/dthaler/teep.git
 ```
 
 You must have the following installed to compile and debug:
-* [Visual Studio 2019](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
+* [Visual Studio 2019 or 2022](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
 * [Open Enclave Visual Studio Extension](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.17 or later
 and its [prerequisites](https://github.com/dthaler/openenclave/blob/master/docs/GettingStartedDocs/VisualStudioWindows.md)
 

@@ -14,5 +14,4 @@
 	url = https://github.com/laurencelundblade/ctoken.git
 [submodule "external/libcsuit"]
 	path = external/libcsuit
-	url = https://github.com/dthaler/libcsuit.git
-	branch = fix-build
+	url = https://github.com/kentakayama/libcsuit.git

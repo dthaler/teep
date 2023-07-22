@@ -697,6 +697,28 @@ static teep_error_code_t TeepAgentHandleUpdate(void* sessionHandle, QCBORDecodeC
             // TODO: use Attestation Result.
             break;
         }
+        case TEEP_LABEL_ERR_CODE:
+        {
+            if (item.uDataType != QCBOR_TYPE_INT64) {
+                REPORT_TYPE_ERROR(errorMessage, "err-code", QCBOR_TYPE_INT64, item);
+                teep_error = TeepAgentComposeError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);
+                TeepAgentSendError(errorResponse, sessionHandle);
+                return teep_error;
+            }
+            errorMessage << "err-code: " << item.val.int64 << std::endl;
+            TeepLogMessage(errorMessage.str().c_str());
+            break;
+        }
+        case TEEP_LABEL_ERR_MSG:
+        {
+            if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
+                REPORT_TYPE_ERROR(errorMessage, "err-msg", QCBOR_TYPE_TEXT_STRING, item);
+                return TEEP_ERR_PERMANENT_ERROR;
+            }
+            errorMessage << "err-msg: " << std::string((const char*)item.val.string.ptr, item.val.string.len) << std::endl;
+            TeepLogMessage(errorMessage.str().c_str());
+            break;
+        }
         default:
             errorMessage << "Unrecognized option label " << label;
             teep_error = TeepAgentComposeError(token, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), &errorResponse);

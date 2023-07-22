@@ -230,6 +230,8 @@ static teep_error_code_t TamComposeUpdate(
     _In_opt_ const RequestedComponentInfo* currentComponentList,
     _In_opt_ const RequestedComponentInfo* requestedComponentList,
     _In_opt_ const RequestedComponentInfo* unneededComponentList,
+    _In_ teep_error_code_t errorCode,
+    _In_ const std::string& errorMessage,
     _Out_ int* count) // Returns non-zero if we actually have something to update.
 {
     *count = 0;
@@ -254,8 +256,7 @@ static teep_error_code_t TamComposeUpdate(
 
         QCBOREncode_OpenMap(&context);
         {
-            // Spec issue #166: we assume it's optional whether
-            // to include a token, so we don't.
+            // It's optional whether to include a token, so we don't.
 #if 0
             /* Create a random token. */
             UsefulBuf_MAKE_STACK_UB(token, 8);
@@ -327,6 +328,16 @@ static teep_error_code_t TamComposeUpdate(
                 }
             }
             QCBOREncode_CloseArray(&context);
+
+            // TODO: TEEP_LABEL_ATTESTATION_PAYLOAD_FORMAT
+            // TODO: TEEP_LABEL_ATTESTATION_PAYLOAD
+
+            if (errorCode != TEEP_ERR_SUCCESS) {
+                QCBOREncode_AddInt64ToMapN(&context, TEEP_LABEL_ERR_CODE, errorCode);
+            }
+            if (!errorMessage.empty()) {
+                QCBOREncode_AddTextToMapN(&context, TEEP_LABEL_ERR_MSG, UsefulBuf_FromSZ(errorMessage.c_str()));
+            }
         }
         QCBOREncode_CloseMap(&context);
     }
@@ -367,6 +378,33 @@ static teep_error_code_t ParseComponentId(
     return TEEP_ERR_SUCCESS;
 }
 
+static teep_error_code_t TamSendErrorUpdateMessage(_In_ void* sessionHandle, teep_error_code_t errorCode, _In_ const std::string& errorMessage)
+{
+    // Compose an Update message.
+    UsefulBufC update;
+    int count;
+    teep_error_code_t err = TamComposeUpdate(&update, nullptr, nullptr, nullptr, errorCode, errorMessage.c_str(), &count);
+    if (err != 0) {
+        return err;
+    }
+    if (count > 0) {
+        if (update.len == 0) {
+            return TEEP_ERR_TEMPORARY_ERROR;
+        }
+
+        HexPrintBuffer("Sending CBOR message: ", update.ptr, update.len);
+
+        TeepLogMessage("Sending Update message...\n");
+
+        err = TamSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
+        free((void*)update.ptr);
+        if (err != TEEP_ERR_SUCCESS) {
+            return err;
+        }
+    }
+    return errorCode;
+}
+
 static teep_error_code_t TamHandleQueryResponse(
     _In_ void* sessionHandle,
     _Inout_ QCBORDecodeContext* context)
@@ -381,7 +419,7 @@ static teep_error_code_t TamHandleQueryResponse(
     QCBORDecode_GetNext(context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
         REPORT_TYPE_ERROR(errorMessage, "options", QCBOR_TYPE_MAP, item);
-        return TEEP_ERR_PERMANENT_ERROR;
+        return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
     }
     RequestedComponentInfo currentComponentList(nullptr);
     RequestedComponentInfo requestedComponentList(nullptr);
@@ -394,60 +432,63 @@ static teep_error_code_t TamHandleQueryResponse(
         case TEEP_LABEL_TOKEN:
             if (item.uDataType != QCBOR_TYPE_BYTE_STRING) {
                 REPORT_TYPE_ERROR(errorMessage, "token", QCBOR_TYPE_BYTE_STRING, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
 
             // Since we always send QueryRequest with the attestation bit set,
             // and don't include a token in the QueryRequest, we should never
             // get a token in response.  If we do, it indicates a bug in the
             // TEEP Agent that sent the QueryResponse.
-            return TEEP_ERR_PERMANENT_ERROR;
+            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, "Unexpected token");
 
         case TEEP_LABEL_SELECTED_VERSION:
             if (item.uDataType != QCBOR_TYPE_INT64) {
                 REPORT_TYPE_ERROR(errorMessage, "selected-version", QCBOR_TYPE_BYTE_STRING, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             if (item.val.uint64 != 0) {
-                TeepLogMessage("Unrecognized protocol version %lld\n", item.val.uint64);
-                return TEEP_ERR_UNSUPPORTED_MSG_VERSION;
+                errorMessage << "Unrecognized protocol version " << item.val.uint64 << "\n";
+                TeepLogMessage(errorMessage.str().c_str());
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_UNSUPPORTED_MSG_VERSION, errorMessage.str());
             }
             break;
 
         case TEEP_LABEL_SELECTED_CIPHER_SUITE: {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR(errorMessage, "selected-cipher-suite", QCBOR_TYPE_BYTE_STRING, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             // Parse an array of cipher suite operations.
             uint16_t operationCount = item.val.uCount;
             if (operationCount != 1) {
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, "Unsupported operation count");
             }
 
             // Parse an array that specifies an operation.
             QCBORDecode_GetNext(context, &item);
             if ((item.uDataType != QCBOR_TYPE_ARRAY) || (item.val.uCount != 2)) {
                 REPORT_TYPE_ERROR(errorMessage, "cipher suite operation pair", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             QCBORDecode_GetNext(context, &item);
             if (item.uDataType != QCBOR_TYPE_INT64) {
                 REPORT_TYPE_ERROR(errorMessage, "cose type", QCBOR_TYPE_INT64, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             if (item.val.int64 != CBOR_TAG_COSE_SIGN1) {
-                TeepLogMessage("Unrecognized COSE type %lld\n", item.val.uint64);
-                return TEEP_ERR_PERMANENT_ERROR; /* invalid cipher suite */
+                errorMessage << "Unrecognized COSE type " << item.val.uint64 << std::endl;
+                TeepLogMessage(errorMessage.str().c_str());
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             QCBORDecode_GetNext(context, &item);
             if (item.uDataType != QCBOR_TYPE_INT64) {
                 REPORT_TYPE_ERROR(errorMessage, "cose algorithm", QCBOR_TYPE_INT64, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             if (item.val.int64 != T_COSE_ALGORITHM_ES256) {
-                TeepLogMessage("Unrecognized COSE algorithm %lld\n", item.val.uint64);
-                return TEEP_ERR_PERMANENT_ERROR; /* invalid cipher suite */
+                errorMessage << "Unrecognized COSE algorithm " << item.val.uint64 << std::endl;
+                TeepLogMessage(errorMessage.str().c_str());
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             break;
         }
@@ -456,14 +497,14 @@ static teep_error_code_t TamHandleQueryResponse(
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR(errorMessage, "requested-tc-list", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_MAP) {
                     REPORT_TYPE_ERROR(errorMessage, "requested-tc-info", QCBOR_TYPE_MAP, item);
-                    return TEEP_ERR_PERMANENT_ERROR;
+                    return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
                 }
                 uint16_t tcInfoParameterCount = item.val.uCount;
                 RequestedComponentInfo* currentRci = nullptr;
@@ -475,11 +516,11 @@ static teep_error_code_t TamHandleQueryResponse(
                     {
                         if (currentRci != nullptr) {
                             // Duplicate.
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, "Duplicate requested component");
                         }
                         teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci, errorMessage);
                         if (errorCode != TEEP_ERR_SUCCESS) {
-                            return errorCode;
+                            return TamSendErrorUpdateMessage(sessionHandle, errorCode, errorMessage.str());
                         }
                         currentRci->Next = requestedComponentList.Next;
                         requestedComponentList.Next = currentRci;
@@ -488,26 +529,27 @@ static teep_error_code_t TamHandleQueryResponse(
                     case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
                             REPORT_TYPE_ERROR(errorMessage, "tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
                         }
                         if (currentRci == nullptr) {
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, "No current component");
                         }
                         currentRci->ManifestSequenceNumber = item.val.uint64;
                         break;
                     case TEEP_LABEL_HAVE_BINARY:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
                             REPORT_TYPE_ERROR(errorMessage, "have-binary", QCBOR_TYPE_UINT64, item);
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
                         }
                         if (currentRci == nullptr) {
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, "No current component");
                         }
                         currentRci->HaveBinary = (item.val.uint64 != 0);
                         break;
                     default:
-                        TeepLogMessage("Unrecognized option label %d\n", label);
-                        return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
+                        errorMessage << "Unrecognized option label " << label << std::endl;
+                        TeepLogMessage(errorMessage.str().c_str());
+                        return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
                     }
                 }
             }
@@ -517,7 +559,7 @@ static teep_error_code_t TamHandleQueryResponse(
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR(errorMessage, "unneeded-manifest-list", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             uint16_t arrayEntryCount = item.val.uCount;
             for (int arrayEntryIndex = 0; arrayEntryIndex < arrayEntryCount; arrayEntryIndex++) {
@@ -526,7 +568,7 @@ static teep_error_code_t TamHandleQueryResponse(
                 RequestedComponentInfo* currentUci = nullptr;
                 teep_error_code_t errorCode = ParseComponentId(context, &item, &currentUci, errorMessage);
                 if (errorCode != TEEP_ERR_SUCCESS) {
-                    return errorCode;
+                    return TamSendErrorUpdateMessage(sessionHandle, errorCode, errorMessage.str());
                 }
                 currentUci->Next = unneededComponentList.Next;
                 unneededComponentList.Next = currentUci;
@@ -537,7 +579,7 @@ static teep_error_code_t TamHandleQueryResponse(
         {
             if (item.uDataType != QCBOR_TYPE_ARRAY) {
                 REPORT_TYPE_ERROR(errorMessage, "tc-list", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             RequestedComponentInfo* currentRci = nullptr;
             uint16_t arrayEntryCount = item.val.uCount;
@@ -545,7 +587,7 @@ static teep_error_code_t TamHandleQueryResponse(
                 QCBORDecode_GetNext(context, &item);
                 if (item.uDataType != QCBOR_TYPE_MAP) {
                     REPORT_TYPE_ERROR(errorMessage, "tc-list", QCBOR_TYPE_MAP, item);
-                    return TEEP_ERR_PERMANENT_ERROR;
+                    return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
                 }
                 uint16_t tcInfoParameterCount = item.val.uCount;
                 for (int tcInfoParameterIndex = 0; tcInfoParameterIndex < tcInfoParameterCount; tcInfoParameterIndex++) {
@@ -556,11 +598,11 @@ static teep_error_code_t TamHandleQueryResponse(
                     {
                         if (currentRci != nullptr) {
                             // Duplicate.
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, "Duplicate component");
                         }
                         teep_error_code_t errorCode = ParseComponentId(context, &item, &currentRci, errorMessage);
                         if (errorCode != TEEP_ERR_SUCCESS) {
-                            return errorCode;
+                            return TamSendErrorUpdateMessage(sessionHandle, errorCode, errorMessage.str());
                         }
                         currentRci->Next = currentComponentList.Next;
                         currentComponentList.Next = currentRci;
@@ -569,16 +611,17 @@ static teep_error_code_t TamHandleQueryResponse(
                     case TEEP_LABEL_TC_MANIFEST_SEQUENCE_NUMBER:
                         if (item.uDataType != QCBOR_TYPE_UINT64) {
                             REPORT_TYPE_ERROR(errorMessage, "tc-manifest-sequence-number", QCBOR_TYPE_UINT64, item);
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
                         }
                         if (currentRci == nullptr) {
-                            return TEEP_ERR_PERMANENT_ERROR;
+                            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, "No current component");
                         }
                         currentRci->ManifestSequenceNumber = item.val.uint64;
                         break;
                     default:
-                        TeepLogMessage("Unrecognized option label %d\n", label);
-                        return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
+                        errorMessage << "Unrecognized option label " << label << std::endl;
+                        TeepLogMessage(errorMessage.str().c_str());
+                        return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
                     }
                 }
             }
@@ -586,8 +629,8 @@ static teep_error_code_t TamHandleQueryResponse(
         }
         case TEEP_LABEL_ATTESTATION_PAYLOAD_FORMAT: {
             if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
-                REPORT_TYPE_ERROR(errorMessage, "attestation-payload-format", QCBOR_TYPE_ARRAY, item);
-                return TEEP_ERR_PERMANENT_ERROR;
+                REPORT_TYPE_ERROR(errorMessage, "attestation-payload-format", QCBOR_TYPE_TEXT_STRING, item);
+                return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
             }
             attestationPayloadFormat = std::string((const char*)item.val.string.ptr, item.val.string.len);
             break;
@@ -606,8 +649,9 @@ static teep_error_code_t TamHandleQueryResponse(
             }
             break;
         default:
-            TeepLogMessage("Unrecognized option label %d\n", label);
-            return TEEP_ERR_PERMANENT_ERROR; /* invalid message */
+            errorMessage << "Unrecognized option label " << label << std::endl;
+            TeepLogMessage(errorMessage.str().c_str());
+            return TamSendErrorUpdateMessage(sessionHandle, TEEP_ERR_PERMANENT_ERROR, errorMessage.str());
         }
     }
 
@@ -615,7 +659,7 @@ static teep_error_code_t TamHandleQueryResponse(
         // Compose an Update message.
         UsefulBufC update;
         int count;
-        teep_error_code_t err = TamComposeUpdate(&update, currentComponentList.Next, requestedComponentList.Next, unneededComponentList.Next, &count);
+        teep_error_code_t err = TamComposeUpdate(&update, currentComponentList.Next, requestedComponentList.Next, unneededComponentList.Next, TEEP_ERR_SUCCESS, errorMessage.str(), &count);
         if (err != 0) {
             return err;
         }

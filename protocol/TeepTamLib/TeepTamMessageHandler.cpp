@@ -63,7 +63,7 @@ teep_error_code_t TamComposeQueryRequest(
         }
         QCBOREncode_CloseMap(&context);
 
-        // Add supported cipher suites.
+        // Add supported TEEP cipher suites.
         QCBOREncode_OpenArray(&context);
         {
             // Add teep-cipher-suite-sign1-es256.
@@ -89,6 +89,27 @@ teep_error_code_t TamComposeQueryRequest(
                     QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_EDDSA);
                 }
                 QCBOREncode_CloseArray(&context);
+            }
+            QCBOREncode_CloseArray(&context);
+        }
+        QCBOREncode_CloseArray(&context);
+
+        // Add supported EAT-SUIT cipher suites.
+        QCBOREncode_OpenArray(&context);
+        {
+            // Add suit-sha256-es256-ecdh-a128gcm.
+            QCBOREncode_OpenArray(&context);
+            {
+                QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_ES256);
+                QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_A128GCM);
+            }
+            QCBOREncode_CloseArray(&context);
+
+            // Add suit-sha256-eddsa-ecdh-a128gcm.
+            QCBOREncode_OpenArray(&context);
+            {
+                QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_EDDSA);
+                QCBOREncode_AddInt64(&context, T_COSE_ALGORITHM_A128GCM);
             }
             QCBOREncode_CloseArray(&context);
         }

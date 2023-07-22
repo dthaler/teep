@@ -198,12 +198,12 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_Inout_ QCBORDecodeContex
                 }
             }
 
-            // Parse the supported-cipher-suites.
+            // Parse the supported-teep-cipher-suites.
             {
                 bool found = false;
                 QCBORDecode_GetNext(decodeContext, &item);
                 if (item.uDataType != QCBOR_TYPE_ARRAY) {
-                    REPORT_TYPE_ERROR(errorMessage, "supported-cipher-suites", QCBOR_TYPE_ARRAY, item);
+                    REPORT_TYPE_ERROR(errorMessage, "supported-teep-cipher-suites", QCBOR_TYPE_ARRAY, item);
                     return TeepAgentComposeError(errorToken, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), errorResponse);
                 }
                 uint16_t cipherSuiteCount = item.val.uCount;
@@ -257,6 +257,47 @@ static teep_error_code_t TeepAgentComposeQueryResponse(_Inout_ QCBORDecodeContex
                     QCBOREncode_CloseArray(&context);
                 }
                 QCBOREncode_CloseArray(&context);
+            }
+
+            // Parse the supported-eat-suit-cipher-suites.
+            {
+                bool found = false;
+                QCBORDecode_GetNext(decodeContext, &item);
+                if (item.uDataType != QCBOR_TYPE_ARRAY) {
+                    REPORT_TYPE_ERROR(errorMessage, "supported-eat-suit-cipher-suites", QCBOR_TYPE_ARRAY, item);
+                    return TeepAgentComposeError(errorToken, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), errorResponse);
+                }
+                uint16_t cipherSuiteCount = item.val.uCount;
+                for (uint16_t cipherSuiteIndex = 0; cipherSuiteIndex < cipherSuiteCount; cipherSuiteIndex++) {
+                    // Parse an array of cipher suite operations.
+                    QCBORDecode_GetNext(decodeContext, &item);
+                    if (item.uDataType != QCBOR_TYPE_ARRAY || item.val.uCount != 2) {
+                        REPORT_TYPE_ERROR(errorMessage, "cipher suite operation pair", QCBOR_TYPE_ARRAY, item);
+                        return TeepAgentComposeError(errorToken, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), errorResponse);
+                    }
+                    QCBORDecode_GetNext(decodeContext, &item);
+                    if (item.uDataType != QCBOR_TYPE_INT64) {
+                        REPORT_TYPE_ERROR(errorMessage, "cose type", QCBOR_TYPE_INT64, item);
+                        return TeepAgentComposeError(errorToken, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), errorResponse);
+                    }
+                    int64_t coseAuthenticationAlgorithm = item.val.int64;
+
+                    QCBORDecode_GetNext(decodeContext, &item);
+                    if (item.uDataType != QCBOR_TYPE_INT64) {
+                        REPORT_TYPE_ERROR(errorMessage, "cose algorithm", QCBOR_TYPE_INT64, item);
+                        return TeepAgentComposeError(errorToken, TEEP_ERR_PERMANENT_ERROR, errorMessage.str(), errorResponse);
+                    }
+
+                    int64_t coseEncryptionAlgorithm = item.val.int64;
+                    if (coseAuthenticationAlgorithm == T_COSE_ALGORITHM_ES256 &&
+                        coseEncryptionAlgorithm == T_COSE_ALGORITHM_A128GCM) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    // TODO: include suit-sha256-es256-ecdh-a128gcm or suit-sha256-eddsa-ecdh-a128gcm depending on configuration.
+                    return TEEP_ERR_UNSUPPORTED_CIPHER_SUITES;
+                }
             }
 
             // Parse the data-item-requested.

@@ -525,7 +525,9 @@ TEST_CASE("TAM receives QueryResponse with supported version and ES256", "[proto
 
 TEST_CASE("TAM receives QueryResponse with unsupported version", "[protocol]")
 {
-    const uint64_t expected_message_count = 0;
+    // Issue #347: unclear whether it's ok (2) or not ok (0) to send an Update with error info
+    // in response to a bad QueryResponse.
+    const uint64_t expected_message_count = 2;
     TestQueryResponseVersion(1, TEEP_SIGNATURE_ES256, TEEP_ERR_UNSUPPORTED_MSG_VERSION, expected_message_count);
 }
 

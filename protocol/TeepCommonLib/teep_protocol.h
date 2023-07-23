@@ -56,6 +56,7 @@ typedef enum {
     TEEP_LABEL_SUIT_REPORTS = 19,
     TEEP_LABEL_TOKEN = 20,
     TEEP_LABEL_SUPPORTED_FRESHNESS_MECHANISMS = 21,
+    TEEP_LABEL_ERR_CODE = 23,
 } teep_label_t;
 
 typedef enum {

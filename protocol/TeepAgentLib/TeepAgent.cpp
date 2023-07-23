@@ -754,8 +754,8 @@ static teep_error_code_t TeepAgentVerifyMessageSignature(
     UsefulBufC signed_cose;
     signed_cose.ptr = message;
     signed_cose.len = messageLength;
-    for (auto key_pair : TeepAgentGetTamKeys()) {
-        teep_error_code_t teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, pencoded);
+    for (auto [kind, key_pair] : TeepAgentGetTamKeys()) {
+        teep_error_code_t teeperr = teep_verify_cbor_message(kind, &key_pair, &signed_cose, pencoded);
         if (teeperr == TEEP_ERR_SUCCESS) {
             // TODO(#114): save key_pair in session
             return TEEP_ERR_SUCCESS;

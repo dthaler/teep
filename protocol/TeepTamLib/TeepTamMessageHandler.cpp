@@ -396,6 +396,7 @@ static teep_error_code_t TamSendErrorUpdateMessage(_In_ void* sessionHandle, tee
 
         TeepLogMessage("Sending Update message...\n");
 
+        // TODO(#114): get correct signature kind from session
         err = TamSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
         free((void*)update.ptr);
         if (err != TEEP_ERR_SUCCESS) {
@@ -672,6 +673,7 @@ static teep_error_code_t TamHandleQueryResponse(
 
             TeepLogMessage("Sending Update message...\n");
 
+            // TODO(#114): get correct signature kind from session
             err = TamSendMessage(sessionHandle, TEEP_CBOR_MEDIA_TYPE, &update, TEEP_SIGNATURE_ES256);
             free((void*)update.ptr);
             if (err != TEEP_ERR_SUCCESS) {
@@ -771,8 +773,8 @@ static teep_error_code_t TamVerifyMessageSignature(
     UsefulBufC signed_cose;
     signed_cose.ptr = message;
     signed_cose.len = messageLength;
-    for (auto key_pair : TamGetTeepAgentKeys()) {
-        teep_error_code_t teeperr = teep_verify_cbor_message(&key_pair, &signed_cose, pencoded);
+    for (auto [kind, key_pair] : TamGetTeepAgentKeys()) {
+        teep_error_code_t teeperr = teep_verify_cbor_message(kind, &key_pair, &signed_cose, pencoded);
         if (teeperr == TEEP_ERR_SUCCESS) {
             // TODO(#114): save key_pair in session
             return TEEP_ERR_SUCCESS;

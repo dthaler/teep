@@ -224,6 +224,34 @@ teep_error_code_t TeepInitialize(_In_z_ const char* signing_private_key_pair_fil
 }
 
 teep_error_code_t
+teep_compute_key_id(teep_signature_kind_t signature_kind, _In_ const struct t_cose_key* key_pair, _Out_ UsefulBuf* key_id)
+{
+#if 1
+    // TODO: this is not correct or secure, switch to the other code path once we
+    // can get the public key from a t_cose_key key pair.
+    *(teep_signature_kind_t*)key_id->ptr = signature_kind;
+    key_id->len = sizeof(signature_kind);
+    return TEEP_ERR_SUCCESS;
+#else
+    // Get the public key.
+    if (signature_kind == TEEP_SIGNATURE_ES256) {
+    }
+    else {
+    }
+
+    // Compute SHA-256 hash.
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    SHA256_Update(&sha256, public_key.key.buffer.ptr, public_key.key.buffer.len);
+    SHA256_Final(hash, &sha256);
+
+    *key_id = UsefulBuf_FROM_BYTE_ARRAY_LITERAL(hash);
+    return TEEP_ERR_PERMANENT_ERROR;
+#endif
+}
+
+teep_error_code_t
 teep_sign1_cbor_message(
     _In_ const struct t_cose_key* key_pair,
     _In_ const UsefulBufC* unsigned_message,
@@ -234,7 +262,12 @@ teep_sign1_cbor_message(
     // Initialize for signing.
     struct t_cose_sign1_sign_ctx sign_ctx;
     t_cose_sign1_sign_init(&sign_ctx, 0, get_cose_algorithm(signature_kind));
-    t_cose_sign1_set_signing_key(&sign_ctx, *key_pair, NULL_Q_USEFUL_BUF_C);
+    UsefulBuf_MAKE_STACK_UB(key_id, SHA256_DIGEST_LENGTH);
+    teep_error_code_t result = teep_compute_key_id(signature_kind, key_pair, &key_id);
+    if (result != TEEP_ERR_SUCCESS) {
+        return result;
+    }
+    t_cose_sign1_set_signing_key(&sign_ctx, *key_pair, UsefulBuf_Const(key_id));
 
     // Compute the size of the output and auxiliary buffers.
     struct q_useful_buf null_buff { NULL, SIZE_MAX };
@@ -292,19 +325,90 @@ teep_sign_cbor_message(
     teep_signature_kind_t signature_kind,
     _Out_ UsefulBufC* signed_message)
 {
-    // TODO(#104): t_cose 2.0 should support Sign.
-    // Switch to it once it's ready and supports EdDSA.
-    // In the meantime, we just use Sign1 ES256.
+    // Initialize for signing.
+    struct t_cose_sign_sign_ctx sign_ctx;
+    t_cose_sign_sign_init(&sign_ctx, T_COSE_OPT_MESSAGE_TYPE_SIGN);
 
-    return teep_sign1_cbor_message(&key_pairs[TEEP_SIGNATURE_ES256],
-        unsigned_message,
+    struct t_cose_signature_sign_eddsa eddsa_signer;
+    struct t_cose_signature_sign_main es256_signer;
+    UsefulBuf_MAKE_STACK_UB(eddsa_key_id, SHA256_DIGEST_LENGTH);
+    UsefulBuf_MAKE_STACK_UB(es256_key_id, SHA256_DIGEST_LENGTH);
+    for (const auto& [kind, key_pair] : key_pairs) {
+        int32_t algorithm_id = (kind == TEEP_SIGNATURE_ES256) ? T_COSE_ALGORITHM_ES256 : T_COSE_ALGORITHM_EDDSA;
+        if (kind == TEEP_SIGNATURE_ES256) {
+            t_cose_signature_sign_main_init(&es256_signer, algorithm_id);
+            teep_error_code_t result = teep_compute_key_id(kind, &key_pair, &es256_key_id);
+            if (result != TEEP_ERR_SUCCESS) {
+                return result;
+            }
+            t_cose_signature_sign_main_set_signing_key(&es256_signer, key_pair, UsefulBuf_Const(es256_key_id));
+            t_cose_sign_add_signer(&sign_ctx, t_cose_signature_sign_from_main(&es256_signer));
+        } else {
+            t_cose_signature_sign_eddsa_init(&eddsa_signer);
+            teep_error_code_t result = teep_compute_key_id(kind, &key_pair, &eddsa_key_id);
+            if (result != TEEP_ERR_SUCCESS) {
+                return result;
+            }
+            t_cose_signature_sign_eddsa_set_signing_key(&eddsa_signer, key_pair, UsefulBuf_Const(eddsa_key_id));
+            t_cose_sign_add_signer(&sign_ctx, t_cose_signature_sign_from_eddsa(&eddsa_signer));
+
+            // Compute the size of the output and auxiliary buffers.
+            struct q_useful_buf null_buff { NULL, SIZE_MAX };
+            struct q_useful_buf_c signed_cose;
+            enum t_cose_err_t return_value = t_cose_sign_sign(&sign_ctx,
+                NULL_Q_USEFUL_BUF_C, // No externally supplied AAD.
+                *unsigned_message,
+                null_buff,
+                &signed_cose);
+
+            // Allocate buffers of the right size.
+            if (signed_cose.len > signed_message_buffer.len) {
+                return TEEP_ERR_TEMPORARY_ERROR;
+            }
+            struct q_useful_buf auxiliary_buffer = {};
+            auxiliary_buffer.len = t_cose_signature_sign_eddsa_auxiliary_buffer_size(&eddsa_signer);
+            if (auxiliary_buffer.len > 0) {
+                // TODO: remove workaround for https://github.com/laurencelundblade/t_cose/issues/251
+                // once it is fixed.
+                auxiliary_buffer.len += 50;
+
+                auxiliary_buffer.ptr = malloc(auxiliary_buffer.len);
+                if (auxiliary_buffer.ptr == NULL) {
+                    return TEEP_ERR_TEMPORARY_ERROR;
+                }
+            }
+
+            t_cose_signature_sign_eddsa_set_auxiliary_buffer(&eddsa_signer, auxiliary_buffer);
+        }
+    }
+
+    // Sign.
+    enum t_cose_err_t return_value = t_cose_sign_sign(&sign_ctx,
+        NULL_Q_USEFUL_BUF_C, // No externally supplied AAD.
+        *unsigned_message,
+        /* Non-const pointer and length of the
+         * buffer where the completed output is
+         * written to. The length here is that
+         * of the whole buffer.
+         */
         signed_message_buffer,
-        TEEP_SIGNATURE_ES256,
+        /* Const pointer and actual length of
+         * the completed, signed and encoded
+         * COSE_Sign1 message. This points
+         * into the output buffer and has the
+         * lifetime of the output buffer.
+         */
         signed_message);
+    if (return_value != T_COSE_SUCCESS) {
+        TeepLogMessage("COSE Sign failed with error %d\n", return_value);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    return TEEP_ERR_SUCCESS;
 }
 
 teep_error_code_t
-teep_verify_cbor_message(
+teep_verify_cbor_message_sign1(
     _In_ const struct t_cose_key* key_pair,
     _In_ const UsefulBufC* signed_cose,
     _Out_ UsefulBufC* encoded)
@@ -313,7 +417,7 @@ teep_verify_cbor_message(
 
     t_cose_sign1_verify_init(&verify_ctx, T_COSE_OPT_DECODE_ONLY);
     UsefulBufC payload = {};
-    int return_value = t_cose_sign1_verify(&verify_ctx, *signed_cose, &payload, nullptr);
+    t_cose_err_t return_value = t_cose_sign1_verify(&verify_ctx, *signed_cose, &payload, nullptr);
     if (return_value != T_COSE_SUCCESS) {
         TeepLogMessage("First t_cose_sign1_verify failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
@@ -338,7 +442,7 @@ teep_verify_cbor_message(
     return_value = t_cose_sign1_verify(&verify_ctx,
         *signed_cose,        /* COSE to verify */
         encoded,             /* Payload from signed_cose */
-        NULL);               /* Don't return parameters */
+        nullptr);            /* Don't return parameters */
     free(auxiliary_buffer.ptr);
     if (return_value != T_COSE_SUCCESS) {
         TeepLogMessage("Second t_cose_sign1_verify failed with error %d\n", return_value);
@@ -346,6 +450,90 @@ teep_verify_cbor_message(
     }
 
     return TEEP_ERR_SUCCESS;
+}
+
+teep_error_code_t
+teep_verify_cbor_message_sign(
+    teep_signature_kind_t signature_kind,
+    _In_ const struct t_cose_key* key_pair,
+    _In_ const UsefulBufC* signed_cose,
+    _Out_ UsefulBufC* encoded)
+{
+    struct t_cose_sign_verify_ctx verify_ctx;
+
+    UsefulBuf_MAKE_STACK_UB(key_id, SHA256_DIGEST_LENGTH);
+    teep_error_code_t result = teep_compute_key_id(signature_kind, key_pair, &key_id);
+    if (result != TEEP_ERR_SUCCESS) {
+        return result;
+    }
+
+    // Initialize verifiers.
+    t_cose_sign_verify_init(&verify_ctx, T_COSE_OPT_DECODE_ONLY);
+    struct t_cose_signature_verify_main es256_verifier;
+    struct t_cose_signature_verify_eddsa eddsa_verifier;
+    if (signature_kind == TEEP_SIGNATURE_ES256) {
+        // ES256 verifier.
+        t_cose_signature_verify_main_init(&es256_verifier);
+        t_cose_signature_verify_main_set_key(&es256_verifier, *key_pair, UsefulBuf_Const(key_id));
+        t_cose_sign_add_verifier(&verify_ctx, t_cose_signature_verify_from_main(&es256_verifier));
+    } else {
+        // EdDSA verifier.
+        t_cose_signature_verify_eddsa_init(&eddsa_verifier, 0);
+        t_cose_signature_verify_eddsa_set_key(&eddsa_verifier, *key_pair, UsefulBuf_Const(key_id));
+        t_cose_sign_add_verifier(&verify_ctx, t_cose_signature_verify_from_eddsa(&eddsa_verifier));
+    }
+
+    // Compute the auxiliary buffer size needed.
+    // TODO: this code path is blocked on https://github.com/laurencelundblade/t_cose/issues/252
+    // which causes t_cose_sign_verify to fail when it shouldn't.
+    UsefulBufC payload = {};
+    t_cose_err_t return_value = t_cose_sign_verify(&verify_ctx, *signed_cose, NULL_Q_USEFUL_BUF_C, &payload, nullptr);
+    if (return_value != T_COSE_SUCCESS) {
+        TeepLogMessage("First t_cose_sign1_verify failed with error %d\n", return_value);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    // Allocate an auxiliary buffer of the right size.
+    struct q_useful_buf auxiliary_buffer = {};
+    auxiliary_buffer.len = t_cose_signature_verify_eddsa_auxiliary_buffer_size(&eddsa_verifier);
+    if (auxiliary_buffer.len > 0) {
+        auxiliary_buffer.ptr = malloc(auxiliary_buffer.len);
+        if (auxiliary_buffer.ptr == NULL) {
+            TeepLogMessage("teep_verify_cbor_message could not allocate %d bytes\n", auxiliary_buffer.len);
+            return TEEP_ERR_TEMPORARY_ERROR;
+        }
+    }
+    t_cose_signature_verify_eddsa_set_auxiliary_buffer(&eddsa_verifier, auxiliary_buffer);
+
+    // Do the actual verification.
+    t_cose_sign_verify_init(&verify_ctx, 0);
+    return_value = t_cose_sign_verify(&verify_ctx,
+        *signed_cose,        /* COSE to verify */
+        NULL_Q_USEFUL_BUF_C, /* No AAD */
+        encoded,             /* Payload from signed_cose */
+        nullptr);            /* Don't return parameters */
+    if (return_value != T_COSE_SUCCESS) {
+        TeepLogMessage("Second t_cose_sign_verify failed with error %d\n", return_value);
+        return TEEP_ERR_PERMANENT_ERROR;
+    }
+
+    return TEEP_ERR_SUCCESS;
+}
+
+teep_error_code_t
+teep_verify_cbor_message(
+    teep_signature_kind_t signature_kind,
+    _In_ const struct t_cose_key* key_pair,
+    _In_ const UsefulBufC* signed_cose,
+    _Out_ UsefulBufC* encoded)
+{
+#if 0
+    teep_error_code_t result = teep_verify_cbor_message_sign1(key_pair, signed_cose, encoded);
+    if (result == TEEP_ERR_SUCCESS) {
+        return TEEP_ERR_SUCCESS;
+    }
+#endif
+    return teep_verify_cbor_message_sign(signature_kind, key_pair, signed_cose, encoded);
 }
 
 #ifdef TEEP_USE_CERTIFICATES // Currently unused.

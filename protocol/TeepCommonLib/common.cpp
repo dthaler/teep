@@ -368,10 +368,6 @@ teep_sign_cbor_message(
             struct q_useful_buf auxiliary_buffer = {};
             auxiliary_buffer.len = t_cose_signature_sign_eddsa_auxiliary_buffer_size(&eddsa_signer);
             if (auxiliary_buffer.len > 0) {
-                // TODO: remove workaround for https://github.com/laurencelundblade/t_cose/issues/251
-                // once it is fixed.
-                auxiliary_buffer.len += 50;
-
                 auxiliary_buffer.ptr = malloc(auxiliary_buffer.len);
                 if (auxiliary_buffer.ptr == NULL) {
                     return TEEP_ERR_TEMPORARY_ERROR;

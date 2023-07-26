@@ -448,6 +448,10 @@ teep_verify_cbor_message_sign1(
     return TEEP_ERR_SUCCESS;
 }
 
+// TODO: Define this once https://github.com/laurencelundblade/t_cose/issues/252
+// is fixed.
+#undef COMPUTE_AUXILIARY_BUFFER_SIZE
+
 teep_error_code_t
 teep_verify_cbor_message_sign(
     teep_signature_kind_t signature_kind,
@@ -464,7 +468,11 @@ teep_verify_cbor_message_sign(
     }
 
     // Initialize verifiers.
+#ifndef COMPUTE_AUXILIARY_BUFFER_SIZE
+    t_cose_sign_verify_init(&verify_ctx, 0);
+#else
     t_cose_sign_verify_init(&verify_ctx, T_COSE_OPT_DECODE_ONLY);
+#endif
     struct t_cose_signature_verify_main es256_verifier;
     struct t_cose_signature_verify_eddsa eddsa_verifier;
     if (signature_kind == TEEP_SIGNATURE_ES256) {
@@ -479,19 +487,23 @@ teep_verify_cbor_message_sign(
         t_cose_sign_add_verifier(&verify_ctx, t_cose_signature_verify_from_eddsa(&eddsa_verifier));
     }
 
+    t_cose_err_t return_value;
+    struct q_useful_buf auxiliary_buffer = {};
+#ifdef COMPUTE_AUXILIARY_BUFFER_SIZE
     // Compute the auxiliary buffer size needed.
-    // TODO: this code path is blocked on https://github.com/laurencelundblade/t_cose/issues/252
-    // which causes t_cose_sign_verify to fail when it shouldn't.
     UsefulBufC payload = {};
-    t_cose_err_t return_value = t_cose_sign_verify(&verify_ctx, *signed_cose, NULL_Q_USEFUL_BUF_C, &payload, nullptr);
+    return_value = t_cose_sign_verify(&verify_ctx, *signed_cose, NULL_Q_USEFUL_BUF_C, &payload, nullptr);
     if (return_value != T_COSE_SUCCESS) {
         TeepLogMessage("First t_cose_sign1_verify failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
     }
+    t_cose_sign_verify_init(&verify_ctx, 0);
 
-    // Allocate an auxiliary buffer of the right size.
-    struct q_useful_buf auxiliary_buffer = {};
+    // Allocate an auxiliary buffer of the right size
     auxiliary_buffer.len = t_cose_signature_verify_eddsa_auxiliary_buffer_size(&eddsa_verifier);
+#else
+    auxiliary_buffer.len = 1024;
+#endif
     if (auxiliary_buffer.len > 0) {
         auxiliary_buffer.ptr = malloc(auxiliary_buffer.len);
         if (auxiliary_buffer.ptr == NULL) {
@@ -502,7 +514,6 @@ teep_verify_cbor_message_sign(
     t_cose_signature_verify_eddsa_set_auxiliary_buffer(&eddsa_verifier, auxiliary_buffer);
 
     // Do the actual verification.
-    t_cose_sign_verify_init(&verify_ctx, 0);
     return_value = t_cose_sign_verify(&verify_ctx,
         *signed_cose,        /* COSE to verify */
         NULL_Q_USEFUL_BUF_C, /* No AAD */

@@ -26,7 +26,7 @@ void TeepAgentGetSigningKeyPair(_Out_ struct t_cose_key* keyPair, _Out_ teep_sig
     *kind = g_teep_agent_signing_key_kind;
 }
 
-vector<struct t_cose_key> g_tam_key_pairs;
+map<teep_signature_kind_t,struct t_cose_key> g_tam_key_pairs;
 
 /* TODO: This is just a placeholder for a real implementation.
  * Currently we provide untrusted keys into the TAM.
@@ -64,14 +64,15 @@ teep_error_code_t TeepAgentConfigureTamKeys(_In_z_ const char* directory_name)
         if (result != TEEP_ERR_SUCCESS) {
             break;
         }
-        g_tam_key_pairs.emplace_back(key_pair);
+        teep_signature_kind_t kind = (strstr(filename, "es256") != nullptr) ? TEEP_SIGNATURE_ES256 : TEEP_SIGNATURE_EDDSA;
+        g_tam_key_pairs[kind] = key_pair;
     }
     closedir(dir);
     return result;
 }
 
 /* Get the TEEP Agents' public keys to verify an incoming message against. */
-vector<struct t_cose_key> TeepAgentGetTamKeys()
+map<teep_signature_kind_t, struct t_cose_key> TeepAgentGetTamKeys()
 {
     return g_tam_key_pairs;
 }

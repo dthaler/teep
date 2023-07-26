@@ -62,10 +62,10 @@ static void TestConfigureKeys(teep_signature_kind_t signatureKind)
     char agent_public_key_filename[256];
     REQUIRE(StartAgentBroker(TEEP_AGENT_DATA_DIRECTORY, TRUE, signatureKind, agent_public_key_filename) == 0);
 
-    // Copy Agent keys to TAM
+    // Copy Agent keys to TAM.
     CopyFile(agent_public_key_filename, TAM_DATA_DIRECTORY "/trusted");
 
-    // Copy TAM keys to Agent
+    // Copy TAM keys to Agent.
     char tam_public_key_filename[256];
     TamGetPublicKey(signatureKind, tam_public_key_filename);
     CopyFile(tam_public_key_filename, TEEP_AGENT_DATA_DIRECTORY "/trusted");

@@ -25,7 +25,7 @@ teep_error_code_t TamGetSigningKeyPairs(_Out_ std::map<teep_signature_kind_t, st
     return TEEP_ERR_SUCCESS;
 }
 
-vector<struct t_cose_key> g_agent_key_pairs;
+map<teep_signature_kind_t, struct t_cose_key> g_agent_key_pairs;
 
 /* TODO: This is just a placeholder for a real implementation.
  * Currently we provide untrusted keys into the TAM.
@@ -63,7 +63,8 @@ teep_error_code_t TamConfigureAgentKeys(_In_z_ const char* directory_name)
         if (result != TEEP_ERR_SUCCESS) {
             break;
         }
-        g_agent_key_pairs.emplace_back(key_pair);
+        teep_signature_kind_t kind = (strstr(filename, "es256") != nullptr) ? TEEP_SIGNATURE_ES256 : TEEP_SIGNATURE_EDDSA;
+        g_agent_key_pairs[kind] = key_pair;
 
         TeepLogMessage("TAM loaded TEEP agent key from %s\n", keyfile.c_str());
     }
@@ -72,7 +73,7 @@ teep_error_code_t TamConfigureAgentKeys(_In_z_ const char* directory_name)
 }
 
 /* Get the TEEP Agents' public keys to verify an incoming message against. */
-vector<struct t_cose_key> TamGetTeepAgentKeys()
+map<teep_signature_kind_t, struct t_cose_key> TamGetTeepAgentKeys()
 {
     return g_agent_key_pairs;
 }

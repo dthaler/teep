@@ -85,6 +85,7 @@ teep_sign_cbor_message(
 
 teep_error_code_t
 teep_verify_cbor_message(
+    teep_signature_kind_t signature_kind,
     _In_ const struct t_cose_key* key_pair,
     _In_ const UsefulBufC* signed_cose,
     _Out_ UsefulBufC* encoded);

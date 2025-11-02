@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         configurations: [DebugStandalone]
-        os: [windows-2019, windows-2022]
+        os: [windows-2025, windows-2022]
     runs-on: ${{matrix.os}}
     env:
       # Path to the solution file relative to the root of the project.

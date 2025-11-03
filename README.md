@@ -84,7 +84,7 @@ a different implementation for other platforms.
 
 You must also have OpenSSL 3.0.7 or later installed to `%ProgramW6432%\OpenSSL`.
 You can do this either by running a pre-built installer such as the one from
-https://www.softpedia.com/get/Programming/Components-Libraries/OpenSSL.shtml
+[Softpedia](https://www.softpedia.com/get/Programming/Components-Libraries/OpenSSL.shtml)
 or by building it yourself as follows:
 
 ```cmd
@@ -98,7 +98,7 @@ nmake
 
 and, as Administrator:
 
-```
+```cmd
 nmake install
 ```
 

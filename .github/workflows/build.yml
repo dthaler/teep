@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         configurations: [DebugStandalone]
-        os: [windows-2019, windows-2022]
+        os: [windows-2025, windows-2022]
     runs-on: ${{matrix.os}}
     env:
       # Path to the solution file relative to the root of the project.
@@ -39,7 +39,7 @@ jobs:
         choco install nasm
         echo "C:\Program Files\NASM" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: 'recursive'
 

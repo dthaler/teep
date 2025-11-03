@@ -75,23 +75,32 @@ You must have the following installed to compile and debug:
 * [Visual Studio 2019 or 2022](https://visualstudio.microsoft.com/). Any edition, including the (free) Community edition is fine
 * [Open Enclave Visual Studio Extension](https://marketplace.visualstudio.com/items?itemName=MS-TCPS.OpenEnclaveSDK-VSIX) v0.17 or later
 and its [prerequisites](https://github.com/dthaler/openenclave/blob/master/docs/GettingStartedDocs/VisualStudioWindows.md)
+* [Perl](https://strawberryperl.com/)
 
 The TAM is currently written to run on Windows, due to the HTTP layer.
 However, the TeepAgentBrokerLib/HttpHelper.h API should already be
 platform-agnostic and one could replace the Windows HttpHelper.cpp with 
 a different implementation for other platforms.
 
-You must also have OpenSSL 3.0.7 or later installed to %ProgramW6432%\OpenSSL.
+You must also have OpenSSL 3.0.7 or later installed to `%ProgramW6432%\OpenSSL`.
 You can do this either by running a pre-built installer such as the one from
 https://www.softpedia.com/get/Programming/Components-Libraries/OpenSSL.shtml
 or by building it yourself as follows:
 
-* cd external\openssl
-* mkdir _build
-* perl ..\Configure VC-WIN64A
-* perl configdata.pm --dump
-* nmake
-* nmake install
+```cmd
+cd external\openssl
+mkdir _build
+cd _build
+perl ..\Configure VC-WIN64A
+perl configdata.pm --dump
+nmake
+```
+
+and, as Administrator:
+
+```
+nmake install
+```
 
 ## Running the code
 

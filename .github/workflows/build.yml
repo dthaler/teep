@@ -7,6 +7,9 @@ name: MSBuild
 
 on: pull_request
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
       # Cancel any builds currently in progress for the same PR.
       # Allow running concurrently for with any other commits.

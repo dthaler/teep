@@ -488,11 +488,12 @@ teep_verify_cbor_message_sign(
     }
 
     t_cose_err_t return_value;
+    uint64_t tag_numbers[T_COSE_MAX_TAGS_TO_RETURN] = {};
     struct q_useful_buf auxiliary_buffer = {};
 #ifdef COMPUTE_AUXILIARY_BUFFER_SIZE
     // Compute the auxiliary buffer size needed.
     UsefulBufC payload = {};
-    return_value = t_cose_sign_verify(&verify_ctx, *signed_cose, NULL_Q_USEFUL_BUF_C, &payload, nullptr);
+    return_value = t_cose_sign_verify_msg(&verify_ctx, *signed_cose, NULL_Q_USEFUL_BUF_C, &payload, nullptr, tag_numbers);
     if (return_value != T_COSE_SUCCESS) {
         TeepLogMessage("First t_cose_sign1_verify failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
@@ -514,11 +515,12 @@ teep_verify_cbor_message_sign(
     t_cose_signature_verify_eddsa_set_auxiliary_buffer(&eddsa_verifier, auxiliary_buffer);
 
     // Do the actual verification.
-    return_value = t_cose_sign_verify(&verify_ctx,
+    return_value = t_cose_sign_verify_msg(&verify_ctx,
         *signed_cose,        /* COSE to verify */
         NULL_Q_USEFUL_BUF_C, /* No AAD */
         encoded,             /* Payload from signed_cose */
-        nullptr);            /* Don't return parameters */
+        nullptr,             /* Don't return parameters */
+        tag_numbers);
     if (return_value != T_COSE_SUCCESS) {
         TeepLogMessage("Second t_cose_sign_verify failed with error %d\n", return_value);
         return TEEP_ERR_PERMANENT_ERROR;
